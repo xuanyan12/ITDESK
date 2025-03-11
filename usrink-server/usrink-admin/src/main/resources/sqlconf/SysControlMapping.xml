@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysControlMapper">
+
+    <!--  用于分页查询  -->
+    <select id="selectSysControlList" resultType="ink.usr.common.model.mysql.SysControlModel">
+        select *
+        from sys_control
+        <where>
+            <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
+            <if test="lastName!=null and lastName!=''">AND LOWER(lastName) LIKE CONCAT('%', LOWER(#{lastName}), '%')</if>
+            <if test="firstName!=null and firstName!=''">AND LOWER(firstName) LIKE CONCAT('%', LOWER(#{firstName}), '%')</if>
+            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
+            <if test="pcStatus!=null and pcStatus!=''">AND LOWER(pcStatus) LIKE CONCAT('%', LOWER(#{pcStatus}), '%')</if>
+            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
+        </where>
+        Limit #{pageNum}, #{pageSize}
+    </select>
+
+    <!--    用于返回分页查询前的记录数-->
+    <select id="selectCountNum" resultType="java.lang.Integer">
+        select count(*)
+        from sys_control
+        <where>
+            <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
+            <if test="lastName!=null and lastName!=''">AND LOWER(lastName) LIKE CONCAT('%', LOWER(#{lastName}), '%')</if>
+            <if test="firstName!=null and firstName!=''">AND LOWER(firstName) LIKE CONCAT('%', LOWER(#{firstName}), '%')</if>
+            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
+            <if test="pcStatus!=null and pcStatus!=''">AND LOWER(pcStatus) LIKE CONCAT('%', LOWER(#{pcStatus}), '%')</if>
+            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
+        </where>
+    </select>
+
+    <update id="updateSysControl">
+        update sys_control
+        <set>
+            <if test="ntAccount!=null and ntAccount!=''">
+                ntAccount = #{ntAccount},
+            </if>
+            <if test="pcClass!=null and pcClass!=''">
+                pcClass = #{pcClass},
+            </if>
+            <if test="pcStatus!=null and pcStatus!=''">
+                pcStatus = #{pcStatus}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+</mapper>
