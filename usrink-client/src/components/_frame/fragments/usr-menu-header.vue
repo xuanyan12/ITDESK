@@ -9,7 +9,7 @@ const collapseState = computed(() => collapseStateStore.collapseState)
 // Logo 高度
 const height = computed(() => collapseStateStore.collapseState ? '60px' : '135px')
 // Logo size
-const logoSize = computed(() => collapseStateStore.collapseState ? 30 : 44)
+const logoSize = computed(() => collapseStateStore.collapseState ? 30 : 150)
 // Logo MarginBottom
 const marginBottom = computed(() => collapseStateStore.collapseState ? '0px' : '10px')
 // Logo font 高度
@@ -17,6 +17,9 @@ const fontHeight = computed(() => collapseStateStore.collapseState ? '0px' : '24
 
 // 默认显示Logo名称
 const showLogoName = ref(true)
+
+// Logo 图片路径（public 目录下）
+const logoSrc = '/seglogo-01.png';
 
 onMounted(() => {
     // 初始化时，根据菜单折叠状态，设置Logo名称显示状态
@@ -42,12 +45,12 @@ watch(collapseState, (newVal) => {
     <section
         class="usr_menu_header"
         :style="{height:height}">
-        <el-icon
-            :size="logoSize"
-            color="#FFFFFF"
-            :style="{marginBottom:marginBottom}">
-            <ElementPlus/>
-        </el-icon>
+        <img
+            :src="logoSrc"
+            alt="Company Logo"
+            :width="logoSize"
+            :style="{ marginBottom: marginBottom }"
+        />
         <div
             class="usr_menu_header_txt"
             :style="{height:fontHeight}">
@@ -63,7 +66,8 @@ watch(collapseState, (newVal) => {
     align-items: center;
     justify-content: center;
     transition: height .5s;
-    background: linear-gradient(90deg, #409eff 90%, #00537E 120%);
+    background: white;
+    /* background: linear-gradient(90deg, #409eff 90%, #00537E 120%); */
 }
 
 .usr_menu_header .el-icon {
@@ -71,7 +75,8 @@ watch(collapseState, (newVal) => {
 }
 
 .usr_menu_header_txt {
-    color: #ffffff;
+
+    color: #00537E;
     font-size: 20px;
     transition: height .5s;
 }

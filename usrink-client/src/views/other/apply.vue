@@ -3,44 +3,52 @@
     <!-- 设备申请表单 -->
     <el-card shadow="never" class="usr_card_override top">
       <el-form :model="applicationForm" ref="applicationFormRef" label-width="100px" class="application-form">
-        <el-form-item label="设备大类" prop="deviceCategory" :rules="[{ required: true, message: '请选择设备大类', trigger: 'blur' }]">
-          <el-select v-model="applicationForm.deviceCategory" placeholder="请选择设备大类" @change="onDeviceCategoryChange">
-            <el-option label="电脑" value="computer"></el-option>
-            <el-option label="手机" value="phone"></el-option>
-            <el-option label="显示器" value="monitor"></el-option>
-            <el-option label="打印机" value="printer"></el-option>
-          </el-select>
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="设备大类" prop="deviceCategory">
+              <el-select v-model="applicationForm.deviceCategory" placeholder="请选择设备大类" @change="onDeviceCategoryChange">
+                <el-option label="电脑" value="computer"></el-option>
+                <el-option label="手机" value="phone"></el-option>
+                <el-option label="显示器" value="monitor"></el-option>
+                <el-option label="打印机" value="printer"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-        <el-form-item label="设备类型" prop="deviceType" :rules="[{ required: true, message: '请选择设备类型', trigger: 'blur' }]">
-          <el-select v-model="applicationForm.deviceType" placeholder="请选择设备类型" @change="onDeviceTypeChange">
-            <el-option v-for="type in deviceTypes" :key="type" :label="type" :value="type"></el-option>
-          </el-select>
-        </el-form-item>
+          <el-col :span="8">
+            <el-form-item label="设备类型" prop="deviceType">
+              <el-select v-model="applicationForm.deviceType" placeholder="请选择设备类型" @change="onDeviceTypeChange">
+                <el-option v-for="type in deviceTypes" :key="type" :label="type" :value="type"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-        <el-form-item label="设备选择" prop="deviceName" :rules="[{ required: true, message: '请选择设备', trigger: 'blur' }]">
-          <el-select v-model="applicationForm.deviceName" placeholder="请选择设备">
-            <el-option
-              v-for="device in filteredDevices"
-              :key="device.id"
-              :label="`${device.name} (${device.quantity} 可用)`"
-              :value="device.name"
-              :disabled="device.quantity === 0"
-            ></el-option>
-          </el-select>
-        </el-form-item>
+          <el-col :span="8">
+            <el-form-item label="设备选择" prop="deviceName">
+              <el-select v-model="applicationForm.deviceName" placeholder="请选择设备">
+                <el-option
+                  v-for="device in filteredDevices"
+                  :key="device.id"
+                  :label="`${device.name} (${device.quantity} 可用)`"
+                  :value="device.name"
+                  :disabled="device.quantity === 0"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-        <el-form-item label="数量" prop="quantity" :rules="[{ required: true, message: '请输入数量', trigger: 'blur' }]">
-          <el-input v-model="applicationForm.quantity" type="number" :min="1" :max="maxQuantity" placeholder="请输入数量"></el-input>
-        </el-form-item>
+          <el-col :span="8" style="padding-top:10px">
+            <el-form-item label="数量" prop="quantity">
+              <el-input v-model="applicationForm.quantity" type="number" :min="1" :max="maxQuantity" placeholder="请输入数量"></el-input>
+            </el-form-item>
+          </el-col>
 
-        <el-form-item label="申请理由" prop="reason" :rules="[{ required: true, message: '请输入申请理由', trigger: 'blur' }]">
-          <el-input v-model="applicationForm.reason" type="textarea" placeholder="请输入申请理由" rows="4"></el-input>
-        </el-form-item>
-
-        <el-form-item label="期望交付时间" prop="expectedDelivery" :rules="[{ required: true, message: '请选择期望交付时间', trigger: 'change' }]">
-          <el-date-picker v-model="applicationForm.expectedDelivery" type="date" placeholder="选择期望交付时间"></el-date-picker>
-        </el-form-item>
+          <el-col :span="16" style="padding-top:10px">
+            <el-form-item label="申请理由" prop="reason">
+              <el-input v-model="applicationForm.reason" type="textarea" placeholder="请输入申请理由" rows="1"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-form-item>
           <el-button type="primary" @click="submitApplication">提交申请</el-button>
@@ -52,12 +60,11 @@
     <el-card shadow="never" class="usr_card_override top" style="margin-top: 20px;">
       <h3>我的申请状态</h3>
       <el-table :data="applicationList" :loading="loading" style="width: 100%;">
+        <el-table-column label="流程发起时间" prop="createdAt"></el-table-column>
         <el-table-column label="设备名称" prop="deviceName"></el-table-column>
-        <el-table-column label="设备大类" prop="deviceCategory"></el-table-column>
-        <el-table-column label="设备类型" prop="deviceType"></el-table-column>
         <el-table-column label="数量" prop="quantity"></el-table-column>
         <el-table-column label="申请理由" prop="reason"></el-table-column>
-        <el-table-column label="期望交付时间" prop="expectedDelivery"></el-table-column>
+        <el-table-column label="流程更新时间" prop="updatedAt"></el-table-column>
         <el-table-column label="申请状态" prop="status">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
@@ -67,40 +74,11 @@
         </el-table-column>
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
-            <el-button type="text" @click="viewApplicationDetails(row)">查看详情</el-button>
+            <el-button type="text" @click="viewApplicationDetails(row)">撤回申请</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
-
-    <!-- 查看申请详情弹窗 -->
-    <el-dialog v-model="viewApplicationDialogVisible" title="申请详情">
-      <div v-if="selectedApplication">
-        <el-form :model="selectedApplication" label-width="100px">
-          <el-form-item label="设备名称">
-            <el-input v-model="selectedApplication.deviceName" disabled></el-input>
-          </el-form-item>
-          <el-form-item label="设备类型">
-            <el-input v-model="selectedApplication.deviceType" disabled></el-input>
-          </el-form-item>
-          <el-form-item label="数量">
-            <el-input v-model="selectedApplication.quantity" disabled></el-input>
-          </el-form-item>
-          <el-form-item label="申请理由">
-            <el-input v-model="selectedApplication.reason" disabled type="textarea"></el-input>
-          </el-form-item>
-          <el-form-item label="期望交付时间">
-            <el-input v-model="selectedApplication.expectedDelivery" disabled></el-input>
-          </el-form-item>
-          <el-form-item label="申请状态">
-            <el-input v-model="selectedApplication.status" disabled></el-input>
-          </el-form-item>
-        </el-form>
-      </div>
-      <template #footer>
-        <el-button @click="viewApplicationDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
 
     <!-- 审批进度弹窗 -->
     <el-dialog v-model="approvalProgressDialogVisible" title="审批进度">
@@ -109,64 +87,48 @@
           <el-step v-for="(step, index) in approvalProgress" :key="index" :title="step" :description="step"></el-step>
         </el-steps>
       </div>
-      <template #footer>
-        <el-button @click="approvalProgressDialogVisible = false">关闭</el-button>
-      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import { ref, reactive, onMounted } from 'vue';
+import httpUtil from "@/utils/HttpUtil";
+
 export default {
-  data() {
-    return {
-      applicationForm: {
-        deviceCategory: '',  // 新增设备大类
-        deviceType: '',
-        deviceName: '',
-        quantity: '',
-        reason: '',
-        expectedDelivery: ''
-      },
-      applicationList: [],
-      loading: false,
-      devices: [],
-      filteredDevices: [],
-      maxQuantity: 0,
-      viewApplicationDialogVisible: false,
-      approvalProgressDialogVisible: false,
-      selectedApplication: null,
-      approvalProgress: [],
-      approvalProgressStep: 0,
-      deviceCategories: ['computer', 'phone', 'monitor', 'printer'],  // 设备大类
-      deviceTypes: [],  // 存储设备类型
-    };
-  },
-  methods: {
-    onDeviceCategoryChange() {
-      this.deviceTypes = this.getDeviceTypesByCategory(this.applicationForm.deviceCategory); // 根据大类筛选设备类型
-      this.applicationForm.deviceType = '';
-      this.filteredDevices = this.devices.filter(device => device.category === this.applicationForm.deviceCategory);
-      this.applicationForm.deviceName = '';
-      this.maxQuantity = 0;
-    },
-    onDeviceTypeChange() {
-      this.filteredDevices = this.devices.filter(device => device.type === this.applicationForm.deviceType);
-      this.applicationForm.deviceName = '';
-      this.maxQuantity = 0;
-    },
-    fetchDevices() {
-      // 模拟从数据库获取设备数据，设备数据中加入 category 字段
-      this.devices = [
-        { id: 1, name: 'MacBook Pro', category: 'computer', type: 'laptop', quantity: 5 },
-        { id: 2, name: 'Dell XPS 13', category: 'computer', type: 'laptop', quantity: 2 },
-        { id: 3, name: 'iPhone 14', category: 'phone', type: 'smartphone', quantity: 0 },
-        { id: 4, name: 'Samsung Galaxy S23', category: 'phone', type: 'smartphone', quantity: 10 },
-        { id: 5, name: 'Dell UltraSharp 27', category: 'monitor', type: 'LED', quantity: 3 },
-        { id: 6, name: 'HP LaserJet Pro', category: 'printer', type: 'laser', quantity: 0 }
-      ];
-    },
-    getDeviceTypesByCategory(category) {
+  setup() {
+    // 设备申请表单数据
+    const applicationForm = reactive({
+      deviceCategory: '',
+      deviceType: '',
+      deviceName: '',
+      quantity: '',
+      reason: '',
+      pageNum: 1,
+      pageSize: 6
+    });
+
+    const flowRoles = reactive({
+      username: '',
+      approver1: '',
+      approver2: ''
+    });
+
+    const agree = ref(false);
+    const applicationList = ref([]);
+    const loading = ref(false);
+    const devices = ref([]);
+    const filteredDevices = ref([]);
+    const maxQuantity = ref(0);
+    const approvalProgressDialogVisible = ref(false);
+    const selectedApplication = ref(null);
+    const approvalProgress = ref([]);
+    const approvalProgressStep = ref(0);
+    const deviceCategories = ref(['computer', 'phone', 'monitor', 'printer']); // 设备大类
+    const deviceTypes = ref([]); // 存储设备类型
+
+    // 根据设备大类获取设备类型
+    const getDeviceTypesByCategory = (category) => {
       const types = {
         computer: ['laptop', 'desktop'],
         phone: ['smartphone', 'tablet'],
@@ -174,42 +136,126 @@ export default {
         printer: ['laser', 'inkjet']
       };
       return types[category] || [];
-    },
-    submitApplication() {
-      if (this.$refs.applicationFormRef.validate()) {
-        const newApplication = { ...this.applicationForm, status: 'Pending' };
-        this.applicationList.push(newApplication);
+    };
+
+    // 获取设备数据
+    const fetchDevices = () => {
+      devices.value = [
+        { id: 1, name: 'MacBook Pro', category: 'computer', type: 'laptop', quantity: 5 },
+        { id: 2, name: 'Dell XPS 13', category: 'computer', type: 'laptop', quantity: 2 },
+        { id: 3, name: 'iPhone 14', category: 'phone', type: 'smartphone', quantity: 0 },
+        { id: 4, name: 'Samsung Galaxy S23', category: 'phone', type: 'smartphone', quantity: 10 },
+        { id: 5, name: 'Dell UltraSharp 27', category: 'monitor', type: 'LED', quantity: 3 },
+        { id: 6, name: 'HP LaserJet Pro', category: 'printer', type: 'laser', quantity: 0 }
+      ];
+    };
+
+    // 设备大类变化时，筛选设备类型和设备名称
+    const onDeviceCategoryChange = () => {
+      deviceTypes.value = getDeviceTypesByCategory(applicationForm.deviceCategory);
+      applicationForm.deviceType = '';
+      filteredDevices.value = devices.value.filter(device => device.category === applicationForm.deviceCategory);
+      applicationForm.deviceName = '';
+      maxQuantity.value = 0;
+    };
+
+    // 设备类型变化时，筛选设备名称
+    const onDeviceTypeChange = () => {
+      filteredDevices.value = devices.value.filter(device => device.type === applicationForm.deviceType);
+      applicationForm.deviceName = '';
+      maxQuantity.value = 0;
+    };
+
+    // 提交申请
+    const submitApplication = () => {
+      const newApplication = { ...applicationForm, status: 'Pending' };
+      httpUtil.post("/sysApply/submitApply", newApplication, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(res => {
+        getApplyList();
         this.$message.success('设备申请提交成功！');
-        this.resetForm();
-      }
-    },
-    resetForm() {
-      this.applicationForm.deviceCategory = '';
-      this.applicationForm.deviceType = '';
-      this.applicationForm.deviceName = '';
-      this.applicationForm.quantity = '';
-      this.applicationForm.reason = '';
-      this.applicationForm.expectedDelivery = '';
-    },
-    viewApplicationDetails(row) {
-      this.selectedApplication = row;
-      this.viewApplicationDialogVisible = true;
-    },
-    viewApprovalProgress(row) {
-      // 模拟审批进度
-      this.approvalProgress = ['已提交', '审核中', '已批准'];
-      this.approvalProgressStep = this.approvalProgress.indexOf(row.status);
-      this.approvalProgressDialogVisible = true;
-    },
-    statusTagType(status) {
+      }).catch(err => {
+        console.error(err);
+        this.$message.error('设备申请提交失败！');
+      }).finally(() => {
+        resetForm();
+      });
+    };
+
+    // 重置表单
+    const resetForm = () => {
+      applicationForm.deviceCategory = '';
+      applicationForm.deviceType = '';
+      applicationForm.deviceName = '';
+      applicationForm.quantity = '';
+      applicationForm.reason = '';
+      agree.value = false;
+    };
+
+    // 获取申请列表
+    const getApplyList = () => {
+      loading.value = true;
+      httpUtil.post("/sysApply/getApplyList", applicationForm).then(res => {
+        applicationList.value = res.data.list || [];
+      }).catch(err => {
+        console.log("出错了");
+        console.error(err);
+      }).finally(() => {
+        loading.value = false;
+      });
+    };
+
+
+    // 审批进度
+    const viewApprovalProgress = (row) => {
+        approvalProgress.value = [
+          { title: '已提交', description: flowRoles.username },
+          { title: '审核中', description: flowRoles.approver1 },
+          { title: '已批准', description: flowRoles.approver2 }
+        ];
+        approvalProgressStep.value = approvalProgress.value.indexOf(row.status);
+        approvalProgressDialogVisible.value = true;
+    };
+
+    // 申请状态标签样式
+    const statusTagType = (status) => {
       if (status === 'Pending') return 'warning';
       if (status === 'Approved') return 'success';
       if (status === 'Rejected') return 'danger';
       return '';
-    }
-  },
-  mounted() {
-    this.fetchDevices(); // 获取设备数据
+    };
+
+    // 组件加载时获取设备数据和申请列表
+    onMounted(() => {
+      fetchDevices();
+      getApplyList();
+    });
+
+    return {
+      applicationForm,
+      agree,
+      applicationList,
+      loading,
+      devices,
+      filteredDevices,
+      maxQuantity,
+      approvalProgressDialogVisible,
+      selectedApplication,
+      approvalProgress,
+      approvalProgressStep,
+      deviceCategories,
+      deviceTypes,
+      flowRoles,
+      onDeviceCategoryChange,
+      onDeviceTypeChange,
+      submitApplication,
+      resetForm,
+      getApplyList,
+      viewApprovalProgress,
+      statusTagType
+    };
   }
 };
 </script>
@@ -229,11 +275,14 @@ export default {
   max-width: 200px;
   margin-top: 10px;
   border-radius: 6px;
-  background-color: #409EFF;
+  background-color: rgb(236, 245, 255);
+  color: rgb(64, 158, 255);
 }
 
 .application-form .el-button:hover {
   background-color: #66b1ff;
+  border-color: #66b1ff;
+  color: white;
 }
 
 .usr_card_override.top .el-form {
@@ -246,7 +295,12 @@ export default {
   margin-right: 0;
 }
 
-/* 表格部分样式 */
+.el-form-item .el-checkbox {
+  display: inline-block;
+  width: auto;
+  margin-right: 10px;
+}
+
 .el-table {
   margin-top: 20px;
 }

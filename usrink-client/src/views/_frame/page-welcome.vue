@@ -40,26 +40,26 @@ onMounted(() => {
     // 加载Jvm信息
     loadJvmInfo()
 
-        // 嵌入式 AIBOT 组件
-    const script = document.createElement('script');
-    script.src = 'http://10.219.184.36:3101/embed/anythingllm-chat-widget.min.js';
-    script.setAttribute('data-embed-id', '42f40229-230d-43a6-814b-8aa72018a0b3');
-    script.setAttribute('data-base-api-url', 'http://10.219.184.36:3101/api/embed');
-    script.async = true;
-    document.body.appendChild(script);
+    // 嵌入式 AIBOT 组件
+    // const script = document.createElement('script');
+    // script.src = 'http://10.219.184.36:3101/embed/anythingllm-chat-widget.min.js';
+    // script.setAttribute('data-embed-id', '42f40229-230d-43a6-814b-8aa72018a0b3');
+    // script.setAttribute('data-base-api-url', 'http://10.219.184.36:3101/api/embed');
+    // script.async = true;
+    // document.body.appendChild(script);
 
-    // 自定义属性
-    script.setAttribute('data-username', 'embed-AIBOT');  // 设置聊天框名字
-    script.setAttribute('data-chat-icon', 'chatBubble');  // 修改聊天图标
-    script.setAttribute('data-brand-image-url', '/img/SEGIMAGE.jpg');  // 设置品牌图标URL
-    script.setAttribute('data-greeting', 'Hi!我是SEG的AIBOT，欢迎向我提问！');  // 设置欢迎信息
-    script.setAttribute('data-no-sponsor', 'true');  // 隐藏赞助商
-    // script.setAttribute('data-sponsor-link', 'https://seg.org/');  // 修改赞助商链接
-    // script.setAttribute('data-sponsor-text', 'Powered by SEG');  // 修改赞助商文本
-    script.setAttribute('data-assistant-name', 'SEG-AIBOT');  // 修改助手名称
-    script.setAttribute('data-assistant-icon', '/img/SEGIMAGE.jpg');  // 设置助手图标
-    script.setAttribute('data-window-height', '550px');  // 设置聊天窗口高度
-    script.setAttribute('data-window-width', '400px');  // 设置聊天窗口宽度
+    // // 自定义属性
+    // script.setAttribute('data-username', 'embed-AIBOT');  // 设置聊天框名字
+    // script.setAttribute('data-chat-icon', 'chatBubble');  // 修改聊天图标
+    // script.setAttribute('data-brand-image-url', '/img/SEGIMAGE.jpg');  // 设置品牌图标URL
+    // script.setAttribute('data-greeting', 'Hi!我是SEG的AIBOT，欢迎向我提问！');  // 设置欢迎信息
+    // script.setAttribute('data-no-sponsor', 'true');  // 隐藏赞助商
+    // // script.setAttribute('data-sponsor-link', 'https://seg.org/');  // 修改赞助商链接
+    // // script.setAttribute('data-sponsor-text', 'Powered by SEG');  // 修改赞助商文本
+    // script.setAttribute('data-assistant-name', 'SEG-AIBOT');  // 修改助手名称
+    // script.setAttribute('data-assistant-icon', '/img/SEGIMAGE.jpg');  // 设置助手图标
+    // script.setAttribute('data-window-height', '550px');  // 设置聊天窗口高度
+    // script.setAttribute('data-window-width', '400px');  // 设置聊天窗口宽度
 })
 
 // 欢迎
