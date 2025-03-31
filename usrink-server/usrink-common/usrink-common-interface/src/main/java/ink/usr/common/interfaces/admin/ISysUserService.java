@@ -70,4 +70,11 @@ public interface ISysUserService {
      * 修改个人密码
      */
     boolean updateMyPwd(Long userId, UpdatePwdForm updatePwdForm);
+
+    /**
+     * 根据userId查找用户名
+     * @param userId
+     * @return
+     */
+    String getNameByUserId(Long userId);
 }

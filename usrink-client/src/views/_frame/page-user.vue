@@ -11,6 +11,7 @@ const queryForm = ref({
     phone: '',
     userRoleId: '',
     status: '0',
+    department: '',
     pageNum: 1,
     pageSize: 10
 })
@@ -406,6 +407,9 @@ const deleteRole = () => {
                 <el-form-item label="用户名">
                     <el-input v-model="queryForm.userName" placeholder="用户名" clearable style="width: 180px"/>
                 </el-form-item>
+                <el-form-item label="部门">
+                    <el-input v-model="queryForm.department" placeholder="部门" clearable style="width: 180px"/>
+                </el-form-item>
                 <el-form-item label="用户昵称">
                     <el-input v-model="queryForm.userNick" placeholder="用户昵称" clearable style="width: 180px"/>
                 </el-form-item>
@@ -467,6 +471,11 @@ const deleteRole = () => {
                         <el-table-column prop="userName" label="用户名" width="150">
                             <template #default="scope">
                                 {{ scope.row.userName }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="department" label="部门" width="150">
+                            <template #default="scope">
+                                {{ scope.row.department }}
                             </template>
                         </el-table-column>
                         <el-table-column prop="userNick" label="用户昵称" width="150">
@@ -561,6 +570,11 @@ const deleteRole = () => {
                     </el-form-item>
                     <el-form-item label="手机号" prop="phone">
                         <el-input v-model="addUserForm.phone" maxlength="20" placeholder="请输入手机号"
+                                  style="width: 250px"
+                                  clearable/>
+                    </el-form-item>
+                    <el-form-item label="部门" prop="department">
+                        <el-input v-model="addUserForm.department" maxlength="20" placeholder="请选择部门"
                                   style="width: 250px"
                                   clearable/>
                     </el-form-item>

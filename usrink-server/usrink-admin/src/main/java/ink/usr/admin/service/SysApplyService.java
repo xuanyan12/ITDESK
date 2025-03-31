@@ -10,5 +10,5 @@ public interface SysApplyService {
 
     List<SysApprovalRequestModel> getApplyList(Long userId);
 
-    void addApply(SysApprovalRequestModel sysApprovalRequestModel);
+    String addApply(SysApprovalRequestModel sysApprovalRequestModel);
 }

@@ -1,9 +1,12 @@
 package ink.usr.admin.mapper;
 
 import ink.usr.common.model.mysql.SysUserModel;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
+@Mapper
 public interface SysUserMapper {
 
     /**
@@ -79,4 +82,6 @@ public interface SysUserMapper {
      */
     int deleteSysUserById(Long userId);
 
+    @Select("select userName from sys_user where userId = #{userId}")
+    String getNameByUserId(Long userId);
 }

@@ -9,7 +9,7 @@ const collapseState = computed(() => collapseStateStore.collapseState)
 // Logo 高度
 const height = computed(() => collapseStateStore.collapseState ? '60px' : '135px')
 // Logo size
-const logoSize = computed(() => collapseStateStore.collapseState ? 30 : 150)
+const logoSize = computed(() => collapseStateStore.collapseState ? 30 : 200)
 // Logo MarginBottom
 const marginBottom = computed(() => collapseStateStore.collapseState ? '0px' : '10px')
 // Logo font 高度
@@ -51,11 +51,11 @@ watch(collapseState, (newVal) => {
             :width="logoSize"
             :style="{ marginBottom: marginBottom }"
         />
-        <div
+        <!-- <div
             class="usr_menu_header_txt"
             :style="{height:fontHeight}">
             <span v-show="showLogoName">SEG-ITDESK</span>
-        </div>
+        </div> -->
     </section>
 </template>
 

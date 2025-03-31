@@ -27,5 +27,7 @@ public class SysApproverModel implements Serializable {
     private String createdAt;
     // 更新时间
     private String updatedAt;
+    // userId
+    private Long userId;
     
 }

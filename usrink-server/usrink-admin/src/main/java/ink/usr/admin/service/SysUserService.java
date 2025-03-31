@@ -2,6 +2,7 @@ package ink.usr.admin.service;
 
 import ink.usr.admin.dao.SysRoleDao;
 import ink.usr.admin.dao.SysUserDao;
+import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.common.core.constants.Constants;
 import ink.usr.common.core.exception.WarningException;
 import ink.usr.common.core.exception.base.BusinessException;
@@ -25,6 +26,8 @@ public class SysUserService implements ISysUserService {
     private SysUserDao sysUserDao;
     @Autowired
     private SysRoleDao sysRoleDao;
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     /**
      * 查询系统用户资料
@@ -162,5 +165,11 @@ public class SysUserService implements ISysUserService {
                 .userPassword(newPwd)
                 .build());
         return count > 0;
+    }
+
+    @Override
+    public String getNameByUserId(Long userId) {
+        String userName = sysUserMapper.getNameByUserId(userId);
+        return userName;
     }
 }

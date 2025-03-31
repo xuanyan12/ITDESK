@@ -66,4 +66,9 @@ public class SysUserModel implements Serializable {
      */
     private Integer status;
 
+
+    /**
+     * 用户所属部门
+     */
+    private Integer department;
 }
