@@ -84,10 +84,16 @@
     <el-dialog v-model="approvalProgressDialogVisible" title="审批进度">
       <div v-if="approvalProgress">
         <el-steps :active="approvalProgressStep" finish-status="success" style="margin-top: 20px;">
-          <el-step v-for="(step, index) in approvalProgress" :key="index" :title="step" :description="step"></el-step>
+          <el-step 
+            v-for="(step, index) in approvalProgress" 
+            :key="index" 
+            :title="step.title" 
+            :description="step.description">
+          </el-step>
         </el-steps>
       </div>
     </el-dialog>
+
   </div>
 </template>
 
@@ -108,7 +114,7 @@ export default {
       pageSize: 6
     });
 
-    const flowRoles = reactive({
+    let flowRoles = reactive({
       username: '',
       approver1: '',
       approver2: ''
@@ -208,16 +214,77 @@ export default {
     };
 
 
-    // 审批进度
+    // 发起请求获取审批人信息
     const viewApprovalProgress = (row) => {
+      httpUtil.get("/sysApply/getApproversByAprrovalId", {
+        params: {
+          aprrovalId: row.approvalId  // 确保参数名是 aprrovalId
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(res => {
+        // 假设返回的审批人数据是 res.data
+        flowRoles = res.data.list;
+        console.log(row);
+        
+        // 可以在这里更新 approvalProgress 或其他地方使用 approvers
+        console.log('审批人数据：', flowRoles);
+        
+        // 例如更新流程中的审批人
         approvalProgress.value = [
-          { title: '已提交', description: flowRoles.username },
-          { title: '审核中', description: flowRoles.approver1 },
-          { title: '已批准', description: flowRoles.approver2 }
+          { title: '已提交', description: flowRoles.username || '未知用户' },
+          { title: '审核中', description: flowRoles.approver1 || '暂无审批' },
+          { title: '已批准', description: flowRoles.approver2 || '暂无批准' }
         ];
-        approvalProgressStep.value = approvalProgress.value.indexOf(row.status);
+        approvalProgressStep.value = approvalProgress.value.findIndex(step => step.title === row.status);
         approvalProgressDialogVisible.value = true;
+        // 展示成功消息
+        // this.$message.success('审批人信息获取成功！');
+      }).catch(err => {
+        console.error(err);
+        // 失败时弹出错误提示
+        // this.$message.error('获取审批人信息失败！');
+      }).finally(() => {
+        // 可以在这里进行一些清理操作或加载状态更新
+      });
     };
+
+    // 审批进度viewApprovalProgress
+// const viewApprovalProgress = (row) => {
+
+//     // 根据 row 中的相关数据动态更新 flowRoles
+//     const flowRoles = reactive({
+//       username: row.username || '',  // 确保从 row 中获取 username
+//       approver1: row.approver1 || '',  // 从 row 获取 approver1
+//       approver2: row.approver2 || ''   // 从 row 获取 approver2
+//     });
+//     console.log(row.approvalId);
+
+//     // 发送网络请求获取approver1,approver2
+//     httpUtil.post("/sysApply/submitApply", row.approvalId, {
+//         headers: {
+//           'Content-Type': 'application/json'
+//         }
+//       }).then(res => {
+//         getApplyList();
+//         this.$message.success('设备申请提交成功！');
+//       }).catch(err => {
+//         console.error(err);
+//         this.$message.error('设备申请提交失败！');
+//       }).finally(() => {
+//         resetForm();
+//       });
+
+//     approvalProgress.value = [
+//         { title: '已提交', description: flowRoles.username || '未知用户' },
+//         { title: '审核中', description: flowRoles.approver1 || '暂无审批' },
+//         { title: '已批准', description: flowRoles.approver2 || '暂无批准' }
+//     ];
+
+//     approvalProgressStep.value = approvalProgress.value.findIndex(step => step.title === row.status);
+//     approvalProgressDialogVisible.value = true;
+// };
 
     // 申请状态标签样式
     const statusTagType = (status) => {

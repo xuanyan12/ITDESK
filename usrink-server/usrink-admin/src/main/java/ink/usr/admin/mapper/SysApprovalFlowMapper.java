@@ -11,4 +11,11 @@ public interface SysApprovalFlowMapper {
 
     @Select("select * from sys_approval_flow where approverId = #{approverId}")
     List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId);
+
+    String getApproversByAprroval1Id(Long aprrovalId);
+
+    String getApproversByAprroval2Id(Long aprrovalId);
+
+    String getUserNameByAprrovalId(Long aprrovalId);
+
 }

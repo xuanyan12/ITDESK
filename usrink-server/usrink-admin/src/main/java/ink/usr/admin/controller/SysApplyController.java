@@ -3,6 +3,7 @@ package ink.usr.admin.controller;
 import com.github.pagehelper.Page;
 import ink.usr.admin.dao.DTO.SysApplyDTO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
+import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.admin.service.*;
 import ink.usr.common.core.constants.Constants;
 import ink.usr.common.core.domain.Dict;
@@ -20,6 +21,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -81,6 +83,10 @@ public class SysApplyController {
         return Res.success();
     }
 
+    /**
+     * 根据用户id找到该用户所有的审批流
+     * @return
+     */
     @RequestMapping("/getApprovalListById")
     public Res getApprovalListById(){
         ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
@@ -111,6 +117,14 @@ public class SysApplyController {
                 .set("list", newList)
                 .set("total", pages.getTotal());
 
+        return Res.success(result);
+    }
+
+    @RequestMapping("/getApproversByAprrovalId")
+    public Res getApproversByAprrovalId(@RequestParam("aprrovalId") Long aprrovalId){
+        SysApproversVO sysApproversVO = sysApprovalFlowService.getApproversByAprrovalId(aprrovalId);
+        Dict result = Dict.create()
+                .set("list", sysApproversVO);
         return Res.success(result);
     }
 }

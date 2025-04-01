@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysApprovalFlowMapper">
+
+    <select id="getApproversByAprroval1Id" resultType="String">
+        select name
+        from sys_approver
+        where approverId = (
+            select approverId
+            from sys_approval_flow
+            where stage = 1 and approvalId = #{approvalId}
+        )
+    </select>
+
+    <select id="getApproversByAprroval2Id" resultType="String">
+        select name
+        from sys_approver
+        where approverId = (
+            select approverId
+            from sys_approval_flow
+            where stage = 2 and approvalId = #{approvalId}
+        )
+    </select>
+
+    <select id="getUserNameByAprrovalId" resultType="String">
+        select userName
+        from sys_user
+        where userId = (
+            select applicant
+            from sys_approval_request
+            where approvalId = #{approvalId}
+        )
+    </select>
+</mapper>
