@@ -3,6 +3,7 @@ package ink.usr.admin.mapper;
 import ink.usr.admin.dao.DTO.SysApplyDTO;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
+import ink.usr.common.model.mysql.SysApprovalTokenModel;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -24,4 +25,6 @@ public interface SysApplyMapper {
 
     @Select("select * from sys_approval_request where approvalId = #{approvalId}")
     SysApprovalRequestModel getByApprovalId(Long approvalId);
+
+    void InsertToken(SysApprovalTokenModel sysApprovalTokenModel);
 }

@@ -120,11 +120,88 @@ public class SysApplyController {
         return Res.success(result);
     }
 
+    /**
+     * 通过approvalId找到approver
+     * @param approvalId
+     * @return
+     */
     @RequestMapping("/getApproversByAprrovalId")
-    public Res getApproversByAprrovalId(@RequestParam("aprrovalId") Long aprrovalId){
-        SysApproversVO sysApproversVO = sysApprovalFlowService.getApproversByAprrovalId(aprrovalId);
+    public Res getApproversByAprrovalId(@RequestParam("approvalId") Long approvalId){
+        SysApproversVO sysApproversVO = sysApprovalFlowService.getApproversByAprrovalId(approvalId);
         Dict result = Dict.create()
                 .set("list", sysApproversVO);
         return Res.success(result);
     }
+
+    /**
+     * 临时审批获取需要审批的申请内容
+     * @return
+     */
+    @RequestMapping("/tempApproval")
+    public Res tempApproval(Long flowId, String token) {
+        if (flowId == null || token == null || token.isEmpty()) {
+            return Res.error("审批参数不完整");
+        }
+        
+        try {
+            // 验证token是否有效
+            boolean isValidToken = sysApprovalFlowService.validateApprovalToken(flowId, token);
+            if (!isValidToken) {
+                return Res.error("凭证为空或凭证过期，请重新登录！");
+            }
+            
+            // 获取审批流信息
+            SysApprovalFlowModel flowModel = sysApprovalFlowService.getApprovalFlowById(flowId);
+            if (flowModel == null) {
+                return Res.error("未找到对应的审批流程");
+            }
+            
+            // 获取申请详情
+            SysApprovalRequestModel requestModel = sysApprovalRequestService.getByApprovalId(flowModel.getApprovalId());
+            if (requestModel == null) {
+                return Res.error("未找到申请详情");
+            }
+            
+            return Res.success(requestModel);
+        } catch (Exception e) {
+            log.error("获取临时审批信息失败", e);
+            return Res.error("获取审批信息失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 提交临时审批结果
+     * @return
+     */
+//    @RequestMapping("/submitTempApproval")
+//    public Res submitTempApproval(@RequestBody Dict params) {
+//        Long flowId = params.getLong("flowId");
+//        String token = params.getStr("token");
+//        Long id = params.getLong("id");
+//        String status = params.getStr("status");
+//        String comment = params.getStr("comment");
+//
+//        if (flowId == null || token == null || token.isEmpty() || id == null || status == null) {
+//            return Res.error("审批参数不完整");
+//        }
+//
+//        try {
+//            // 验证token是否有效
+//            boolean isValidToken = sysApprovalFlowService.validateApprovalToken(flowId, token);
+//            if (!isValidToken) {
+//                return Res.error("凭证为空或凭证过期，请重新登录！");
+//            }
+//
+//            // 更新审批状态
+//            boolean result = sysApprovalFlowService.updateApprovalStatus(flowId, id, status, comment);
+//            if (!result) {
+//                return Res.error("审批操作失败");
+//            }
+//
+//            return Res.success("审批操作成功");
+//        } catch (Exception e) {
+//            log.error("提交临时审批结果失败", e);
+//            return Res.error("提交审批结果失败：" + e.getMessage());
+//        }
+//    }
 }

@@ -218,7 +218,7 @@ export default {
     const viewApprovalProgress = (row) => {
       httpUtil.get("/sysApply/getApproversByAprrovalId", {
         params: {
-          aprrovalId: row.approvalId  // 确保参数名是 aprrovalId
+          approvalId: row.approvalId  // 确保参数名是 aprrovalId
         },
         headers: {
           'Content-Type': 'application/json'

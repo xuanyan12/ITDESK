@@ -20,9 +20,11 @@ public class SysApprovalTokenModel implements Serializable {
     private String token;
     // token创建时间
     private String createdAt;
-    // token失效时间
-    private String expiredAt;
-    // token的使用状态
-    private boolean used;
+    // token更新时间
+    private String updatedAt;
+    // token过期时间
+    private String expireTime;
+    // token的使用状态,0代表未使用，1代表已使用
+    private int used;
     
 }

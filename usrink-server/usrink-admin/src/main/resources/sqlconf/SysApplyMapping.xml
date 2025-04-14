@@ -8,6 +8,7 @@
         from sys_approval_request as r
         left join sys_user as u
         on r.applicant = u.userId
+        where u.userId = #{userId}
     </select>
 
     <insert id="addApply" useGeneratedKeys="true" keyProperty="approvalId">
@@ -32,4 +33,8 @@
         (#{approvalId},#{approverId},#{stage},#{status},#{createdAt},#{updatedAt})
     </insert>
 
+    <insert id="InsertToken" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_approval_token(flowId, token, createdAt, updatedAt, used, expireTime) VALUES
+        (#{flowId},#{token},#{createdAt},#{updatedAt},#{used},#{expireTime})
+    </insert>
 </mapper>

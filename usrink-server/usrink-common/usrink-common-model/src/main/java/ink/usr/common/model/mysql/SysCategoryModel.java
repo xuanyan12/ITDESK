@@ -12,28 +12,28 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SysCategoryModel implements Serializable {
-    // 种类ID
+    // 设备ID
     private long categoryId;
     // 设备大类
-    private long categoryMain;
+    private String categoryMain;
     // 设备小类
-    private long categoryType;
+    private String categoryType;
     // 设备品牌
-    private long categoryBrand;
+    private String categoryBrand;
     // 设备名
-    private long categoryDname;
+    private String categoryDname;
     // 设备价格
     private long categoryPrice;
     // 设备供应商
-    private long categorySupplier;
+    private String categorySupplier;
     // 设备使用年限
     private long categoryUseyear;
     // 设备库存数
     private long categorySafenum;
     // 设备易损性
-    private long categoryProperty;
+    private String categoryProperty;
     // 设备标准性
-    private long categoryStype;
+    private String categoryStype;
     // 设备描述
-    private long categoryDescription;
+    private String categoryDescription;
 }

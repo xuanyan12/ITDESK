@@ -21,7 +21,7 @@ public class SysApprovalFlowModel implements Serializable {
     private Long approverId;
     // 审批环节序号
     private int stage;
-    // 当前环节的审批状态
+    // 当前环节的审批状态,0代表审批中，1代表审批通过，2代表审批不通过
     private String status;
     // 创建时间
     private String createdAt;

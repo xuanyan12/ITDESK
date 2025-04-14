@@ -1,6 +1,5 @@
 package ink.usr.admin.service.Impl;
 
-import ink.usr.admin.dao.DTO.SysApplyDTO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.service.SysApplyService;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
@@ -58,7 +57,7 @@ public class SysApplyServiceImpl implements SysApplyService {
         sysApprovalFlowModel.setApprovalId(approvalId);
         sysApprovalFlowModel.setApproverId(approverId);
         sysApprovalFlowModel.setStage(1);
-        sysApprovalFlowModel.setStatus("Pending");
+        sysApprovalFlowModel.setStatus("审批中");
         sysApprovalFlowModel.setCreatedAt(createTime);
         sysApprovalFlowModel.setUpdatedAt(createTime);
         sysApplyMapper.addApplyFlow(sysApprovalFlowModel);
@@ -68,7 +67,7 @@ public class SysApplyServiceImpl implements SysApplyService {
         sysApprovalFlowModel4ITApprover.setApprovalId(approvalId);
         sysApprovalFlowModel4ITApprover.setApproverId(Long.valueOf(3));
         sysApprovalFlowModel4ITApprover.setStage(2);
-        sysApprovalFlowModel4ITApprover.setStatus("Pending");
+        sysApprovalFlowModel4ITApprover.setStatus("审批中");
         sysApprovalFlowModel4ITApprover.setCreatedAt(createTime);
         sysApprovalFlowModel4ITApprover.setUpdatedAt(createTime);
         sysApplyMapper.addApplyFlow(sysApprovalFlowModel4ITApprover);
@@ -79,9 +78,13 @@ public class SysApplyServiceImpl implements SysApplyService {
         String token = UUID.randomUUID().toString().replace("-", "");
         sysApprovalTokenModel.setToken(token);
         sysApprovalTokenModel.setCreatedAt(createTime);
-        sysApprovalTokenModel.setExpiredAt(timestamp);
+        sysApprovalTokenModel.setExpireTime(timestamp);
+        sysApprovalTokenModel.setUpdatedAt(createTime);
+        sysApprovalTokenModel.setUsed(0);
+
+        sysApplyMapper.InsertToken(sysApprovalTokenModel);
         //  4.2 发送邮件
-        String url = "某个链接" + "?flowId=" + flow1Id + "&token=" + token;
+        String url = "http://localhost:5173/public-page" + "?flowId=" + flow1Id + "&token=" + token;
         return url;
     }
 }

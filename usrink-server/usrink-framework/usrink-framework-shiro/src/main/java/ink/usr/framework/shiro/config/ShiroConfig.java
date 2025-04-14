@@ -10,6 +10,7 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 /**
  * Shiro配置
  */
@@ -50,4 +51,5 @@ public class ShiroConfig {
         log.debug("配置AuthorizationAttributeSourceAdvisor，开启Shiro注解");
         return authorizationAttributeSourceAdvisor;
     }
+
 }

@@ -20,6 +20,7 @@ const instance = axios.create({
 
 // 添加请求拦截器
 instance.interceptors.request.use((request) => {
+    console.log('Request URL:', request.url);
     // 在发送请求之前做些什么
     if (request.url.indexOf("/login") === -1) {
         let token = loginUtil.isAuthenticated();
@@ -60,7 +61,7 @@ instance.interceptors.response.use((response) => {
     ElMessage({
         dangerouslyUseHTMLString: true,
         type: 'error',
-        message: '操作失败，请刷新浏览器再次尝试，或联系管理员。&nbsp;&nbsp;微信：<strong><i>Super_Mutolee</i></strong>',
+        message: '操作失败，请刷新浏览器再次尝试，或联系管理员。&nbsp;&nbsp;微信：<strong><i>xjxjxjxj2001</i></strong>',
     })
     return Promise.reject(error);
 });

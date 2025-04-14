@@ -37,7 +37,10 @@ public class SysOperatorAspectj {
      * !execution(public * ink.usr.admin.controller.SysLoginController.login(..))
      * 除了登录接口，其他接口都会被拦截
      */
-    @Pointcut("execution(public * ink.usr.admin.controller.*.*(..)) && !execution(public * ink.usr.admin.controller.SysLoginController.login(..))")
+    @Pointcut("execution(public * ink.usr.admin.controller.*.*(..)) && " +
+              "!execution(public * ink.usr.admin.controller.SysLoginController.login(..)) && " +
+              "!execution(public * ink.usr.admin.controller.SysApplyController.tempApproval(..)) && " +
+              "!execution(public * ink.usr.admin.controller.SysApplyController.submitTempApproval(..))")
     public void operatorPoint() {
 
     }
@@ -112,7 +115,33 @@ public class SysOperatorAspectj {
         // 请求方法
         sysLogOperatorModel.setReqType(request.getMethod());
         // 请求URI
-        sysLogOperatorModel.setReqUrl(request.getRequestURI());
+        String requestURI = request.getRequestURI();
+        sysLogOperatorModel.setReqUrl(requestURI);
+        
+        // 检查是否是白名单路径，如果是临时审批相关接口则不记录用户信息
+        if (requestURI.contains("/sysApply/tempApproval") || requestURI.contains("/sysApply/submitTempApproval")) {
+            // 公开接口不记录用户信息
+            sysLogOperatorModel.setUserName("anonymous");
+            sysLogOperatorModel.setUserRoleName("匿名访问");
+        } else {
+            try {
+                // 获取用户信息
+                ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+                // 用户名
+                sysLogOperatorModel.setUserName(shiroUserInfo.getUserName());
+                // 获取角色信息
+                ShiroRoleInfo shiroRoleInfo = shiroService.getRoleByUserId(shiroUserInfo.getUserId());
+                // 用户角色
+                String roleName = shiroRoleInfo != null ? shiroRoleInfo.getRoleName() : "默认角色";
+                sysLogOperatorModel.setUserRoleName(roleName);
+            } catch (Exception e) {
+                // 如果获取用户信息失败，设置为匿名访问
+                log.warn("获取用户信息失败，可能是匿名访问: {}", e.getMessage());
+                sysLogOperatorModel.setUserName("anonymous");
+                sysLogOperatorModel.setUserRoleName("匿名访问");
+            }
+        }
+        
         // 请求参数
         Map<String, Object> parameterMap = ServletUtil.getAllParameters();
         String paramJson = JsonUtil.toJson(parameterMap);
@@ -134,14 +163,6 @@ public class SysOperatorAspectj {
                 sysLogOperatorModel.setOperatorDesc("未知操作");
             }
         }
-
-        ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
-        // 用户名
-        sysLogOperatorModel.setUserName(shiroUserInfo.getUserName());
-        ShiroRoleInfo shiroRoleInfo = shiroService.getRoleByUserId(shiroUserInfo.getUserId());
-        // 用户角色
-        String roleName = shiroRoleInfo != null ? shiroRoleInfo.getRoleName() : "默认角色";
-        sysLogOperatorModel.setUserRoleName(roleName);
 
         // 执行异步任务
         AsyncUtil.executeAsyncTask(() -> {

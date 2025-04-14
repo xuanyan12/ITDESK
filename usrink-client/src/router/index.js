@@ -3,6 +3,7 @@ import usrFrameLogin from "@/components/_frame/usr-frame-login.vue"
 import pageWelcome from "@/views/_frame/page-welcome.vue"
 import usrFrameNotfound from "@/components/_frame/usr-frame-notfound.vue"
 import usrFrameForbidden from "@/components/_frame/usr-frame-forbidden.vue";
+import publicApproval from "@/views/public/public-approval.vue" // 添加公开审批页面引入
 import {createRouter, createWebHistory} from 'vue-router'
 import NProgress from 'nprogress'
 import loginUtil from "@/utils/LoginUtil";
@@ -28,13 +29,15 @@ const routes = [
     },
     // login 页面
     {path: '/login', component: usrFrameLogin},
+    // 公开页面
+    {path: '/public-page', component: publicApproval},
     // 404 Notfound
     // 理论上，这里应该永远匹配不到，因为路由守卫前置拦截会把将要访问的路由重定向的对应的路由上
     // 比如访问了`/aaa`一个不存在的路由，
     // 前置守卫会判断用户是否已经授权登录，如果没有会被重定向到`/login`；
     // 如果已经授权登录了，但该路由不在用户的权限内，会被重定向到`/forbidden`。
     // 只有一种情况例外：用户已经授权登录，且该路由在用户的权限内，但是该路由对应的组件不存在，这种情况下会渲染`usrFrameNotfound`组件
-    {path: '/:pathMatch(.*)*', component: usrFrameNotfound},
+    {path: '/:pathMatch(.*)*', component: usrFrameNotfound}
 ]
 
 /**
@@ -59,8 +62,16 @@ router.beforeEach(async (to) => {
     // 获取授权状态
     let isAuth = loginUtil.isAuthenticated()
 
-    // 未授权，并且请求地址不是`/login`，那么跳转到`/login`
-    if (!isAuth && to.path !== '/login') {
+    // 添加不需要登录验证的白名单路径
+    const whiteList = ['/login', '/register', '/forget-password', '/public-page']
+    
+    // 判断是否在白名单中，如果是，直接放行
+    if (whiteList.includes(to.path)) {
+        return true
+    }
+
+    // 未授权，并且请求地址不是白名单，那么跳转到`/login`
+    if (!isAuth) {
         return '/login'
     }
     // 已授权，但请求地址是`/login`，那么跳转到`/`
