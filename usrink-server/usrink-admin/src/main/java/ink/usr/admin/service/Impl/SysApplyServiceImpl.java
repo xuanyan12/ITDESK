@@ -8,6 +8,7 @@ import ink.usr.common.model.mysql.SysApprovalTokenModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,9 @@ public class SysApplyServiceImpl implements SysApplyService {
 
     @Autowired
     private SysApplyMapper sysApplyMapper;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Override
     public List<SysApprovalRequestModel> getApplyList(Long userId) {
@@ -84,7 +88,7 @@ public class SysApplyServiceImpl implements SysApplyService {
 
         sysApplyMapper.InsertToken(sysApprovalTokenModel);
         //  4.2 发送邮件
-        String url = "http://localhost:5173/public-page" + "?flowId=" + flow1Id + "&token=" + token;
+        String url = frontendUrl + "/public-page" + "?flowId=" + flow1Id + "&token=" + token;
         return url;
     }
 }
