@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -15,16 +14,22 @@ import java.time.LocalDateTime;
 public class SysApprovalRequestModel implements Serializable {
     // 审批请求id
     private Long approvalId;
-    // 申请人id
+    // 使用人id
     private Long applicant;
-    // 设备大类
+    // 申请类别
     private String deviceCategory;
-    // 设备小类
+    // 电脑类型
     private String deviceType;
-    // 设备名称
-    private String deviceName;
-    // 设备数量
-    private String quantity;
+    // 成本中心
+    private String costCenter;
+    // 所属公司
+    private String company;
+    // 责任人
+    private String responsiblility;
+    // 电脑情形
+    private String deviceSituation;
+    // 公司系统
+    private String companySystem;
     // 申请理由
     private String reason;
     // 请求有效期（过期时间）

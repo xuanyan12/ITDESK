@@ -71,4 +71,19 @@ public class SysUserModel implements Serializable {
      * 用户所属部门
      */
     private Integer department;
+
+    /**
+     * 责任人（正式员工为自己，实习生为mentor）
+     */
+    private String responsibility;
+
+    /**
+     * 所属公司
+     */
+    private String company;
+
+    /**
+     * 成本中心
+     */
+    private String costCenter;
 }

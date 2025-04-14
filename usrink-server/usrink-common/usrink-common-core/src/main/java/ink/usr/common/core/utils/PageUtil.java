@@ -19,7 +19,29 @@ public class PageUtil {
         // 获取分页大小
         String pageSize = ServletUtil.getParameter(Constants.PAGE_SIZE);
 
-        return PageHelper.startPage(Integer.parseInt(pageNum), Integer.parseInt(pageSize));
+        // 设置默认值，如果参数为null或空字符串
+        int pageNumInt = 1;
+        int pageSizeInt = 10;
+
+        // 尝试解析页码，如果解析失败则使用默认值
+        if (pageNum != null && !pageNum.trim().isEmpty()) {
+            try {
+                pageNumInt = Integer.parseInt(pageNum);
+            } catch (NumberFormatException e) {
+                // 解析失败时使用默认值
+            }
+        }
+
+        // 尝试解析每页大小，如果解析失败则使用默认值
+        if (pageSize != null && !pageSize.trim().isEmpty()) {
+            try {
+                pageSizeInt = Integer.parseInt(pageSize);
+            } catch (NumberFormatException e) {
+                // 解析失败时使用默认值
+            }
+        }
+
+        return PageHelper.startPage(pageNumInt, pageSizeInt);
     }
 
 }

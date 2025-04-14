@@ -2,56 +2,126 @@
   <div style="padding: 20px;">
     <!-- 设备申请表单 -->
     <el-card shadow="never" class="usr_card_override top">
-      <el-form :model="applicationForm" ref="applicationFormRef" label-width="100px" class="application-form">
+      <h3>办公电脑申请</h3>
+      <el-form :model="applicationForm" ref="applicationFormRef" label-width="120px" class="application-form" :rules="rules">
         <el-row :gutter="20">
-          <el-col :span="8">
-            <el-form-item label="设备大类" prop="deviceCategory">
-              <el-select v-model="applicationForm.deviceCategory" placeholder="请选择设备大类" @change="onDeviceCategoryChange">
-                <el-option label="电脑" value="computer"></el-option>
-                <el-option label="手机" value="phone"></el-option>
-                <el-option label="显示器" value="monitor"></el-option>
-                <el-option label="打印机" value="printer"></el-option>
+          <el-col :span="12">
+            <el-form-item label="申请类别" prop="applicationType">
+              <el-select v-model="applicationForm.applicationType" placeholder="请选择申请类别" style="width: 100%">
+                <el-option label="办公电脑换新" value="officePcRenewal"></el-option>
+                <el-option label="新正式员工电脑" value="newEmployeePc"></el-option>
+                <el-option label="新实习生/外服电脑" value="internPc"></el-option>
+                <el-option label="其他用途电脑" value="otherPurpose"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
 
-          <el-col :span="8">
-            <el-form-item label="设备类型" prop="deviceType">
-              <el-select v-model="applicationForm.deviceType" placeholder="请选择设备类型" @change="onDeviceTypeChange">
-                <el-option v-for="type in deviceTypes" :key="type" :label="type" :value="type"></el-option>
+          <el-col :span="12">
+            <el-form-item label="电脑类型" prop="deviceType">
+              <el-select v-model="applicationForm.deviceType" placeholder="请选择电脑类型" style="width: 100%">
+                <el-option label="普通笔记本" value="normalLaptop"></el-option>
+                <el-option label="工作站笔记本" value="workstationLaptop"></el-option>
+                <el-option label="普通台式机" value="normalDesktop"></el-option>
+                <el-option label="工作站台式机" value="workstationDesktop"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
 
-          <el-col :span="8">
-            <el-form-item label="设备选择" prop="deviceName">
-              <el-select v-model="applicationForm.deviceName" placeholder="请选择设备">
-                <el-option
-                  v-for="device in filteredDevices"
-                  :key="device.id"
-                  :label="`${device.name} (${device.quantity} 可用)`"
-                  :value="device.name"
-                  :disabled="device.quantity === 0"
-                ></el-option>
+          <el-col :span="12">
+            <el-form-item label="使用人" prop="user">
+              <div class="user-input-container">
+                <el-input 
+                  v-model="applicationForm.user" 
+                  placeholder="请输入使用人" 
+                  style="width: 100%"
+                  clearable
+                  @input="handleUserInput"
+                  @blur="handleUserBlur">
+                </el-input>
+                <!-- 用户查询结果下拉框 -->
+                <div v-if="showUserResults" class="user-results-dropdown">
+                  <div v-if="userSearchResults.length > 0">
+                    <div 
+                      v-for="(user, index) in userSearchResults" 
+                      :key="index" 
+                      class="user-result-item"
+                      @click="selectUser(user)">
+                      {{ user.userName }}
+                    </div>
+                  </div>
+                  <div v-else class="no-results">
+                    未找到相关用户
+                  </div>
+                </div>
+              </div>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="成本中心" prop="costCenter">
+              <el-select v-model="applicationForm.costCenter" placeholder="请选择成本中心" style="width: 100%">
+                <el-option v-for="item in costCenters" :key="item" :label="item" :value="item"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
 
-          <el-col :span="8" style="padding-top:10px">
-            <el-form-item label="数量" prop="quantity">
-              <el-input v-model="applicationForm.quantity" type="number" :min="1" :max="maxQuantity" placeholder="请输入数量"></el-input>
+          <el-col :span="12">
+            <el-form-item label="所属公司" prop="company">
+              <el-select v-model="applicationForm.company" placeholder="请选择所属公司" style="width: 100%">
+                <el-option v-for="item in companies" :key="item" :label="item" :value="item"></el-option>
+                <el-option label="SGCS" value="SGCS"></el-option>
+                <el-option label="SGCC" value="SGCC"></el-option>
+                <el-option label="SES" value="SES"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
 
-          <el-col :span="16" style="padding-top:10px">
+          <el-col :span="12">
+            <el-form-item label="责任人" prop="responsible">
+              <el-select v-model="applicationForm.responsible" placeholder="请选择责任人" style="width: 100%">
+                <el-option v-for="item in responsiblePersons" :key="item" :label="item" :value="item"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="电脑情形" prop="computerCondition">
+              <el-radio-group v-model="applicationForm.computerCondition">
+                <el-radio label="新电脑">新电脑</el-radio>
+                <el-radio label="库存旧电脑">库存旧电脑</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="公司系统" prop="companySys">
+              <el-radio-group v-model="applicationForm.companySys">
+                <el-radio label="是（公司系统）">是（公司系统）</el-radio>
+                <el-radio label="否（非标系统）">否（非标系统）</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="24">
             <el-form-item label="申请理由" prop="reason">
-              <el-input v-model="applicationForm.reason" type="textarea" placeholder="请输入申请理由" rows="1"></el-input>
+              <el-select 
+                v-model="applicationForm.reason" 
+                placeholder="请选择或输入申请理由" 
+                style="width: 100%" 
+                clearable 
+                allow-create 
+                filterable>
+                <el-option label="超年限换新" value="超年限换新"></el-option>
+                <el-option label="新岗位新电脑" value="新岗位新电脑"></el-option>
+                <el-option label="替代岗位库存电脑" value="替代岗位库存电脑"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item>
           <el-button type="primary" @click="submitApplication">提交申请</el-button>
+          <el-button @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -60,12 +130,21 @@
     <el-card shadow="never" class="usr_card_override top" style="margin-top: 20px;">
       <h3>我的申请状态</h3>
       <el-table :data="applicationList" :loading="loading" style="width: 100%;">
-        <el-table-column label="流程发起时间" prop="createdAt"></el-table-column>
-        <el-table-column label="设备名称" prop="deviceName"></el-table-column>
-        <el-table-column label="数量" prop="quantity"></el-table-column>
+        <el-table-column label="申请时间" prop="createdAt"></el-table-column>
+        <el-table-column label="申请类型" prop="applicationType">
+          <template #default="{ row }">
+            {{ getApplicationTypeName(row.applicationType) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="电脑类型" prop="deviceType">
+          <template #default="{ row }">
+            {{ getDeviceTypeName(row.deviceType) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="使用人" prop="user"></el-table-column>
         <el-table-column label="申请理由" prop="reason"></el-table-column>
-        <el-table-column label="流程更新时间" prop="updatedAt"></el-table-column>
-        <el-table-column label="申请状态" prop="status">
+        <el-table-column label="更新时间" prop="updatedAt"></el-table-column>
+        <el-table-column label="状态" prop="status">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
               {{ row.status }}
@@ -74,7 +153,7 @@
         </el-table-column>
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
-            <el-button type="text" @click="viewApplicationDetails(row)">撤回申请</el-button>
+            <el-button type="text" @click="viewApplicationDetails(row)">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -98,230 +177,340 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import httpUtil from "@/utils/HttpUtil";
+import { ElMessage } from 'element-plus';
+import { useUserInfoStore } from "@/stores/_frame/userInfoStore";
 
 export default {
   setup() {
+    // 获取当前用户信息
+    const userInfoStore = useUserInfoStore();
+    const currentUser = userInfoStore.userInfo?.username || '';
+
     // 设备申请表单数据
     const applicationForm = reactive({
-      deviceCategory: '',
-      deviceType: '',
-      deviceName: '',
-      quantity: '',
-      reason: '',
-      pageNum: 1,
-      pageSize: 6
+      applicationType: '', // 申请类别
+      deviceType: '', // 电脑类型
+      costCenter: '', // 成本中心
+      company: '', // 所属公司
+      user: currentUser, // 使用人，默认当前用户名
+      responsible: '', // 责任人
+      computerCondition: '新电脑', // 电脑情形，默认新电脑
+      companySys: '是（公司系统）', // 公司系统，默认是
+      reason: '', // 申请理由
     });
 
-    let flowRoles = reactive({
-      username: '',
-      approver1: '',
-      approver2: ''
-    });
+    // 表单验证规则
+    const rules = {
+      applicationType: [{ required: true, message: '请选择申请类别', trigger: 'change' }],
+      deviceType: [{ required: true, message: '请选择电脑类型', trigger: 'change' }],
+      costCenter: [{ required: true, message: '请选择成本中心', trigger: 'change' }],
+      company: [{ required: true, message: '请选择所属公司', trigger: 'change' }],
+      user: [{ required: true, message: '请输入使用人', trigger: 'blur' }],
+      responsible: [{ required: true, message: '请选择责任人', trigger: 'change' }],
+      reason: [{ required: true, message: '请选择或输入申请理由', trigger: 'change' }]
+    };
 
-    const agree = ref(false);
+    const applicationFormRef = ref(null);
     const applicationList = ref([]);
     const loading = ref(false);
-    const devices = ref([]);
-    const filteredDevices = ref([]);
-    const maxQuantity = ref(0);
     const approvalProgressDialogVisible = ref(false);
-    const selectedApplication = ref(null);
     const approvalProgress = ref([]);
     const approvalProgressStep = ref(0);
-    const deviceCategories = ref(['computer', 'phone', 'monitor', 'printer']); // 设备大类
-    const deviceTypes = ref([]); // 存储设备类型
 
-    // 根据设备大类获取设备类型
-    const getDeviceTypesByCategory = (category) => {
-      const types = {
-        computer: ['laptop', 'desktop'],
-        phone: ['smartphone', 'tablet'],
-        monitor: ['LED', 'OLED'],
-        printer: ['laser', 'inkjet']
-      };
-      return types[category] || [];
-    };
+    // 动态数据
+    const costCenters = ref(['IT']); // 成本中心
+    const companies = ref([]); // 公司列表
+    const responsiblePersons = ref([]); // 责任人列表
+    
+    // 用户查询相关
+    const userSearchResults = ref([]); // 用户查询结果
+    const showUserResults = ref(false); // 是否显示用户查询结果
+    const searchTimeout = ref(null); // 搜索防抖定时器
+    const userInputRef = ref(null); // 用户输入框引用
 
-    // 获取设备数据
-    const fetchDevices = () => {
-      devices.value = [
-        { id: 1, name: 'MacBook Pro', category: 'computer', type: 'laptop', quantity: 5 },
-        { id: 2, name: 'Dell XPS 13', category: 'computer', type: 'laptop', quantity: 2 },
-        { id: 3, name: 'iPhone 14', category: 'phone', type: 'smartphone', quantity: 0 },
-        { id: 4, name: 'Samsung Galaxy S23', category: 'phone', type: 'smartphone', quantity: 10 },
-        { id: 5, name: 'Dell UltraSharp 27', category: 'monitor', type: 'LED', quantity: 3 },
-        { id: 6, name: 'HP LaserJet Pro', category: 'printer', type: 'laser', quantity: 0 }
-      ];
-    };
-
-    // 设备大类变化时，筛选设备类型和设备名称
-    const onDeviceCategoryChange = () => {
-      deviceTypes.value = getDeviceTypesByCategory(applicationForm.deviceCategory);
-      applicationForm.deviceType = '';
-      filteredDevices.value = devices.value.filter(device => device.category === applicationForm.deviceCategory);
-      applicationForm.deviceName = '';
-      maxQuantity.value = 0;
-    };
-
-    // 设备类型变化时，筛选设备名称
-    const onDeviceTypeChange = () => {
-      filteredDevices.value = devices.value.filter(device => device.type === applicationForm.deviceType);
-      applicationForm.deviceName = '';
-      maxQuantity.value = 0;
-    };
-
-    // 提交申请
-    const submitApplication = () => {
-      const newApplication = { ...applicationForm, status: 'Pending' };
-      httpUtil.post("/sysApply/submitApply", newApplication, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+    // 获取用户信息（成本中心、所属公司、责任人）
+    const fetchUserInfo = (userName) => {
+      if (!userName) return;
+      
+      httpUtil.get("/sysApply/getUserInfoByUserName", {
+        params: { userName }
       }).then(res => {
-        getApplyList();
-        this.$message.success('设备申请提交成功！');
+        if (res.data) {
+          // 设置成本中心
+          if (res.data.department) {
+            applicationForm.costCenter = res.data.department;
+            // 如果成本中心不在列表中，添加到列表
+            if (!costCenters.value.includes(res.data.department)) {
+              costCenters.value.push(res.data.department);
+            }
+          }
+          
+          // 设置所属公司 - 这里需要根据实际情况处理
+          // 如果后端返回了公司信息，则使用后端返回的
+          if (res.data.company) {
+            applicationForm.company = res.data.company;
+            // 如果公司不在列表中，添加到列表
+            if (!companies.value.includes(res.data.company)) {
+              companies.value.push(res.data.company);
+            }
+          }
+          
+          // 设置责任人 - 这里需要根据实际情况处理
+          // 如果后端返回了责任人信息，则使用后端返回的
+          if (res.data.responsibility) {
+            applicationForm.responsible = res.data.responsibility;
+            // 如果责任人不在列表中，添加到列表
+            if (!responsiblePersons.value.includes(res.data.responsibility)) {
+              responsiblePersons.value.push(res.data.responsibility);
+            }
+          }
+        }
       }).catch(err => {
-        console.error(err);
-        this.$message.error('设备申请提交失败！');
-      }).finally(() => {
-        resetForm();
+        console.error("获取用户信息失败:", err);
+        ElMessage({
+          type: 'error',
+          message: '获取用户信息失败'
+        });
       });
     };
 
-    // 重置表单
-    const resetForm = () => {
-      applicationForm.deviceCategory = '';
-      applicationForm.deviceType = '';
-      applicationForm.deviceName = '';
-      applicationForm.quantity = '';
-      applicationForm.reason = '';
-      agree.value = false;
+    // 处理用户输入
+    const handleUserInput = (value) => {
+      // 清除之前的定时器
+      if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+      }
+      
+      // 设置新的定时器，用户停止输入500ms后执行搜索
+      searchTimeout.value = setTimeout(() => {
+        if (value && value.trim() !== '') {
+          searchUser();
+        } else {
+          showUserResults.value = false;
+        }
+      }, 500);
+    };
+    
+    // 处理用户输入框失焦
+    const handleUserBlur = () => {
+      // 延迟关闭下拉框，以便用户能够点击下拉框中的选项
+      setTimeout(() => {
+        showUserResults.value = false;
+      }, 200);
+    };
+    
+    // 搜索用户
+    const searchUser = () => {
+      const userName = applicationForm.user;
+      if (!userName || userName.trim() === '') {
+        showUserResults.value = false;
+        return;
+      }
+      
+      httpUtil.get("/sysApply/getUserInfoByUserName", {
+        params: { userName }
+      }).then(res => {
+        if (res.data) {
+          // 将查询结果添加到结果列表
+          userSearchResults.value = [res.data];
+          showUserResults.value = true;
+        } else {
+          userSearchResults.value = [];
+          showUserResults.value = true;
+        }
+      }).catch(err => {
+        console.error("搜索用户失败:", err);
+        userSearchResults.value = [];
+        showUserResults.value = true;
+      });
+    };
+    
+    // 选择用户
+    const selectUser = (user) => {
+      applicationForm.user = user.userName;
+      showUserResults.value = false;
+      
+      // 获取用户信息
+      fetchUserInfo(user.userName);
+    };
+    
+    // 点击文档其他地方关闭下拉框
+    const handleDocumentClick = (event) => {
+      // 检查点击是否在用户输入框或下拉框之外
+      const userInputContainer = document.querySelector('.user-input-container');
+      if (userInputContainer && !userInputContainer.contains(event.target)) {
+        showUserResults.value = false;
+      }
     };
 
     // 获取申请列表
     const getApplyList = () => {
       loading.value = true;
-      httpUtil.post("/sysApply/getApplyList", applicationForm).then(res => {
+      httpUtil.post("/sysApply/getApplyList").then(res => {
         applicationList.value = res.data.list || [];
       }).catch(err => {
-        console.log("出错了");
-        console.error(err);
+        console.error("获取申请列表失败:", err);
       }).finally(() => {
         loading.value = false;
       });
     };
 
+    // 提交申请
+    const submitApplication = () => {
+      applicationFormRef.value.validate((valid) => {
+        if (valid) {
+          loading.value = true;
+          httpUtil.post("/sysApply/submitApply", applicationForm).then(res => {
+            ElMessage({
+              type: 'success',
+              message: '申请提交成功'
+            });
+            resetForm();
+            getApplyList();
+          }).catch(err => {
+            console.error("提交申请失败:", err);
+            ElMessage({
+              type: 'error',
+              message: '申请提交失败'
+            });
+          }).finally(() => {
+            loading.value = false;
+          });
+        } else {
+          ElMessage({
+            type: 'warning',
+            message: '请完成表单填写'
+          });
+          return false;
+        }
+      });
+    };
 
-    // 发起请求获取审批人信息
+    // 重置表单
+    const resetForm = () => {
+      if (applicationFormRef.value) {
+        applicationFormRef.value.resetFields();
+      }
+      // 重置为默认值
+      applicationForm.user = currentUser;
+      applicationForm.computerCondition = '新电脑';
+      applicationForm.companySys = '是（公司系统）';
+      // 重新获取当前用户信息
+      fetchUserInfo(currentUser);
+    };
+
+    // 查看申请详情
+    const viewApplicationDetails = (row) => {
+      // 实现查看详情逻辑
+      console.log("查看申请详情:", row);
+    };
+
+    // 查看审批进度
     const viewApprovalProgress = (row) => {
       httpUtil.get("/sysApply/getApproversByAprrovalId", {
-        params: {
-          approvalId: row.approvalId  // 确保参数名是 aprrovalId
-        },
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        params: { approvalId: row.approvalId }
       }).then(res => {
-        // 假设返回的审批人数据是 res.data
-        flowRoles = res.data.list;
-        console.log(row);
-        
-        // 可以在这里更新 approvalProgress 或其他地方使用 approvers
-        console.log('审批人数据：', flowRoles);
-        
-        // 例如更新流程中的审批人
+        const flowRoles = res.data.list;
         approvalProgress.value = [
           { title: '已提交', description: flowRoles.username || '未知用户' },
           { title: '审核中', description: flowRoles.approver1 || '暂无审批' },
           { title: '已批准', description: flowRoles.approver2 || '暂无批准' }
         ];
-        approvalProgressStep.value = approvalProgress.value.findIndex(step => step.title === row.status);
+        approvalProgressStep.value = getApprovalStep(row.status);
         approvalProgressDialogVisible.value = true;
-        // 展示成功消息
-        // this.$message.success('审批人信息获取成功！');
       }).catch(err => {
-        console.error(err);
-        // 失败时弹出错误提示
-        // this.$message.error('获取审批人信息失败！');
-      }).finally(() => {
-        // 可以在这里进行一些清理操作或加载状态更新
+        console.error("获取审批进度失败:", err);
+        ElMessage({
+          type: 'error',
+          message: '获取审批进度失败'
+        });
       });
     };
 
-    // 审批进度viewApprovalProgress
-// const viewApprovalProgress = (row) => {
-
-//     // 根据 row 中的相关数据动态更新 flowRoles
-//     const flowRoles = reactive({
-//       username: row.username || '',  // 确保从 row 中获取 username
-//       approver1: row.approver1 || '',  // 从 row 获取 approver1
-//       approver2: row.approver2 || ''   // 从 row 获取 approver2
-//     });
-//     console.log(row.approvalId);
-
-//     // 发送网络请求获取approver1,approver2
-//     httpUtil.post("/sysApply/submitApply", row.approvalId, {
-//         headers: {
-//           'Content-Type': 'application/json'
-//         }
-//       }).then(res => {
-//         getApplyList();
-//         this.$message.success('设备申请提交成功！');
-//       }).catch(err => {
-//         console.error(err);
-//         this.$message.error('设备申请提交失败！');
-//       }).finally(() => {
-//         resetForm();
-//       });
-
-//     approvalProgress.value = [
-//         { title: '已提交', description: flowRoles.username || '未知用户' },
-//         { title: '审核中', description: flowRoles.approver1 || '暂无审批' },
-//         { title: '已批准', description: flowRoles.approver2 || '暂无批准' }
-//     ];
-
-//     approvalProgressStep.value = approvalProgress.value.findIndex(step => step.title === row.status);
-//     approvalProgressDialogVisible.value = true;
-// };
-
-    // 申请状态标签样式
-    const statusTagType = (status) => {
-      if (status === 'Pending') return 'warning';
-      if (status === 'Approved') return 'success';
-      if (status === 'Rejected') return 'danger';
-      return '';
+    // 获取审批步骤
+    const getApprovalStep = (status) => {
+      switch (status) {
+        case '已提交': return 0;
+        case '审核中': return 1;
+        case '已批准': return 2;
+        default: return 0;
+      }
     };
 
-    // 组件加载时获取设备数据和申请列表
+    // 获取状态标签类型
+    const statusTagType = (status) => {
+      switch (status) {
+        case '审批中': return 'warning';
+        case '审批通过': return 'success';
+        case '审批驳回': return 'danger';
+        default: return 'info';
+      }
+    };
+
+    // 获取申请类型名称
+    const getApplicationTypeName = (type) => {
+      const types = {
+        'officePcRenewal': '办公电脑换新',
+        'newEmployeePc': '新正式员工电脑',
+        'internPc': '新实习生/外服电脑',
+        'otherPurpose': '其他用途电脑'
+      };
+      return types[type] || type;
+    };
+
+    // 获取设备类型名称
+    const getDeviceTypeName = (type) => {
+      const types = {
+        'normalLaptop': '普通笔记本',
+        'workstationLaptop': '工作站笔记本',
+        'normalDesktop': '普通台式机',
+        'workstationDesktop': '工作站台式机'
+      };
+      return types[type] || type;
+    };
+
     onMounted(() => {
-      fetchDevices();
+      // 获取当前用户信息
+      fetchUserInfo(currentUser);
+      // 获取申请列表
       getApplyList();
+      // 添加全局点击事件监听
+      document.addEventListener('click', handleDocumentClick);
+    });
+    
+    onBeforeUnmount(() => {
+      // 移除全局点击事件监听
+      document.removeEventListener('click', handleDocumentClick);
     });
 
     return {
       applicationForm,
-      agree,
+      applicationFormRef,
+      rules,
       applicationList,
       loading,
-      devices,
-      filteredDevices,
-      maxQuantity,
+      costCenters,
+      companies,
+      responsiblePersons,
       approvalProgressDialogVisible,
-      selectedApplication,
       approvalProgress,
       approvalProgressStep,
-      deviceCategories,
-      deviceTypes,
-      flowRoles,
-      onDeviceCategoryChange,
-      onDeviceTypeChange,
       submitApplication,
       resetForm,
-      getApplyList,
+      viewApplicationDetails,
       viewApprovalProgress,
-      statusTagType
+      statusTagType,
+      getApplicationTypeName,
+      getDeviceTypeName,
+      // 用户查询相关
+      userSearchResults,
+      showUserResults,
+      handleUserInput,
+      handleUserBlur,
+      searchUser,
+      selectUser
     };
   }
 };
@@ -329,46 +518,75 @@ export default {
 
 <style scoped>
 .application-form {
-  width: 100%;
-  margin: 20px auto;
-}
-
-.application-form .el-form-item {
-  margin-bottom: 12px;
-}
-
-.application-form .el-button {
-  width: 100%;
-  max-width: 200px;
-  margin-top: 10px;
-  border-radius: 6px;
-  background-color: rgb(236, 245, 255);
-  color: rgb(64, 158, 255);
-}
-
-.application-form .el-button:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
-  color: white;
-}
-
-.usr_card_override.top .el-form {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.usr_card_override.top .el-form .el-form-item {
-  margin-bottom: 0;
-  margin-right: 0;
-}
-
-.el-form-item .el-checkbox {
-  display: inline-block;
-  width: auto;
-  margin-right: 10px;
-}
-
-.el-table {
   margin-top: 20px;
+}
+
+.usr_card_override {
+  margin-bottom: 20px;
+}
+
+.top {
+  margin-top: 10px;
+}
+
+/* 用户输入框容器 */
+.user-input-container {
+  position: relative;
+  width: 100%;
+}
+
+/* 用户查询结果下拉框样式 */
+.user-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  margin-top: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #909399 #f4f4f5;
+}
+
+/* 为 Webkit 浏览器自定义滚动条样式 */
+.user-results-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.user-results-dropdown::-webkit-scrollbar-track {
+  background: #f4f4f5;
+  border-radius: 4px;
+}
+
+.user-results-dropdown::-webkit-scrollbar-thumb {
+  background-color: #909399;
+  border-radius: 4px;
+  border: 2px solid #f4f4f5;
+}
+
+.user-result-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.user-result-item:last-child {
+  border-bottom: none;
+}
+
+.user-result-item:hover {
+  background-color: #f5f7fa;
+}
+
+.no-results {
+  padding: 15px 12px;
+  color: #909399;
+  text-align: center;
+  font-size: 14px;
 }
 </style>

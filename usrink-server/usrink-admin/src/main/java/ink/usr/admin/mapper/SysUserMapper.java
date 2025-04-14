@@ -84,4 +84,8 @@ public interface SysUserMapper {
 
     @Select("select userName from sys_user where userId = #{userId}")
     String getNameByUserId(Long userId);
+
+    @Select("select * from sys_user where userName like CONCAT('%', #{userName}, '%')")
+    SysUserModel getUserInfoByUserName(String userName);
+
 }

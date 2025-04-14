@@ -14,6 +14,7 @@ import ink.usr.common.core.utils.ServletUtil;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysApproverModel;
+import ink.usr.common.model.mysql.SysUserModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @Slf4j
@@ -56,15 +58,32 @@ public class SysApplyController {
      */
     @RequestMapping("/getApplyList")
     public Res getApplyList(){
-        Page<Object> pages = PageUtil.startPage();
-        ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
-        Long userId = shiroUserInfo.getUserId();
-        List<SysApprovalRequestModel> applyList = sysApplyService.getApplyList(userId);
+        try {
+            Page<Object> pages = PageUtil.startPage();
+            ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+            
+            // Check if user info is available
+            if (shiroUserInfo == null) {
+                return Res.error("用户未登录或会话已过期");
+            }
+            
+            Long userId = shiroUserInfo.getUserId();
+            
+            // Check if user ID is valid
+            if (userId == null) {
+                return Res.error("无法获取用户ID");
+            }
+            
+            List<SysApprovalRequestModel> applyList = sysApplyService.getApplyList(userId);
 
-        Dict result = Dict.create()
-                .set("list", applyList)
-                .set("total", pages.getTotal());
-        return Res.success(result);
+            Dict result = Dict.create()
+                    .set("list", applyList)
+                    .set("total", pages.getTotal());
+            return Res.success(result);
+        } catch (Exception e) {
+            log.error("获取申请列表失败", e);
+            return Res.error("获取申请列表失败: " + e.getMessage());
+        }
     }
 
     /**
@@ -80,7 +99,7 @@ public class SysApplyController {
         //  2.发送带有唯一标识的邮件
         //  3.再创建一个属于IT部门审批者的二级工作流
         //  4.再通过邮件发送链接给对应的审批者进行审批(一级工作流审批者),一级通过后触发邮件给二级审批者
-        return Res.success();
+        return Res.success(url);
     }
 
     /**
@@ -204,4 +223,16 @@ public class SysApplyController {
 //            return Res.error("提交审批结果失败：" + e.getMessage());
 //        }
 //    }
+
+    @RequestMapping("/getUserInfoByUserName")
+    public Res getUserInfoByUserName(@RequestParam("userName") String userName) throws Exception {
+
+        SysUserModel sysUserModel = null;
+        try {
+            sysUserModel = sysUserService.getUserInfoByUserName(userName);
+        } catch (Exception e){
+            throw new Exception(e);
+        }
+        return Res.success(sysUserModel);
+    }
 }

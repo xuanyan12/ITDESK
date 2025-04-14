@@ -172,4 +172,10 @@ public class SysUserService implements ISysUserService {
         String userName = sysUserMapper.getNameByUserId(userId);
         return userName;
     }
+
+    @Override
+    public SysUserModel getUserInfoByUserName(String userName) {
+        SysUserModel sysUserModel = sysUserMapper.getUserInfoByUserName(userName);
+        return sysUserModel;
+    }
 }

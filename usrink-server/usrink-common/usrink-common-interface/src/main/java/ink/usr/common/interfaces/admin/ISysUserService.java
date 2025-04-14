@@ -77,4 +77,6 @@ public interface ISysUserService {
      * @return
      */
     String getNameByUserId(Long userId);
+
+    SysUserModel getUserInfoByUserName(String userName);
 }
