@@ -24,8 +24,8 @@ public class SysApprovalRequestModel implements Serializable {
     private String costCenter;
     // 所属公司
     private String company;
-    // 责任人
-    private String responsiblility;
+    // 责任人id
+    private Long responsibility;
     // 电脑情形
     private String deviceSituation;
     // 公司系统

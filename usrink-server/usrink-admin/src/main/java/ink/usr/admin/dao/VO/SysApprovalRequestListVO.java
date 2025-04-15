@@ -13,18 +13,24 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SysApprovalRequestListVO extends SysApprovalFlowModel {
-    // 申请人id
+    // 使用人id
     private Long applicant;
-    // 设备名称
-    private String deviceName;
-    // 设备数量
-    private String quantity;
-    // 设备大类
+    // 申请类别
     private String deviceCategory;
-    // 设备小类
+    // 电脑类型
     private String deviceType;
+    // 成本中心
+    private String costCenter;
+    // 所属公司
+    private String company;
+    // 电脑情形
+    private String deviceSituation;
+    // 公司系统
+    private String companySystem;
     // 申请理由
     private String reason;
     // 申请人名称
     private String userName;
+    // 责任人名称
+    private String responsibilityName;
 }

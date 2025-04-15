@@ -1,12 +1,15 @@
 package ink.usr.admin.service.Impl;
 
+import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.service.SysApplyService;
+import ink.usr.admin.service.SysUserService;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysApprovalTokenModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,13 +27,27 @@ public class SysApplyServiceImpl implements SysApplyService {
     @Autowired
     private SysApplyMapper sysApplyMapper;
 
+    @Autowired
+    private SysUserService sysUserService;
+
     @Value("${frontend.url}")
     private String frontendUrl;
 
     @Override
-    public List<SysApprovalRequestModel> getApplyList(Long userId) {
+    public List<SysApplyListVO> getApplyList(Long userId) {
+        List<SysApplyListVO> sysApplyListVOList = new ArrayList<>();
+
         List<SysApprovalRequestModel> applyList = sysApplyMapper.getApplyList(userId);
-        return applyList;
+        for(SysApprovalRequestModel singleList : applyList){
+            SysApplyListVO object = new SysApplyListVO();
+            String userName = sysUserService.getUserNickNameByUserId(singleList.getApplicant());
+            String responsibilityName = sysUserService.getUserNickNameByUserId(singleList.getResponsibility());
+            object.setUserName(userName);
+            object.setResponsibilityName(responsibilityName);
+            BeanUtils.copyProperties(singleList,object);
+            sysApplyListVOList.add(object);
+        }
+        return sysApplyListVOList;
     }
 
     @Override

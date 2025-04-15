@@ -24,6 +24,11 @@ public class SysControlController {
     @Autowired
     private SysControlService sysControlService;
 
+    /**
+     * 获取电脑设备列表
+     * @param sysControlModel
+     * @return
+     */
     @PostMapping ("/selectSysControlList")
     @RequiresPermissions("sys:device:control:select")
     public Res selectSysControlList(@RequestBody SysControlDTO sysControlModel){
@@ -40,6 +45,11 @@ public class SysControlController {
         return Res.success(sysControlVO);
     }
 
+    /**
+     * 更新电脑
+     * @param sysControlModel
+     * @return
+     */
     @RequestMapping("/updateSysControl")
     @RequiresPermissions("sys:device:control:update")
     public Res updateSysControl(@RequestBody SysControlModel sysControlModel){
@@ -47,10 +57,49 @@ public class SysControlController {
         return Res.success(flag);
     }
 
+    /**
+     * 删除电脑
+     * @param id
+     * @return
+     */
     @RequestMapping("/deleteSysControl")
     @RequiresPermissions("sys:device:control:delete")
     public Res deleteSysControl(long id){
         boolean flag = sysControlService.deleteSysControl(id);
         return Res.success(flag);
+    }
+
+    /**
+     * 通过userName获取用户的 internal computer
+     * @param userName
+     * @return
+     */
+    @RequestMapping("/getInternalComputerByUserName")
+    public Res getInternalComputerByUserName(@RequestParam("userName") String userName) throws Exception {
+        SysControlModel sysControlModel = null;
+        try {
+            sysControlModel = sysControlService.getInternalComputerByUserName(userName);
+        }catch (Exception e){
+            throw new Exception(e);
+        }
+
+        return Res.success(sysControlModel);
+    }
+
+    /**
+     * 通过userName获取用户的 internal computer
+     * @param userName
+     * @return
+     */
+    @RequestMapping("/getComputerListByUserName")
+    public Res getComputerListByUserName(@RequestParam("userName") String userName) throws Exception {
+        List<SysControlModel> sysControlModelList = null;
+        try {
+            sysControlModelList = sysControlService.getComputerListByUserName(userName);
+        }catch (Exception e){
+            throw new Exception(e);
+        }
+
+        return Res.success(sysControlModelList);
     }
 }

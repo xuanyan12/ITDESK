@@ -1,31 +1,38 @@
 <template>
   <div style="padding: 20px;">
+    <!-- 我的电脑 -->
+    <el-card shadow="never" class="usr_card_override top">
+      <h3>我的电脑</h3>
+      <div v-if="myComputer" class="my-computer-container">
+        <el-descriptions :column="3" border size="small" class="elegant-descriptions">
+          <el-descriptions-item label="ciName">{{ myComputer.ciName }}</el-descriptions-item>
+          <el-descriptions-item label="ntAccount">{{ myComputer.ntAccount }}</el-descriptions-item>
+          <el-descriptions-item label="department">{{ myComputer.department }}</el-descriptions-item>
+          <el-descriptions-item label="lastName">{{ myComputer.lastName }}</el-descriptions-item>
+          <el-descriptions-item label="firstName">{{ myComputer.firstName }}</el-descriptions-item>
+          <el-descriptions-item label="pcStatus">{{ myComputer.pcStatus }}</el-descriptions-item>
+          <el-descriptions-item label="lifeCycleStart">{{ myComputer.lifeCycleStart }}</el-descriptions-item>
+          <el-descriptions-item label="costCenter">{{ myComputer.costCenter }}</el-descriptions-item>
+          <el-descriptions-item label="manufacturer" v-if="myComputer.manufacturer">{{ myComputer.manufacturer }}</el-descriptions-item>
+          <el-descriptions-item label="model" v-if="myComputer.model">{{ myComputer.model }}</el-descriptions-item>
+          <el-descriptions-item label="serialNumber" v-if="myComputer.serialNumber">{{ myComputer.serialNumber }}</el-descriptions-item>
+          <el-descriptions-item label="assetTag" v-if="myComputer.assetTag">{{ myComputer.assetTag }}</el-descriptions-item>
+          <el-descriptions-item label="ipAddress" v-if="myComputer.ipAddress">{{ myComputer.ipAddress }}</el-descriptions-item>
+          <el-descriptions-item label="macAddress" v-if="myComputer.macAddress">{{ myComputer.macAddress }}</el-descriptions-item>
+          <el-descriptions-item label="os" v-if="myComputer.os">{{ myComputer.os }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <div v-else class="no-computer-data">
+        <el-empty description="暂无电脑信息" />
+      </div>
+    </el-card>
+
     <!-- 设备申请表单 -->
     <el-card shadow="never" class="usr_card_override top">
       <h3>办公电脑申请</h3>
       <el-form :model="applicationForm" ref="applicationFormRef" label-width="120px" class="application-form" :rules="rules">
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="申请类别" prop="applicationType">
-              <el-select v-model="applicationForm.applicationType" placeholder="请选择申请类别" style="width: 100%">
-                <el-option label="办公电脑换新" value="officePcRenewal"></el-option>
-                <el-option label="新正式员工电脑" value="newEmployeePc"></el-option>
-                <el-option label="新实习生/外服电脑" value="internPc"></el-option>
-                <el-option label="其他用途电脑" value="otherPurpose"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
 
-          <el-col :span="12">
-            <el-form-item label="电脑类型" prop="deviceType">
-              <el-select v-model="applicationForm.deviceType" placeholder="请选择电脑类型" style="width: 100%">
-                <el-option label="普通笔记本" value="normalLaptop"></el-option>
-                <el-option label="工作站笔记本" value="workstationLaptop"></el-option>
-                <el-option label="普通台式机" value="normalDesktop"></el-option>
-                <el-option label="工作站台式机" value="workstationDesktop"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
 
           <el-col :span="12">
             <el-form-item label="使用人" prop="user">
@@ -36,7 +43,8 @@
                   style="width: 100%"
                   clearable
                   @input="handleUserInput"
-                  @blur="handleUserBlur">
+                  @blur="handleUserBlur"
+                  @keyup.enter="confirmUserChange">
                 </el-input>
                 <!-- 用户查询结果下拉框 -->
                 <div v-if="showUserResults" class="user-results-dropdown">
@@ -80,6 +88,28 @@
             <el-form-item label="责任人" prop="responsible">
               <el-select v-model="applicationForm.responsible" placeholder="请选择责任人" style="width: 100%">
                 <el-option v-for="item in responsiblePersons" :key="item" :label="item" :value="item"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="申请类别" prop="applicationType">
+              <el-select v-model="applicationForm.applicationType" placeholder="请选择申请类别" style="width: 100%" @change="handleApplicationTypeChange">
+                <el-option label="办公电脑换新" value="officePcRenewal"></el-option>
+                <el-option label="新正式员工电脑" value="newEmployeePc"></el-option>
+                <el-option label="新实习生/外服电脑" value="internPc"></el-option>
+                <el-option label="其他用途电脑" value="otherPurpose"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="电脑类型" prop="deviceType">
+              <el-select v-model="applicationForm.deviceType" placeholder="请选择电脑类型" style="width: 100%">
+                <el-option label="Standard Notebook" value="Standard Notebook"></el-option>
+                <el-option label="Performance Notebook" value="Performance Notebook"></el-option>
+                <el-option label="Standard Desktop" value="Standard Desktop"></el-option>
+                <el-option label="Performance Desktop" value="Performance Desktop"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -130,46 +160,77 @@
     <el-card shadow="never" class="usr_card_override top" style="margin-top: 20px;">
       <h3>我的申请状态</h3>
       <el-table :data="applicationList" :loading="loading" style="width: 100%;">
-        <el-table-column label="申请时间" prop="createdAt"></el-table-column>
-        <el-table-column label="申请类型" prop="applicationType">
-          <template #default="{ row }">
-            {{ getApplicationTypeName(row.applicationType) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="电脑类型" prop="deviceType">
+        <el-table-column label="申请时间" prop="createdAt" width="150"></el-table-column>
+        <el-table-column label="使用人" prop="userName" width="100"></el-table-column>
+        <el-table-column label="责任人" prop="responsibilityName" width="100"></el-table-column>
+        <el-table-column label="电脑类型" prop="deviceType" width="150">
           <template #default="{ row }">
             {{ getDeviceTypeName(row.deviceType) }}
           </template>
         </el-table-column>
-        <el-table-column label="使用人" prop="user"></el-table-column>
-        <el-table-column label="申请理由" prop="reason"></el-table-column>
-        <el-table-column label="更新时间" prop="updatedAt"></el-table-column>
-        <el-table-column label="状态" prop="status">
+        <el-table-column label="申请类别" prop="deviceCategory" width="150">
+          <template #default="{ row }">
+            {{ getApplicationTypeName(row.deviceCategory) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="申请理由" prop="reason" show-overflow-tooltip></el-table-column>
+        <el-table-column label="更新时间" prop="updatedAt" width="150"></el-table-column>
+        <el-table-column label="状态" prop="status" width="100">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
               {{ row.status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button type="text" @click="viewApplicationDetails(row)">查看详情</el-button>
+            <el-button type="primary" text @click="viewApplicationDetails(row)">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
     <!-- 审批进度弹窗 -->
-    <el-dialog v-model="approvalProgressDialogVisible" title="审批进度">
-      <div v-if="approvalProgress">
-        <el-steps :active="approvalProgressStep" finish-status="success" style="margin-top: 20px;">
+    <el-dialog v-model="approvalProgressDialogVisible" title="审批进度" width="700px">
+      <div v-if="approvalProgress" class="approval-progress-container">
+        <el-steps :active="approvalProgressStep" finish-status="success" align-center>
           <el-step 
             v-for="(step, index) in approvalProgress" 
             :key="index" 
             :title="step.title" 
+            :status="getStepStatus(index, step.title)"
             :description="step.description">
           </el-step>
         </el-steps>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="approvalProgressDialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+    
+    <!-- 申请详情弹窗 -->
+    <el-dialog v-model="applicationDetailDialogVisible" title="申请详情" width="650px">
+      <div v-if="currentApplication">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="审批请求ID">{{ currentApplication.approvalId }}</el-descriptions-item>
+          <el-descriptions-item label="申请人">{{ currentApplication.userName }}</el-descriptions-item>
+          <el-descriptions-item label="申请类别">{{ getApplicationTypeName(currentApplication.deviceCategory) }}</el-descriptions-item>
+          <el-descriptions-item label="电脑类型">{{ getDeviceTypeName(currentApplication.deviceType) }}</el-descriptions-item>
+          <el-descriptions-item label="成本中心">{{ currentApplication.costCenter }}</el-descriptions-item>
+          <el-descriptions-item label="所属公司">{{ currentApplication.company }}</el-descriptions-item>
+          <el-descriptions-item label="责任人">{{ currentApplication.responsibilityName }}</el-descriptions-item>
+          <el-descriptions-item label="电脑情形">{{ currentApplication.deviceSituation }}</el-descriptions-item>
+          <el-descriptions-item label="公司系统">{{ currentApplication.companySystem }}</el-descriptions-item>
+          <el-descriptions-item label="申请理由" :span="2">{{ currentApplication.reason }}</el-descriptions-item>
+          <el-descriptions-item label="申请状态">
+            <el-tag :type="statusTagType(currentApplication.status)">{{ currentApplication.status }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="有效期">{{ currentApplication.timestamp }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ currentApplication.createdAt }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间">{{ currentApplication.updatedAt }}</el-descriptions-item>
+        </el-descriptions>
       </div>
     </el-dialog>
 
@@ -179,22 +240,23 @@
 <script>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import httpUtil from "@/utils/HttpUtil";
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { useUserInfoStore } from "@/stores/_frame/userInfoStore";
 
 export default {
   setup() {
     // 获取当前用户信息
     const userInfoStore = useUserInfoStore();
-    const currentUser = userInfoStore.userInfo?.username || '';
-
+    // 获取当前用户名，确保获取正确的userName字段
+    const currentUser = ref(userInfoStore.userInfo?.userName || '');
+    
     // 设备申请表单数据
     const applicationForm = reactive({
       applicationType: '', // 申请类别
       deviceType: '', // 电脑类型
       costCenter: '', // 成本中心
       company: '', // 所属公司
-      user: currentUser, // 使用人，默认当前用户名
+      user: currentUser.value, // 使用人，默认当前用户名
       responsible: '', // 责任人
       computerCondition: '新电脑', // 电脑情形，默认新电脑
       companySys: '是（公司系统）', // 公司系统，默认是
@@ -232,47 +294,49 @@ export default {
 
     // 获取用户信息（成本中心、所属公司、责任人）
     const fetchUserInfo = (userName) => {
-      if (!userName) return;
+      if (!userName) return Promise.reject(new Error('用户名为空'));
       
-      httpUtil.get("/sysApply/getUserInfoByUserName", {
+      return httpUtil({
+        method: 'get',
+        url: '/sysApply/getUserInfoByUserName',
         params: { userName }
-      }).then(res => {
-        if (res.data) {
+      }).then(response => {
+        if (response.data) {
           // 设置成本中心
-          if (res.data.department) {
-            applicationForm.costCenter = res.data.department;
-            // 如果成本中心不在列表中，添加到列表
-            if (!costCenters.value.includes(res.data.department)) {
-              costCenters.value.push(res.data.department);
+          if (response.data.department) {
+            applicationForm.costCenter = response.data.department;
+            if (!costCenters.value.includes(response.data.department)) {
+              costCenters.value.push(response.data.department);
             }
           }
           
           // 设置所属公司 - 这里需要根据实际情况处理
           // 如果后端返回了公司信息，则使用后端返回的
-          if (res.data.company) {
-            applicationForm.company = res.data.company;
+          if (response.data.company) {
+            applicationForm.company = response.data.company;
             // 如果公司不在列表中，添加到列表
-            if (!companies.value.includes(res.data.company)) {
-              companies.value.push(res.data.company);
+            if (!companies.value.includes(response.data.company)) {
+              companies.value.push(response.data.company);
             }
           }
           
           // 设置责任人 - 这里需要根据实际情况处理
           // 如果后端返回了责任人信息，则使用后端返回的
-          if (res.data.responsibility) {
-            applicationForm.responsible = res.data.responsibility;
+          if (response.data.responsibility) {
+            applicationForm.responsible = response.data.responsibility;
             // 如果责任人不在列表中，添加到列表
-            if (!responsiblePersons.value.includes(res.data.responsibility)) {
-              responsiblePersons.value.push(res.data.responsibility);
+            if (!responsiblePersons.value.includes(response.data.responsibility)) {
+              responsiblePersons.value.push(response.data.responsibility);
             }
           }
         }
-      }).catch(err => {
-        console.error("获取用户信息失败:", err);
+        return response;
+      }).catch(error => {
         ElMessage({
-          type: 'error',
-          message: '获取用户信息失败'
+          type: 'warning',
+          message: '获取用户信息失败，请手动填写'
         });
+        return Promise.reject(error);
       });
     };
 
@@ -301,39 +365,71 @@ export default {
       }, 200);
     };
     
-    // 搜索用户
-    const searchUser = () => {
-      const userName = applicationForm.user;
-      if (!userName || userName.trim() === '') {
-        showUserResults.value = false;
-        return;
+    // 确认用户变更 - 当用户按下回车键或者手动触发时
+    const confirmUserChange = () => {
+      // 只有当用户名不为空且与当前用户不同时才发送请求
+      const newUserName = applicationForm.user;
+      if (newUserName && newUserName.trim() !== '' && newUserName !== currentUser.value) {
+        // 获取新用户的信息
+        Promise.all([
+          fetchUserInfo(newUserName),
+          fetchMyComputer(newUserName)
+        ]).then(() => {
+          // 获取数据成功后重置表单（保留网络请求获取的字段）
+          resetFormExceptNetworkFields();
+          // 更新当前用户
+          currentUser.value = newUserName;
+          
+          ElMessage({
+            type: 'success',
+            message: '已切换到用户: ' + newUserName
+          });
+        }).catch(error => {
+          console.error('获取用户数据失败:', error);
+          ElMessage({
+            type: 'error',
+            message: '获取用户数据失败，请检查用户名是否正确'
+          });
+        });
       }
-      
-      httpUtil.get("/sysApply/getUserInfoByUserName", {
-        params: { userName }
-      }).then(res => {
-        if (res.data) {
-          // 将查询结果添加到结果列表
-          userSearchResults.value = [res.data];
-          showUserResults.value = true;
-        } else {
-          userSearchResults.value = [];
-          showUserResults.value = true;
-        }
-      }).catch(err => {
-        console.error("搜索用户失败:", err);
-        userSearchResults.value = [];
-        showUserResults.value = true;
-      });
     };
     
     // 选择用户
     const selectUser = (user) => {
-      applicationForm.user = user.userName;
+      // 获取新用户名
+      const newUserName = user.userName;
+      
+      // 设置新用户名
+      applicationForm.user = newUserName;
       showUserResults.value = false;
       
-      // 获取用户信息
-      fetchUserInfo(user.userName);
+      // 只有当选择了不同的用户时才发送请求
+      if (newUserName !== currentUser.value) {
+        // 先清空电脑信息，避免显示旧信息
+        myComputer.value = null;
+        
+        // 同步获取用户信息和电脑信息
+        Promise.all([
+          fetchUserInfo(newUserName),
+          fetchMyComputer(newUserName)
+        ]).then(() => {
+          // 获取数据成功后重置表单（保留网络请求获取的字段）
+          resetFormExceptNetworkFields();
+          // 更新当前用户
+          currentUser.value = newUserName;
+          
+          ElMessage({
+            type: 'success',
+            message: '已切换到用户: ' + newUserName
+          });
+        }).catch(error => {
+          console.error('获取用户数据失败:', error);
+          ElMessage({
+            type: 'error',
+            message: '获取用户数据失败'
+          });
+        });
+      }
     };
     
     // 点击文档其他地方关闭下拉框
@@ -394,17 +490,48 @@ export default {
         applicationFormRef.value.resetFields();
       }
       // 重置为默认值
-      applicationForm.user = currentUser;
+      applicationForm.user = currentUser.value;
       applicationForm.computerCondition = '新电脑';
       applicationForm.companySys = '是（公司系统）';
       // 重新获取当前用户信息
-      fetchUserInfo(currentUser);
+      if (currentUser.value) {
+        fetchUserInfo(currentUser.value);
+      }
+    };
+
+    // 除了网络请求获取的字段外，重置其他表单字段
+    const resetFormExceptNetworkFields = () => {
+      // 保存网络请求获取的字段
+      const currentUser = applicationForm.user;
+      const currentCostCenter = applicationForm.costCenter;
+      const currentCompany = applicationForm.company;
+      const currentResponsible = applicationForm.responsible;
+      // 保存自动填充的电脑类型
+      const currentDeviceType = applicationForm.deviceType;
+      
+      // 创建初始状态的表单
+      const initialForm = {
+        applicationType: '', // 申请类别
+        deviceType: currentDeviceType, // 电脑类型 - 保留自动填充的值
+        costCenter: currentCostCenter, // 成本中心 - 保留
+        company: currentCompany, // 所属公司 - 保留
+        user: currentUser, // 使用人 - 保留
+        responsible: currentResponsible, // 责任人 - 保留
+        computerCondition: '新电脑', // 电脑情形，默认新电脑
+        companySys: '是（公司系统）', // 公司系统，默认是
+        reason: '', // 申请理由
+      };
+      
+      // 使用初始状态替换当前表单内容
+      Object.keys(applicationForm).forEach(key => {
+        applicationForm[key] = initialForm[key];
+      });
     };
 
     // 查看申请详情
     const viewApplicationDetails = (row) => {
-      // 实现查看详情逻辑
-      console.log("查看申请详情:", row);
+      currentApplication.value = row;
+      applicationDetailDialogVisible.value = true;
     };
 
     // 查看审批进度
@@ -415,8 +542,8 @@ export default {
         const flowRoles = res.data.list;
         approvalProgress.value = [
           { title: '已提交', description: flowRoles.username || '未知用户' },
-          { title: '审核中', description: flowRoles.approver1 || '暂无审批' },
-          { title: '已批准', description: flowRoles.approver2 || '暂无批准' }
+          { title: '审批中', description: flowRoles.approver1 || '暂无审批' },
+          { title: '审核中', description: flowRoles.approver2 || '暂无批准' }
         ];
         approvalProgressStep.value = getApprovalStep(row.status);
         approvalProgressDialogVisible.value = true;
@@ -433,8 +560,8 @@ export default {
     const getApprovalStep = (status) => {
       switch (status) {
         case '已提交': return 0;
-        case '审核中': return 1;
-        case '已批准': return 2;
+        case '审批中': return 1;
+        case '审核中': return 2;
         default: return 0;
       }
     };
@@ -463,17 +590,235 @@ export default {
     // 获取设备类型名称
     const getDeviceTypeName = (type) => {
       const types = {
-        'normalLaptop': '普通笔记本',
-        'workstationLaptop': '工作站笔记本',
-        'normalDesktop': '普通台式机',
-        'workstationDesktop': '工作站台式机'
+        'Standard Notebook': 'Standard Notebook',
+        'Performance Notebook': 'Performance Notebook',
+        'Standard Desktop': 'Standard Desktop',
+        'Performance Desktop': 'Performance Desktop',
+        // 保留旧映射以兼容已有数据
+        'normalLaptop': 'Standard Notebook',
+        'workstationLaptop': 'Performance Notebook',
+        'normalDesktop': 'Standard Desktop',
+        'workstationDesktop': 'Performance Desktop'
       };
       return types[type] || type;
     };
 
+    // 获取我的电脑信息
+    const myComputer = ref(null);
+    
+    const fetchMyComputer = (userName) => {
+      if (!userName) return Promise.reject(new Error('用户名为空'));
+      
+      return httpUtil({
+        method: 'get',
+        url: '/sysControl/getInternalComputerByUserName',
+        params: { userName }
+      }).then(response => {
+        if (response.data) {
+          myComputer.value = response.data;
+          
+          // 自动填充电脑类型
+          if (response.data.deviceClass) {
+            // 将后端返回的deviceClass值映射到前端下拉框选项
+            const deviceClass = response.data.deviceClass.trim();
+            
+            // 检查是否为四个选项中的一个，如果是则直接使用
+            const validOptions = [
+              "Standard Notebook", 
+              "Performance Notebook", 
+              "Standard Desktop", 
+              "Performance Desktop"
+            ];
+            
+            if (validOptions.includes(deviceClass)) {
+              applicationForm.deviceType = deviceClass;
+            } else {
+              // 如果不是有效选项，尝试根据关键字匹配
+              if (deviceClass.toLowerCase().includes('notebook') || deviceClass.toLowerCase().includes('laptop')) {
+                if (deviceClass.toLowerCase().includes('performance') || deviceClass.toLowerCase().includes('high')) {
+                  applicationForm.deviceType = 'Performance Notebook';
+                } else {
+                  applicationForm.deviceType = 'Standard Notebook';
+                }
+              } else if (deviceClass.toLowerCase().includes('desktop') || deviceClass.toLowerCase().includes('pc')) {
+                if (deviceClass.toLowerCase().includes('performance') || deviceClass.toLowerCase().includes('high')) {
+                  applicationForm.deviceType = 'Performance Desktop';
+                } else {
+                  applicationForm.deviceType = 'Standard Desktop';
+                }
+              }
+              // 如果无法匹配，则不自动填充，由用户手动选择
+            }
+          }
+          
+          // 如果当前申请类别是办公电脑换新，则检查年限
+          if (applicationForm.applicationType === 'officePcRenewal') {
+            checkComputerLifespan();
+          }
+        } else {
+          myComputer.value = null;
+        }
+        return response;
+      }).catch(error => {
+        ElMessage({
+          type: 'warning',
+          message: '获取电脑信息失败'
+        });
+        myComputer.value = null;
+        return Promise.reject(error);
+      });
+    };
+
+    // 处理申请类别变化
+    const handleApplicationTypeChange = () => {
+      if (applicationForm.applicationType === 'officePcRenewal') {
+        // 只有当有电脑信息时才进行判断
+        if (myComputer.value && myComputer.value.lifeCycleStart) {
+          checkComputerLifespan();
+        } else {
+          ElMessage({
+            type: 'warning',
+            message: '未找到当前用户的电脑信息，无法判断使用年限'
+          });
+        }
+      }
+    };
+    
+    // 检查电脑使用年限
+    const checkComputerLifespan = () => {
+      // 获取电脑生命周期开始日期
+      const lifeCycleStartStr = myComputer.value.lifeCycleStart;
+      
+      // 尝试解析日期，支持多种可能的格式
+      let lifeCycleStartDate;
+      try {
+        // 尝试解析YYYY-MM-DD格式
+        if (lifeCycleStartStr.includes('-')) {
+          lifeCycleStartDate = new Date(lifeCycleStartStr);
+        } 
+        // 尝试解析MM/DD/YYYY格式
+        else if (lifeCycleStartStr.includes('/')) {
+          const parts = lifeCycleStartStr.split('/');
+          if (parts.length === 3) {
+            // 假设格式为MM/DD/YYYY
+            lifeCycleStartDate = new Date(parts[2], parts[0] - 1, parts[1]);
+          }
+        }
+        // 其他可能的格式...
+      } catch (error) {
+        console.error('日期解析错误:', error);
+        ElMessage({
+          type: 'error',
+          message: '无法解析电脑生命周期开始日期'
+        });
+        return;
+      }
+      
+      // 如果无法解析日期
+      if (!lifeCycleStartDate || isNaN(lifeCycleStartDate.getTime())) {
+        ElMessage({
+          type: 'warning',
+          message: '无法确定电脑使用年限，请联系IT部门'
+        });
+        return;
+      }
+      
+      // 获取当前日期
+      const currentDate = new Date();
+      
+      // 计算年限差异
+      const yearsDiff = currentDate.getFullYear() - lifeCycleStartDate.getFullYear();
+      
+      // 如果超过6年
+      if (yearsDiff >= 6) {
+        // 将成本中心修改为IT
+        applicationForm.costCenter = 'IT';
+        ElMessage({
+          type: 'success',
+          message: `电脑使用已超过${yearsDiff}年，符合换新条件，成本中心已自动设置为IT`
+        });
+      } else {
+        // 弹出确认窗口
+        ElMessageBox.confirm(
+          `当前电脑使用年限为${yearsDiff}年，未超六年，年限内换新是否本部门承担新电脑费用（包括换成其他类型的新电脑）？`,
+          '提示',
+          {
+            confirmButtonText: '确认',
+            cancelButtonText: '取消',
+            type: 'warning',
+          }
+        ).catch(() => {
+          // 用户取消，可以重置申请类型
+          applicationForm.applicationType = '';
+        });
+      }
+    };
+
+    // 搜索用户 - 只搜索用户名，不发送获取详细信息请求
+    const searchUser = () => {
+      const userName = applicationForm.user;
+      if (!userName || userName.trim() === '') {
+        showUserResults.value = false;
+        return;
+      }
+      
+      httpUtil.get("/sysApply/getUserInfoByUserName", {
+        params: { userName }
+      }).then(res => {
+        if (res.data) {
+          // 将查询结果添加到结果列表
+          userSearchResults.value = [res.data];
+          showUserResults.value = true;
+        } else {
+          userSearchResults.value = [];
+          showUserResults.value = true;
+        }
+      }).catch(err => {
+        console.error("搜索用户失败:", err);
+        userSearchResults.value = [];
+        showUserResults.value = true;
+      });
+    };
+
+    // 申请详情对话框相关
+    const applicationDetailDialogVisible = ref(false);
+    const currentApplication = ref(null);
+
+    // 获取步骤状态
+    const getStepStatus = (index, title) => {
+      if (index < approvalProgressStep.value) {
+        return 'success';
+      } else if (index === approvalProgressStep.value) {
+        // 如果当前步骤是"审批中"，返回处理中状态
+        return title === '审批中' ? 'process' : 'wait';
+      } else {
+        return 'wait';
+      }
+    };
+
     onMounted(() => {
-      // 获取当前用户信息
-      fetchUserInfo(currentUser);
+      // 重新检查用户信息
+      if (!currentUser.value && userInfoStore.userInfo?.userName) {
+        currentUser.value = userInfoStore.userInfo.userName;
+        applicationForm.user = currentUser.value;
+      }
+      
+      // 确保首先使用当前登录用户的userName发送请求获取数据
+      if (currentUser.value) {
+        // 同时获取用户信息和电脑信息
+        Promise.all([
+          fetchUserInfo(currentUser.value),
+          fetchMyComputer(currentUser.value)
+        ]).catch(error => {
+          console.error('初始化获取数据失败:', error);
+        });
+      } else {
+        ElMessage({
+          type: 'warning',
+          message: '未能获取当前用户信息，请手动填写'
+        });
+      }
+      
       // 获取申请列表
       getApplyList();
       // 添加全局点击事件监听
@@ -497,8 +842,12 @@ export default {
       approvalProgressDialogVisible,
       approvalProgress,
       approvalProgressStep,
+      applicationDetailDialogVisible,
+      currentApplication,
+      handleApplicationTypeChange,
       submitApplication,
       resetForm,
+      confirmUserChange,
       viewApplicationDetails,
       viewApprovalProgress,
       statusTagType,
@@ -510,7 +859,12 @@ export default {
       handleUserInput,
       handleUserBlur,
       searchUser,
-      selectUser
+      selectUser,
+      // 我的电脑相关
+      myComputer,
+      // 审批进度相关
+      getApprovalStep,
+      getStepStatus
     };
   }
 };
@@ -527,6 +881,11 @@ export default {
 
 .top {
   margin-top: 10px;
+}
+
+.no-computer-data {
+  padding: 20px;
+  text-align: center;
 }
 
 /* 用户输入框容器 */
@@ -588,5 +947,96 @@ export default {
   color: #909399;
   text-align: center;
   font-size: 14px;
+}
+
+.my-computer-container {
+  margin: 0;
+  padding: 4px 0;
+}
+
+.elegant-descriptions :deep(.el-descriptions__label) {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #606266;
+  font-weight: bold;
+  background-color: #f5f7fa;
+}
+
+.elegant-descriptions :deep(.el-descriptions__content) {
+  padding: 8px 12px;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.elegant-descriptions :deep(.el-descriptions__body) {
+  background-color: #ffffff;
+  border-radius: 4px;
+}
+
+.approval-progress-container {
+  padding: 30px 20px;
+}
+
+/* 自定义审批步骤样式 */
+.approval-progress-container :deep(.el-step__title.is-process) {
+  color: #409EFF;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.approval-progress-container :deep(.el-step__head.is-process) {
+  color: #409EFF;
+  border-color: #409EFF;
+}
+
+.approval-progress-container :deep(.el-step__head.is-process .el-step__icon.is-text) {
+  background-color: #409EFF;
+  color: #fff;
+}
+
+.approval-progress-container :deep(.el-step__description.is-process) {
+  color: #409EFF;
+  font-size: 14px;
+}
+
+/* 增加所有步骤的字体大小 */
+.approval-progress-container :deep(.el-step__title) {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.approval-progress-container :deep(.el-step__description) {
+  font-size: 14px;
+}
+
+/* 增加图标大小 */
+.approval-progress-container :deep(.el-step__icon) {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+/* 对话框标题样式 */
+:deep(.el-dialog__title) {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+:deep(.el-dialog__header) {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.el-dialog__body) {
+  padding: 0;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 15px 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.dialog-footer {
+  text-align: right;
 }
 </style>

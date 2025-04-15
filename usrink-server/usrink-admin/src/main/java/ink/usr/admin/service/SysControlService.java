@@ -12,4 +12,8 @@ public interface SysControlService {
     boolean updateSysControl(SysControlModel sysControlModel);
 
     boolean deleteSysControl(long id);
+
+    SysControlModel getInternalComputerByUserName(String userName);
+
+    List<SysControlModel> getComputerListByUserName(String userName);
 }

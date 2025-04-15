@@ -1,19 +1,15 @@
 package ink.usr.admin.controller;
 
 import com.github.pagehelper.Page;
-import ink.usr.admin.dao.DTO.SysApplyDTO;
+import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.admin.service.*;
-import ink.usr.common.core.constants.Constants;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.domain.Res;
-import ink.usr.common.core.utils.DateUtil;
 import ink.usr.common.core.utils.PageUtil;
-import ink.usr.common.core.utils.ServletUtil;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
-import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysUserModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
@@ -25,12 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @Slf4j
@@ -73,8 +65,7 @@ public class SysApplyController {
             if (userId == null) {
                 return Res.error("无法获取用户ID");
             }
-            
-            List<SysApprovalRequestModel> applyList = sysApplyService.getApplyList(userId);
+            List<SysApplyListVO> applyList = sysApplyService.getApplyList(userId);
 
             Dict result = Dict.create()
                     .set("list", applyList)
@@ -123,8 +114,10 @@ public class SysApplyController {
             Long approvalId = singleOfList.getApprovalId();
             SysApprovalRequestModel sysApprovalRequestModel = sysApprovalRequestService.getByApprovalId(approvalId);
             // 找到申请人姓名并返回
-            String userName = sysUserService.getNameByUserId(sysApprovalRequestModel.getApplicant());
+            String userName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getApplicant());
+            String responsibilityName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getResponsibility());
             objects.setUserName(userName);
+            objects.setResponsibilityName(responsibilityName);
             objects.setApproverId(singleOfList.getApproverId());
             objects.setFlowId(singleOfList.getFlowId());
             BeanUtils.copyProperties(sysApprovalRequestModel,objects);
@@ -224,6 +217,12 @@ public class SysApplyController {
 //        }
 //    }
 
+    /**
+     * 根据userName找到用户信息
+     * @param userName
+     * @return
+     * @throws Exception
+     */
     @RequestMapping("/getUserInfoByUserName")
     public Res getUserInfoByUserName(@RequestParam("userName") String userName) throws Exception {
 

@@ -33,4 +33,16 @@ public class SysControlServiceImpl implements SysControlService {
         boolean flag = sysControlMapper.deleteSysControl(id);
         return flag;
     }
+
+    @Override
+    public SysControlModel getInternalComputerByUserName(String userName) {
+        SysControlModel sysControlModel = sysControlMapper.getInternalComputerByUserName(userName);
+        return sysControlModel;
+    }
+
+    @Override
+    public List<SysControlModel> getComputerListByUserName(String userName) {
+        List<SysControlModel> sysControlModelList = sysControlMapper.getComputerListByUserName(userName);
+        return sysControlModelList;
+    }
 }
