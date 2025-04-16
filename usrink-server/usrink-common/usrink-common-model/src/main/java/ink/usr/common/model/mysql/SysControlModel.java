@@ -64,4 +64,37 @@ public class SysControlModel implements Serializable {
 
     // 出厂日期到今天的时间
     private String yrsToDay;
+
+    // cpu
+    private String cpu;
+
+    // 内存
+    private String memory;
+
+    // 硬盘
+    private String disk;
+
+    // 显卡
+    private String graphic;
+
+    // 硬件状态
+    private String hardwareStatus;
+
+    // 下单号
+    private String pr;
+
+    // 订单号
+    private String po;
+
+    // 供应商公司
+    private String vendor;
+
+    // SGCS/SES/SGCC
+    private String company;
+
+    // 资产号
+    private String assetsNo;
+
+    // 临时分配标识，0代表非临时分配，1代表临时分配
+    private int temp;
 }

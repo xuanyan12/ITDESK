@@ -70,10 +70,10 @@ public class SysApplyServiceImpl implements SysApplyService {
         //  2.1 获取订单id
         Long approvalId = sysApprovalRequestModel.getApprovalId();
         //  2.2 获取审批人id，审批人id需要根据申请人id去找到对应的部门号，再通过部门号在审批表里找到对应的审批者
-        //  2.2.1 根据申请人id获取部门号
-        Long department = sysApplyMapper.getDepartmentByApplyUserId(userId);
-        //  2.2.2 根据部门号找到审批者id
-        Long approverId = sysApplyMapper.getApproverIdByDepartment(department);
+        //  2.2.1 根据使用人id获取成本中心
+        String costCenter = sysApplyMapper.getCostCenterByApplyUserId(userId);
+        //  2.2.2 根据成本中心找到审批者id
+        Long approverId = sysApplyMapper.getApproverIdByCostCenter(costCenter);
         //  2.3 构建一级审批流实体
         SysApprovalFlowModel sysApprovalFlowModel = new SysApprovalFlowModel();
         sysApprovalFlowModel.setApprovalId(approvalId);

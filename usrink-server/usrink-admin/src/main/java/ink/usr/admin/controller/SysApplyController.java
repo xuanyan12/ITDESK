@@ -90,7 +90,7 @@ public class SysApplyController {
         //  2.发送带有唯一标识的邮件
         //  3.再创建一个属于IT部门审批者的二级工作流
         //  4.再通过邮件发送链接给对应的审批者进行审批(一级工作流审批者),一级通过后触发邮件给二级审批者
-        return Res.success(url);
+        return Res.success();
     }
 
     /**

@@ -3,6 +3,7 @@ package ink.usr.admin.controller;
 import ink.usr.admin.dao.DTO.SysControlDTO;
 import ink.usr.admin.dao.VO.SysControlVO;
 import ink.usr.admin.service.SysControlService;
+import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.model.mysql.SysControlModel;
 import lombok.extern.slf4j.Slf4j;
@@ -87,19 +88,33 @@ public class SysControlController {
     }
 
     /**
-     * 通过userName获取用户的 internal computer
+     * 通过userName获取用户的电脑名称列表
      * @param userName
      * @return
      */
     @RequestMapping("/getComputerListByUserName")
     public Res getComputerListByUserName(@RequestParam("userName") String userName) throws Exception {
         List<SysControlModel> sysControlModelList = null;
+        Dict result = null;
         try {
             sysControlModelList = sysControlService.getComputerListByUserName(userName);
+            result = Dict.create()
+                    .set("list", sysControlModelList);
         }catch (Exception e){
             throw new Exception(e);
         }
 
-        return Res.success(sysControlModelList);
+        return Res.success(result);
+    }
+
+    /**
+     * 通过电脑名获取电脑信息
+     * @param ciName
+     * @return
+     */
+    @RequestMapping("/getComputerInfoByCiName")
+    public Res getComputerInfoByCiName(@RequestParam("ciName") String ciName){
+        SysControlModel sysControlModel = sysControlService.getComputerInfoByCiName(ciName);
+        return Res.success(sysControlModel);
     }
 }

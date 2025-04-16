@@ -18,9 +18,9 @@ public interface SysApplyMapper {
 
     void addApply(SysApprovalRequestModel sysApprovalRequestModel);
 
-    Long getDepartmentByApplyUserId(Long userId);
+    String getCostCenterByApplyUserId(Long userId);
 
-    Long getApproverIdByDepartment(Long department);
+    Long getApproverIdByCostCenter(String costCenter);
 
     void addApplyFlow(SysApprovalFlowModel sysApprovalFlowModel);
 

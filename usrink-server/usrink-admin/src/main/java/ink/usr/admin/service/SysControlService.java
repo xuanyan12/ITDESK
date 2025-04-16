@@ -15,5 +15,7 @@ public interface SysControlService {
 
     SysControlModel getInternalComputerByUserName(String userName);
 
-    List<SysControlModel> getComputerListByUserName(String userName);
+    List getComputerListByUserName(String userName);
+
+    SysControlModel getComputerInfoByCiName(String ciName);
 }

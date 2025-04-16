@@ -16,16 +16,16 @@
         values (#{applicant},#{deviceCategory},#{deviceType},#{deviceName},#{quantity},#{reason},#{timestamp},#{status},#{createdAt},#{updatedAt})
     </insert>
 
-    <select id="getDepartmentByApplyUserId" resultType="Long">
-        select department
+    <select id="getCostCenterByApplyUserId" resultType="Long">
+        select costCenter
         from sys_user
         where userId = #{userId}
     </select>
 
-    <select id="getApproverIdByDepartment" resultType="Long">
+    <select id="getApproverIdByCostCenter" resultType="Long">
         select approverId
         from sys_approver
-        where department = #{department} and role = 'manager'
+        where costCenter = #{costCenter} and role = 'manager'
     </select>
 
     <insert id="addApplyFlow" useGeneratedKeys="true" keyProperty="flowId">

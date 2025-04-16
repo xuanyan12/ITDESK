@@ -22,7 +22,7 @@ public class SysApproverModel implements Serializable {
     // 审批人角色权限
     private String role;
     // 部门id
-    private Long department;
+    private String costCenter;
     // 创建时间
     private String createdAt;
     // 更新时间

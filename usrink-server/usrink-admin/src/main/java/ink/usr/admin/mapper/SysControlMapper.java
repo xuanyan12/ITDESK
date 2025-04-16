@@ -26,4 +26,7 @@ public interface SysControlMapper {
 
     @Select("select * from sys_control where ntAccount = #{userName}")
     List<SysControlModel> getComputerListByUserName(String userName);
+
+    @Select("select * from sys_control where ciName = #{ciName}")
+    SysControlModel getComputerInfoByCiName(String ciName);
 }

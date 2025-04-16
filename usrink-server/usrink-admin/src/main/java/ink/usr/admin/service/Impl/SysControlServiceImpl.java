@@ -6,6 +6,7 @@ import ink.usr.common.model.mysql.SysControlModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -41,8 +42,20 @@ public class SysControlServiceImpl implements SysControlService {
     }
 
     @Override
-    public List<SysControlModel> getComputerListByUserName(String userName) {
+    public List getComputerListByUserName(String userName) {
         List<SysControlModel> sysControlModelList = sysControlMapper.getComputerListByUserName(userName);
-        return sysControlModelList;
+        List controlNameList = new ArrayList<>();
+        String controlName = null;
+        for(SysControlModel model : sysControlModelList){
+            controlName = model.getCiName();
+            controlNameList.add(controlName);
+        }
+        return controlNameList;
+    }
+
+    @Override
+    public SysControlModel getComputerInfoByCiName(String ciName) {
+        SysControlModel sysControlModel = sysControlMapper.getComputerInfoByCiName(ciName);
+        return sysControlModel;
     }
 }
