@@ -25,6 +25,17 @@ const queryForm = ref({
     costCenter: '',
     lifeCycleStart:'',
     yrsToDay:'',
+    cpu: '',
+    memory: '',
+    disk: '',
+    graphic: '',
+    hardwareStatus: '',
+    pr: '',
+    po: '',
+    vendor: '',
+    company: '',
+    assetsNo: '',
+    temp: '',
     pageNum: 1,
     pageSize: 6
 })
@@ -47,7 +58,18 @@ const editPartForm = ref({
     telephone: '',
     costCenter: '',
     lifeCycleStart:'',
-    yrsToDay:''
+    yrsToDay:'',
+    cpu: '',
+    memory: '',
+    disk: '',
+    graphic: '',
+    hardwareStatus: '',
+    pr: '',
+    po: '',
+    vendor: '',
+    company: '',
+    assetsNo: '',
+    temp: ''
 })
 
 const deletePartForm = ref([])
@@ -427,6 +449,105 @@ const deletePart = () => {
                     </template>
                 </el-table-column>
 
+                <!-- CPU -->
+                <el-table-column label="CPU" prop="cpu" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.cpu" placement="top">
+                            <div class="text-ellipsis">{{ row.cpu }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 内存 -->
+                <el-table-column label="内存" prop="memory" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.memory" placement="top">
+                            <div class="text-ellipsis">{{ row.memory }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 硬盘 -->
+                <el-table-column label="硬盘" prop="disk" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.disk" placement="top">
+                            <div class="text-ellipsis">{{ row.disk }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 显卡 -->
+                <el-table-column label="显卡" prop="graphic" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.graphic" placement="top">
+                            <div class="text-ellipsis">{{ row.graphic }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 硬件状态 -->
+                <el-table-column label="硬件状态" prop="hardwareStatus" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.hardwareStatus" placement="top">
+                            <div class="text-ellipsis">{{ row.hardwareStatus }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 下单号 -->
+                <el-table-column label="下单号" prop="pr" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.pr" placement="top">
+                            <div class="text-ellipsis">{{ row.pr }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 订单号 -->
+                <el-table-column label="订单号" prop="po" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.po" placement="top">
+                            <div class="text-ellipsis">{{ row.po }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 供应商公司 -->
+                <el-table-column label="供应商公司" prop="vendor" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.vendor" placement="top">
+                            <div class="text-ellipsis">{{ row.vendor }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 公司 -->
+                <el-table-column label="公司" prop="company" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.company" placement="top">
+                            <div class="text-ellipsis">{{ row.company }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 资产号 -->
+                <el-table-column label="资产号" prop="assetsNo" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.assetsNo" placement="top">
+                            <div class="text-ellipsis">{{ row.assetsNo }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <!-- 临时分配 -->
+                <el-table-column label="临时分配" prop="temp" :width="150">
+                    <template #default="{ row }">
+                        <el-tooltip class="item" effect="light" :content="row.temp === 1 ? '是' : '否'" placement="top">
+                            <div class="text-ellipsis">{{ row.temp === 1 ? '是' : '否' }}</div>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
                 <!-- 操作列：编辑与删除 -->
                 <el-table-column label="操作" :width="150" fixed="right">
                     <template #default="{ row }">
@@ -476,15 +597,51 @@ const deletePart = () => {
             <el-dialog v-model="editPartDialogVisible" title="编辑设备">
                 <el-form :model="editPartForm" ref="editPartFormRef" label-width="100px">
                     <el-form-item label="NT账号" prop="ntAccount" :rules="[{ required: true, message: '请输入NT账号', trigger: 'blur' }]">
-                        <el-input v-model="editPartForm.ntAccount"></el-input> <!-- 使用 ntAccount 字段 -->
+                        <el-input v-model="editPartForm.ntAccount"></el-input>
                     </el-form-item>
                     <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
-                        <el-input v-model="editPartForm.pcClass"></el-input> <!-- 使用 pcClass 字段 -->
+                        <el-input v-model="editPartForm.pcClass"></el-input>
                     </el-form-item>
                     <el-form-item label="电脑状态" prop="pcStatus" :rules="[{ required: true, message: '请选择状态', trigger: 'blur' }]">
                         <el-select v-model="editPartForm.pcStatus">
                             <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
                             <el-option label="IN USE" value="IN USE"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="CPU" prop="cpu">
+                        <el-input v-model="editPartForm.cpu"></el-input>
+                    </el-form-item>
+                    <el-form-item label="内存" prop="memory">
+                        <el-input v-model="editPartForm.memory"></el-input>
+                    </el-form-item>
+                    <el-form-item label="硬盘" prop="disk">
+                        <el-input v-model="editPartForm.disk"></el-input>
+                    </el-form-item>
+                    <el-form-item label="显卡" prop="graphic">
+                        <el-input v-model="editPartForm.graphic"></el-input>
+                    </el-form-item>
+                    <el-form-item label="硬件状态" prop="hardwareStatus">
+                        <el-input v-model="editPartForm.hardwareStatus"></el-input>
+                    </el-form-item>
+                    <el-form-item label="下单号" prop="pr">
+                        <el-input v-model="editPartForm.pr"></el-input>
+                    </el-form-item>
+                    <el-form-item label="订单号" prop="po">
+                        <el-input v-model="editPartForm.po"></el-input>
+                    </el-form-item>
+                    <el-form-item label="供应商公司" prop="vendor">
+                        <el-input v-model="editPartForm.vendor"></el-input>
+                    </el-form-item>
+                    <el-form-item label="公司" prop="company">
+                        <el-input v-model="editPartForm.company"></el-input>
+                    </el-form-item>
+                    <el-form-item label="资产号" prop="assetsNo">
+                        <el-input v-model="editPartForm.assetsNo"></el-input>
+                    </el-form-item>
+                    <el-form-item label="临时分配" prop="temp">
+                        <el-select v-model="editPartForm.temp">
+                            <el-option label="否" :value="0"></el-option>
+                            <el-option label="是" :value="1"></el-option>
                         </el-select>
                     </el-form-item>
                 </el-form>

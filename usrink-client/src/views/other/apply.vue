@@ -2,24 +2,38 @@
   <div style="padding: 20px;">
     <!-- 我的电脑 -->
     <el-card shadow="never" class="usr_card_override top">
-      <h3>我的电脑</h3>
+      <div class="title-with-select">
+        <h3>我的电脑</h3>
+        <el-select 
+          v-model="selectedComputer" 
+          placeholder="名下电脑选择" 
+          @change="handleComputerSelect"
+          style="width: 200px">
+          <el-option 
+            v-for="item in computerList" 
+            :key="item" 
+            :label="item" 
+            :value="item">
+          </el-option>
+        </el-select>
+      </div>
       <div v-if="myComputer" class="my-computer-container">
-        <el-descriptions :column="3" border size="small" class="elegant-descriptions">
-          <el-descriptions-item label="ciName">{{ myComputer.ciName }}</el-descriptions-item>
-          <el-descriptions-item label="ntAccount">{{ myComputer.ntAccount }}</el-descriptions-item>
-          <el-descriptions-item label="department">{{ myComputer.department }}</el-descriptions-item>
-          <el-descriptions-item label="lastName">{{ myComputer.lastName }}</el-descriptions-item>
-          <el-descriptions-item label="firstName">{{ myComputer.firstName }}</el-descriptions-item>
-          <el-descriptions-item label="pcStatus">{{ myComputer.pcStatus }}</el-descriptions-item>
-          <el-descriptions-item label="lifeCycleStart">{{ myComputer.lifeCycleStart }}</el-descriptions-item>
-          <el-descriptions-item label="costCenter">{{ myComputer.costCenter }}</el-descriptions-item>
-          <el-descriptions-item label="manufacturer" v-if="myComputer.manufacturer">{{ myComputer.manufacturer }}</el-descriptions-item>
-          <el-descriptions-item label="model" v-if="myComputer.model">{{ myComputer.model }}</el-descriptions-item>
-          <el-descriptions-item label="serialNumber" v-if="myComputer.serialNumber">{{ myComputer.serialNumber }}</el-descriptions-item>
-          <el-descriptions-item label="assetTag" v-if="myComputer.assetTag">{{ myComputer.assetTag }}</el-descriptions-item>
-          <el-descriptions-item label="ipAddress" v-if="myComputer.ipAddress">{{ myComputer.ipAddress }}</el-descriptions-item>
-          <el-descriptions-item label="macAddress" v-if="myComputer.macAddress">{{ myComputer.macAddress }}</el-descriptions-item>
-          <el-descriptions-item label="os" v-if="myComputer.os">{{ myComputer.os }}</el-descriptions-item>
+        <el-descriptions :column="3" border size="small" class="elegant-descriptions" :label-width="120" :content-width="200">
+          <el-descriptions-item label="ciName" width="300">{{ myComputer.ciName }}</el-descriptions-item>
+          <el-descriptions-item label="ntAccount" width="300">{{ myComputer.ntAccount }}</el-descriptions-item>
+          <el-descriptions-item label="department" width="300">{{ myComputer.department }}</el-descriptions-item>
+          <el-descriptions-item label="lastName" width="300">{{ myComputer.lastName }}</el-descriptions-item>
+          <el-descriptions-item label="firstName" width="300">{{ myComputer.firstName }}</el-descriptions-item>
+          <el-descriptions-item label="pcStatus" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
+          <el-descriptions-item label="lifeCycleStart" width="300">{{ myComputer.lifeCycleStart }}</el-descriptions-item>
+          <el-descriptions-item label="costCenter" width="300">{{ myComputer.costCenter }}</el-descriptions-item>
+          <el-descriptions-item label="manufacturer" v-if="myComputer.manufacturer" width="300">{{ myComputer.manufacturer }}</el-descriptions-item>
+          <el-descriptions-item label="model" v-if="myComputer.model" width="300">{{ myComputer.model }}</el-descriptions-item>
+          <el-descriptions-item label="serialNumber" v-if="myComputer.serialNumber" width="300">{{ myComputer.serialNumber }}</el-descriptions-item>
+          <el-descriptions-item label="assetTag" v-if="myComputer.assetTag" width="300">{{ myComputer.assetTag }}</el-descriptions-item>
+          <el-descriptions-item label="ipAddress" v-if="myComputer.ipAddress" width="300">{{ myComputer.ipAddress }}</el-descriptions-item>
+          <el-descriptions-item label="macAddress" v-if="myComputer.macAddress" width="300">{{ myComputer.macAddress }}</el-descriptions-item>
+          <el-descriptions-item label="os" v-if="myComputer.os" width="300">{{ myComputer.os }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div v-else class="no-computer-data">
@@ -292,6 +306,10 @@ export default {
     const searchTimeout = ref(null); // 搜索防抖定时器
     const userInputRef = ref(null); // 用户输入框引用
 
+    // 电脑下拉选择相关
+    const computerList = ref([]);
+    const selectedComputer = ref('');
+
     // 获取用户信息（成本中心、所属公司、责任人）
     const fetchUserInfo = (userName) => {
       if (!userName) return Promise.reject(new Error('用户名为空'));
@@ -377,6 +395,8 @@ export default {
         ]).then(() => {
           // 获取数据成功后重置表单（保留网络请求获取的字段）
           resetFormExceptNetworkFields();
+          // 重置申请类别
+          applicationForm.applicationType = '';
           // 更新当前用户
           currentUser.value = newUserName;
           
@@ -415,6 +435,8 @@ export default {
         ]).then(() => {
           // 获取数据成功后重置表单（保留网络请求获取的字段）
           resetFormExceptNetworkFields();
+          // 重置申请类别
+          applicationForm.applicationType = '';
           // 更新当前用户
           currentUser.value = newUserName;
           
@@ -617,6 +639,11 @@ export default {
         if (response.data) {
           myComputer.value = response.data;
           
+          // 如果有电脑信息，设置默认选中的电脑
+          if (response.data.ciName) {
+            selectedComputer.value = response.data.ciName;
+          }
+          
           // 自动填充电脑类型
           if (response.data.deviceClass) {
             // 将后端返回的deviceClass值映射到前端下拉框选项
@@ -796,6 +823,113 @@ export default {
       }
     };
 
+    // 获取用户名下电脑列表
+    const fetchComputerList = (userName) => {
+      if (!userName) return Promise.reject(new Error('用户名为空'));
+      
+      return httpUtil({
+        method: 'get',
+        url: '/sysControl/getComputerListByUserName',
+        params: { userName }
+      }).then(response => {
+        if (response.data && response.data.list) {
+          // 直接使用返回的字符串数组
+          computerList.value = response.data.list;
+        } else {
+          computerList.value = [];
+        }
+        return response;
+      }).catch(error => {
+        ElMessage({
+          type: 'warning',
+          message: '获取电脑列表失败'
+        });
+        computerList.value = [];
+        return Promise.reject(error);
+      });
+    };
+
+    // 处理电脑选择
+    const handleComputerSelect = (ciName) => {
+      if (!ciName) return;
+      
+      httpUtil({
+        method: 'get',
+        url: '/sysControl/getComputerInfoByCiName',
+        params: { ciName }
+      }).then(response => {
+        if (response.data) {
+          // 更新"我的电脑"模块中的展示内容
+          myComputer.value = response.data;
+          
+          // 更新"办公电脑申请"模块中绑定的电脑信息
+          // 自动填充电脑类型，与原有逻辑保持一致
+          if (response.data.deviceClass) {
+            // 将后端返回的deviceClass值映射到前端下拉框选项
+            const deviceClass = response.data.deviceClass.trim();
+            
+            // 检查是否为四个选项中的一个，如果是则直接使用
+            const validOptions = [
+              "Standard Notebook", 
+              "Performance Notebook", 
+              "Standard Desktop", 
+              "Performance Desktop"
+            ];
+            
+            if (validOptions.includes(deviceClass)) {
+              applicationForm.deviceType = deviceClass;
+            } else {
+              // 如果不是有效选项，尝试根据关键字匹配
+              if (deviceClass.toLowerCase().includes('notebook') || deviceClass.toLowerCase().includes('laptop')) {
+                if (deviceClass.toLowerCase().includes('performance') || deviceClass.toLowerCase().includes('high')) {
+                  applicationForm.deviceType = 'Performance Notebook';
+                } else {
+                  applicationForm.deviceType = 'Standard Notebook';
+                }
+              } else if (deviceClass.toLowerCase().includes('desktop') || deviceClass.toLowerCase().includes('pc')) {
+                if (deviceClass.toLowerCase().includes('performance') || deviceClass.toLowerCase().includes('high')) {
+                  applicationForm.deviceType = 'Performance Desktop';
+                } else {
+                  applicationForm.deviceType = 'Standard Desktop';
+                }
+              }
+              // 如果无法匹配，则不自动填充，由用户手动选择
+            }
+          }
+          
+          // 重置申请类别
+          applicationForm.applicationType = '';
+          
+          // 如果电脑信息中包含用户信息，重新获取用户信息以更新成本中心等数据
+          if (response.data.ntAccount) {
+            fetchUserInfo(response.data.ntAccount).then(() => {
+              ElMessage({
+                type: 'success',
+                message: '已更新用户信息和电脑: ' + ciName
+              });
+            }).catch(error => {
+              console.error('获取用户信息失败:', error);
+              ElMessage({
+                type: 'success',
+                message: '已切换到电脑: ' + ciName + '，但用户信息更新失败'
+              });
+            });
+          } else {
+            ElMessage({
+              type: 'success',
+              message: '已切换到电脑: ' + ciName
+            });
+          }
+        }
+      }).catch(error => {
+        console.error('获取电脑信息失败:', error);
+        ElMessage({
+          type: 'error',
+          message: '获取电脑信息失败'
+        });
+      });
+    };
+
     onMounted(() => {
       // 重新检查用户信息
       if (!currentUser.value && userInfoStore.userInfo?.userName) {
@@ -805,10 +939,11 @@ export default {
       
       // 确保首先使用当前登录用户的userName发送请求获取数据
       if (currentUser.value) {
-        // 同时获取用户信息和电脑信息
+        // 同时获取用户信息、电脑信息和电脑列表
         Promise.all([
           fetchUserInfo(currentUser.value),
-          fetchMyComputer(currentUser.value)
+          fetchMyComputer(currentUser.value),
+          fetchComputerList(currentUser.value)
         ]).catch(error => {
           console.error('初始化获取数据失败:', error);
         });
@@ -862,6 +997,10 @@ export default {
       selectUser,
       // 我的电脑相关
       myComputer,
+      // 电脑下拉选择相关
+      computerList,
+      selectedComputer,
+      handleComputerSelect,
       // 审批进度相关
       getApprovalStep,
       getStepStatus
@@ -954,18 +1093,30 @@ export default {
   padding: 4px 0;
 }
 
+.elegant-descriptions {
+  width: 100%;
+  table-layout: fixed;
+}
+
 .elegant-descriptions :deep(.el-descriptions__label) {
   padding: 8px 12px;
   font-size: 13px;
   color: #606266;
   font-weight: bold;
   background-color: #f5f7fa;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
 }
 
 .elegant-descriptions :deep(.el-descriptions__content) {
   padding: 8px 12px;
   font-size: 13px;
   word-break: break-all;
+  width: 200px;
+  min-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .elegant-descriptions :deep(.el-descriptions__body) {
@@ -1038,5 +1189,16 @@ export default {
 
 .dialog-footer {
   text-align: right;
+}
+
+.title-with-select {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.title-with-select h3 {
+  margin: 0;
 }
 </style>
