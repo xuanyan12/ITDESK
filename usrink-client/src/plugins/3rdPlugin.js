@@ -13,6 +13,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
+// Font Awesome
+import '@fortawesome/fontawesome-free/css/all.min.css'
+
 // 状态管理插件
 import store from "@/stores/index.js";
 // 路由管理插件
