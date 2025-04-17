@@ -141,7 +141,7 @@
             <el-form-item label="公司系统" prop="companySys">
               <el-radio-group v-model="applicationForm.companySys">
                 <el-radio label="是（公司系统）">是（公司系统）</el-radio>
-                <el-radio label="否（非标系统）">否（非标系统）</el-radio>
+                <el-radio label="否（非标系统）" disabled>否（非标系统）</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -331,10 +331,21 @@ export default {
           // 设置所属公司 - 这里需要根据实际情况处理
           // 如果后端返回了公司信息，则使用后端返回的
           if (response.data.company) {
-            applicationForm.company = response.data.company;
-            // 如果公司不在列表中，添加到列表
-            if (!companies.value.includes(response.data.company)) {
-              companies.value.push(response.data.company);
+            // 检查返回的公司是否与预设的选项匹配
+            const presetCompanies = ["SGCS", "SGCC", "SES"];
+            const companyMatch = presetCompanies.find(company => 
+              company.toLowerCase() === response.data.company.toLowerCase());
+            
+            if (companyMatch) {
+              // 如果匹配到预设公司，则使用预设的格式
+              applicationForm.company = companyMatch;
+            } else {
+              // 如果不匹配预设，则使用后端返回的
+              applicationForm.company = response.data.company;
+              // 只有当公司不在列表中时，才添加到列表
+              if (!companies.value.includes(response.data.company)) {
+                companies.value.push(response.data.company);
+              }
             }
           }
           
@@ -388,10 +399,17 @@ export default {
       // 只有当用户名不为空且与当前用户不同时才发送请求
       const newUserName = applicationForm.user;
       if (newUserName && newUserName.trim() !== '' && newUserName !== currentUser.value) {
+        // 先清空电脑信息，避免显示旧信息
+        myComputer.value = null;
+        // 清空电脑列表和选择的电脑
+        computerList.value = [];
+        selectedComputer.value = '';
+        
         // 获取新用户的信息
         Promise.all([
           fetchUserInfo(newUserName),
-          fetchMyComputer(newUserName)
+          fetchMyComputer(newUserName),
+          fetchComputerList(newUserName)
         ]).then(() => {
           // 获取数据成功后重置表单（保留网络请求获取的字段）
           resetFormExceptNetworkFields();
@@ -427,12 +445,16 @@ export default {
       if (newUserName !== currentUser.value) {
         // 先清空电脑信息，避免显示旧信息
         myComputer.value = null;
+        // 清空电脑列表和选择的电脑
+        computerList.value = [];
+        selectedComputer.value = '';
         
         // 同步获取用户信息和电脑信息
         Promise.all([
           fetchUserInfo(newUserName),
-          fetchMyComputer(newUserName)
-        ]).then(() => {
+          fetchMyComputer(newUserName),
+          fetchComputerList(newUserName)
+        ]).then(([userInfoRes, computerRes, computerListRes]) => {
           // 获取数据成功后重置表单（保留网络请求获取的字段）
           resetFormExceptNetworkFields();
           // 重置申请类别
@@ -480,7 +502,42 @@ export default {
       applicationFormRef.value.validate((valid) => {
         if (valid) {
           loading.value = true;
-          httpUtil.post("/sysApply/submitApply", applicationForm).then(res => {
+          
+          // 将英文申请类别转为中文
+          const deviceCategoryText = getApplicationTypeName(applicationForm.applicationType);
+          
+          // 简化公司系统的值
+          let companySystemValue = applicationForm.companySys;
+          if (companySystemValue.includes('是')) {
+            companySystemValue = '是';
+          } else if (companySystemValue.includes('否')) {
+            companySystemValue = '否';
+          }
+          
+          // 创建一个包含所有必要字段的提交对象，确保字段名与后端一致
+          const submitData = {
+            // 使用后端期望的字段名称
+            deviceCategory: deviceCategoryText, // 申请类别（使用中文文本）
+            deviceType: applicationForm.deviceType, // 电脑类型
+            costCenter: applicationForm.costCenter, // 成本中心
+            company: applicationForm.company, // 所属公司
+            userName: applicationForm.user, // 使用人
+            responsibilityName: applicationForm.responsible, // 责任人
+            deviceSituation: applicationForm.computerCondition, // 电脑情形
+            companySystem: companySystemValue, // 公司系统（简化为"是"或"否"）
+            reason: applicationForm.reason, // 申请理由
+            // 保留原始字段以防万一，但覆盖已转换的值
+            ...applicationForm,
+            companySys: companySystemValue
+          };
+          
+          console.log('提交的申请数据:', submitData);
+          
+          httpUtil.post("/sysApply/submitApply", submitData, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(res => {
             ElMessage({
               type: 'success',
               message: '申请提交成功'
@@ -683,7 +740,9 @@ export default {
             checkComputerLifespan();
           }
         } else {
+          // 如果没有获取到电脑信息，清空相关数据
           myComputer.value = null;
+          selectedComputer.value = '';
         }
         return response;
       }).catch(error => {
@@ -692,6 +751,7 @@ export default {
           message: '获取电脑信息失败'
         });
         myComputer.value = null;
+        selectedComputer.value = '';
         return Promise.reject(error);
       });
     };
@@ -832,11 +892,17 @@ export default {
         url: '/sysControl/getComputerListByUserName',
         params: { userName }
       }).then(response => {
-        if (response.data && response.data.list) {
+        if (response.data && response.data.list && response.data.list.length > 0) {
           // 直接使用返回的字符串数组
           computerList.value = response.data.list;
+          // 如果有电脑列表，默认选中第一个
+          if (response.data.list.length > 0) {
+            selectedComputer.value = response.data.list[0];
+          }
         } else {
+          // 如果没有电脑列表，清空相关数据
           computerList.value = [];
+          selectedComputer.value = '';
         }
         return response;
       }).catch(error => {
@@ -844,7 +910,9 @@ export default {
           type: 'warning',
           message: '获取电脑列表失败'
         });
+        // 出错时也清空电脑列表和选择的电脑
         computerList.value = [];
+        selectedComputer.value = '';
         return Promise.reject(error);
       });
     };

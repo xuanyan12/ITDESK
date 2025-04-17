@@ -1,6 +1,7 @@
 package ink.usr.admin.controller;
 
 import com.github.pagehelper.Page;
+import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
@@ -79,14 +80,14 @@ public class SysApplyController {
 
     /**
      * 提交设备申请，并生成审批流程
-     * @param sysApprovalRequestModel
+     * @param sysApplyRequestDTO
      * @return
      */
     @RequestMapping("/submitApply")
-    public Res submitApply(@RequestBody SysApprovalRequestModel sysApprovalRequestModel){
+    public Res submitApply(@RequestBody SysApplyRequestDTO sysApplyRequestDTO){
 
         //  1.先创建一个request,并创建一个属于部门leader的一级工作流与二级工作流,获得带有唯一标识的url
-        String url = sysApplyService.addApply(sysApprovalRequestModel);
+        String url = sysApplyService.addApply(sysApplyRequestDTO);
         //  2.发送带有唯一标识的邮件
         //  3.再创建一个属于IT部门审批者的二级工作流
         //  4.再通过邮件发送链接给对应的审批者进行审批(一级工作流审批者),一级通过后触发邮件给二级审批者

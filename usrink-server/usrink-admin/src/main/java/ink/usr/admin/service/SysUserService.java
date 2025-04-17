@@ -183,4 +183,9 @@ public class SysUserService implements ISysUserService {
         String userNickName = sysUserMapper.getUserNickNameByUserId(userId);
         return userNickName;
     }
+
+    @Override
+    public Long getUserIdByUserName(String responsibilityName) {
+        return sysUserMapper.getUserIdByUserName(responsibilityName);
+    }
 }

@@ -1,5 +1,6 @@
 package ink.usr.admin.service.Impl;
 
+import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.service.SysApplyService;
@@ -52,19 +53,24 @@ public class SysApplyServiceImpl implements SysApplyService {
 
     @Override
     @Transactional
-    public String addApply(SysApprovalRequestModel sysApprovalRequestModel) {
+    public String addApply(SysApplyRequestDTO sysApplyRequestDTO) {
         //  1.新建设备申请订单
         //  1.1 从shiro中获取用户id
         ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
         Long userId = shiroUserInfo.getUserId();
-        sysApprovalRequestModel.setApplicant(userId);
+        sysApplyRequestDTO.setApplicant(userId);
         //  1.2 设置审批流有效期，默认值为2天
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String timestamp = LocalDateTime.now().plusDays(2).format(formatter);
         String createTime = LocalDateTime.now().format(formatter);
-        sysApprovalRequestModel.setTimestamp(timestamp);
-        sysApprovalRequestModel.setCreatedAt(createTime);
-        sysApprovalRequestModel.setUpdatedAt(createTime);
+        sysApplyRequestDTO.setTimestamp(timestamp);
+        sysApplyRequestDTO.setCreatedAt(createTime);
+        sysApplyRequestDTO.setUpdatedAt(createTime);
+        SysApprovalRequestModel sysApprovalRequestModel = new SysApprovalRequestModel();
+        sysApplyRequestDTO.setStatus("审批中");
+        Long responsibilityId = sysUserService.getUserIdByUserName(sysApplyRequestDTO.getResponsibilityName());
+        BeanUtils.copyProperties(sysApplyRequestDTO,sysApprovalRequestModel);
+        sysApprovalRequestModel.setResponsibility(responsibilityId);
         sysApplyMapper.addApply(sysApprovalRequestModel);
         //  2.创建一个属于部门leader的一级审批工作流
         //  2.1 获取订单id

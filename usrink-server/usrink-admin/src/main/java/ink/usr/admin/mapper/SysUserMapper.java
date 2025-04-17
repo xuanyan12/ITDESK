@@ -90,4 +90,7 @@ public interface SysUserMapper {
 
     @Select("select userNick from sys_user where userId = #{userId}")
     String getUserNickNameByUserId(Long userId);
+
+    @Select("select userId from sys_user where userName = #{responsibilityName}")
+    Long getUserIdByUserName(String responsibilityName);
 }

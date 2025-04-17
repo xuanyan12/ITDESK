@@ -12,11 +12,11 @@
     </select>
 
     <insert id="addApply" useGeneratedKeys="true" keyProperty="approvalId">
-        insert into sys_approval_request(applicant, deviceCategory, deviceType, deviceName, quantity, reason, timestamp, status, createdAt, updatedAt)
-        values (#{applicant},#{deviceCategory},#{deviceType},#{deviceName},#{quantity},#{reason},#{timestamp},#{status},#{createdAt},#{updatedAt})
+        insert into sys_approval_request(applicant, deviceCategory, deviceType, reason, timestamp, status, createdAt, updatedAt, costCenter, company, responsibility, deviceSituation, companySystem)
+        values (#{applicant},#{deviceCategory},#{deviceType},#{reason},#{timestamp},#{status},#{createdAt},#{updatedAt},#{costCenter},#{company},#{responsibility},#{deviceSituation},#{companySystem})
     </insert>
 
-    <select id="getCostCenterByApplyUserId" resultType="Long">
+    <select id="getCostCenterByApplyUserId" resultType="String">
         select costCenter
         from sys_user
         where userId = #{userId}
