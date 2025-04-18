@@ -40,5 +40,6 @@ public class SysApprovalRequestModel implements Serializable {
     private String createdAt;
     // 审批请求更新时间
     private String updatedAt;
-
+    // 需要更换的电脑
+    private String ciName;
 }

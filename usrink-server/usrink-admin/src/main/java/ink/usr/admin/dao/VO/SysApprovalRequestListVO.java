@@ -33,4 +33,6 @@ public class SysApprovalRequestListVO extends SysApprovalFlowModel {
     private String userName;
     // 责任人名称
     private String responsibilityName;
+    // 电脑名称
+    private String ciName;
 }

@@ -110,14 +110,17 @@ public class SysApplyController {
 
         // 遍历每一条flowList，找到每一条的approvalRequest的内容，并拼接为新的List
         List<SysApprovalRequestListVO> newList = new ArrayList<>();
+        SysApprovalRequestModel sysApprovalRequestModel = null;
         for(SysApprovalFlowModel singleOfList : sysApprovalFlowList){
             SysApprovalRequestListVO objects = new SysApprovalRequestListVO();
             Long approvalId = singleOfList.getApprovalId();
-            SysApprovalRequestModel sysApprovalRequestModel = sysApprovalRequestService.getByApprovalId(approvalId);
+            sysApprovalRequestModel = sysApprovalRequestService.getByApprovalId(approvalId);
             // 找到申请人姓名并返回
             String userName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getApplicant());
             String responsibilityName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getResponsibility());
-            objects.setUserName(userName);
+            if(userName != null){
+                objects.setUserName(userName);
+            }
             objects.setResponsibilityName(responsibilityName);
             objects.setApproverId(singleOfList.getApproverId());
             objects.setFlowId(singleOfList.getFlowId());

@@ -19,4 +19,5 @@ public class SysApprovalRequestServiceImpl implements SysApprovalRequestService 
         SysApprovalRequestModel sysApprovalRequestList = sysApplyMapper.getByApprovalId(approvalId);
         return sysApprovalRequestList;
     }
+
 }

@@ -28,4 +28,5 @@ public interface SysApplyMapper {
     SysApprovalRequestModel getByApprovalId(Long approvalId);
 
     void InsertToken(SysApprovalTokenModel sysApprovalTokenModel);
+
 }

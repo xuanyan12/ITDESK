@@ -182,6 +182,11 @@
             {{ getDeviceTypeName(row.deviceType) }}
           </template>
         </el-table-column>
+        <el-table-column label="电脑名称" prop="ciName" width="150">
+          <template #default="{ row }">
+            {{ row.ciName || '申请新电脑' }}
+          </template>
+        </el-table-column>
         <el-table-column label="申请类别" prop="deviceCategory" width="150">
           <template #default="{ row }">
             {{ getApplicationTypeName(row.deviceCategory) }}
@@ -228,7 +233,7 @@
     <el-dialog v-model="applicationDetailDialogVisible" title="申请详情" width="650px">
       <div v-if="currentApplication">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="审批请求ID">{{ currentApplication.approvalId }}</el-descriptions-item>
+          <el-descriptions-item label="需要更换的电脑">{{ currentApplication.ciName || '申请新电脑' }}</el-descriptions-item>
           <el-descriptions-item label="申请人">{{ currentApplication.userName }}</el-descriptions-item>
           <el-descriptions-item label="申请类别">{{ getApplicationTypeName(currentApplication.deviceCategory) }}</el-descriptions-item>
           <el-descriptions-item label="电脑类型">{{ getDeviceTypeName(currentApplication.deviceType) }}</el-descriptions-item>
@@ -275,6 +280,7 @@ export default {
       computerCondition: '新电脑', // 电脑情形，默认新电脑
       companySys: '是（公司系统）', // 公司系统，默认是
       reason: '', // 申请理由
+      ciName: '申请新电脑', // 电脑名称，默认为"申请新电脑"
     });
 
     // 表单验证规则
@@ -404,6 +410,7 @@ export default {
         // 清空电脑列表和选择的电脑
         computerList.value = [];
         selectedComputer.value = '';
+        applicationForm.ciName = '申请新电脑'; // 重置为默认值
         
         // 获取新用户的信息
         Promise.all([
@@ -448,6 +455,7 @@ export default {
         // 清空电脑列表和选择的电脑
         computerList.value = [];
         selectedComputer.value = '';
+        applicationForm.ciName = '申请新电脑'; // 重置为默认值
         
         // 同步获取用户信息和电脑信息
         Promise.all([
@@ -526,6 +534,7 @@ export default {
             deviceSituation: applicationForm.computerCondition, // 电脑情形
             companySystem: companySystemValue, // 公司系统（简化为"是"或"否"）
             reason: applicationForm.reason, // 申请理由
+            ciName: applicationForm.ciName, // 电脑名称
             // 保留原始字段以防万一，但覆盖已转换的值
             ...applicationForm,
             companySys: companySystemValue
@@ -572,6 +581,7 @@ export default {
       applicationForm.user = currentUser.value;
       applicationForm.computerCondition = '新电脑';
       applicationForm.companySys = '是（公司系统）';
+      applicationForm.ciName = '申请新电脑'; // 重置电脑名称为默认值
       // 重新获取当前用户信息
       if (currentUser.value) {
         fetchUserInfo(currentUser.value);
@@ -599,6 +609,7 @@ export default {
         computerCondition: '新电脑', // 电脑情形，默认新电脑
         companySys: '是（公司系统）', // 公司系统，默认是
         reason: '', // 申请理由
+        ciName: '申请新电脑', // 电脑名称，默认为"申请新电脑"
       };
       
       // 使用初始状态替换当前表单内容
@@ -699,6 +710,7 @@ export default {
           // 如果有电脑信息，设置默认选中的电脑
           if (response.data.ciName) {
             selectedComputer.value = response.data.ciName;
+            applicationForm.ciName = response.data.ciName; // 设置申请表单的电脑名称
           }
           
           // 自动填充电脑类型
@@ -898,11 +910,13 @@ export default {
           // 如果有电脑列表，默认选中第一个
           if (response.data.list.length > 0) {
             selectedComputer.value = response.data.list[0];
+            applicationForm.ciName = response.data.list[0]; // 设置申请表单的电脑名称
           }
         } else {
           // 如果没有电脑列表，清空相关数据
           computerList.value = [];
           selectedComputer.value = '';
+          applicationForm.ciName = '申请新电脑'; // 设置为默认值
         }
         return response;
       }).catch(error => {
@@ -913,13 +927,21 @@ export default {
         // 出错时也清空电脑列表和选择的电脑
         computerList.value = [];
         selectedComputer.value = '';
+        applicationForm.ciName = '申请新电脑'; // 设置为默认值
         return Promise.reject(error);
       });
     };
 
     // 处理电脑选择
     const handleComputerSelect = (ciName) => {
-      if (!ciName) return;
+      if (!ciName) {
+        // 如果未选择电脑，设置默认值
+        applicationForm.ciName = '申请新电脑';
+        return;
+      }
+      
+      // 设置选中的电脑名称
+      applicationForm.ciName = ciName;
       
       httpUtil({
         method: 'get',
