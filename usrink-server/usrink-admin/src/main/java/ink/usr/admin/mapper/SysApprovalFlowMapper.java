@@ -37,8 +37,8 @@ public interface SysApprovalFlowMapper {
     /**
      * 更新审批状态
      */
-    @Update("update sys_approval_request set status = #{status}, approvedAt = #{approvedAt}, " +
-            "updatedAt = #{updatedAt}, comment = #{comment} where approvalId = #{approvalId}")
+    @Update("update sys_approval_request set status = #{status}, " +
+            "updatedAt = #{updatedAt} where approvalId = #{approvalId}")
     int updateApprovalStatus(SysApprovalRequestModel requestModel);
     
     /**
@@ -46,4 +46,9 @@ public interface SysApprovalFlowMapper {
      */
     @Update("update sys_approval_flow set status = #{status}, updatedAt = #{updatedAt} where flowId = #{flowId}")
     int updateApprovalFlow(SysApprovalFlowModel flowModel);
+
+
+    String getStatusByAprroval1Id(Long aprrovalId);
+
+    String getStatusByAprroval2Id(Long aprrovalId);
 }

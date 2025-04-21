@@ -32,4 +32,16 @@
             where approvalId = #{approvalId}
         )
     </select>
+
+    <select id="getStatusByAprroval1Id" resultType="String">
+        select status
+        from sys_approval_flow
+        where approverId = #{aprrovalId} and stage = 1
+    </select>
+
+    <select id="getStatusByAprroval2Id" resultType="String">
+        select status
+        from sys_approval_flow
+        where approverId = #{aprrovalId} and stage = 2
+    </select>
 </mapper>

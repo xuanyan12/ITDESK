@@ -3,6 +3,7 @@ package ink.usr.admin.service.Impl;
 import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.mapper.SysApprovalFlowMapper;
+import ink.usr.admin.mapper.SysTokenMapper;
 import ink.usr.admin.service.SysApplyService;
 import ink.usr.admin.service.SysApprovalFlowService;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
@@ -25,6 +26,12 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     @Autowired
     private SysApprovalFlowMapper sysApprovalFlowMapper;
 
+    @Autowired
+    private SysApplyMapper applyMapper;
+
+    @Autowired
+    private SysTokenMapper sysTokenMapper;
+
     @Override
     public List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId) {
         List<SysApprovalFlowModel> FlowList = sysApprovalFlowMapper.getApprovalFlowListByApproverId(approverId);
@@ -35,11 +42,16 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     public SysApproversVO getApproversByAprrovalId(Long aprrovalId) {
         String approver1 = sysApprovalFlowMapper.getApproversByAprroval1Id(aprrovalId);
         String approver2 = sysApprovalFlowMapper.getApproversByAprroval2Id(aprrovalId);
+        String status1 = sysApprovalFlowMapper.getStatusByAprroval1Id(aprrovalId);
+        String status2 = sysApprovalFlowMapper.getStatusByAprroval2Id(aprrovalId);
         String username = sysApprovalFlowMapper.getUserNameByAprrovalId(aprrovalId);
         SysApproversVO sysApproversVO = new SysApproversVO();
         sysApproversVO.setApprover1(approver1);
         sysApproversVO.setApprover2(approver2);
         sysApproversVO.setUsername(username);
+        sysApproversVO.setStatus1(status1);
+        sysApproversVO.setStatus2(status2);
+
         return sysApproversVO;
     }
 
@@ -84,7 +96,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     
     @Override
     @Transactional
-    public boolean updateApprovalStatus(Long flowId, Long requestId, String status, String comment) {
+    public boolean updateApprovalStatus(Long flowId, Long requestId, String status) {
         try {
             // 更新审批状态
             SysApprovalRequestModel requestModel = new SysApprovalRequestModel();
@@ -94,7 +106,6 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             // 设置审批时间
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String approveTime = LocalDateTime.now().format(formatter);
-            requestModel.setCreatedAt(approveTime);
             requestModel.setUpdatedAt(approveTime);
             
             // 更新审批请求状态
@@ -106,8 +117,27 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             flowModel.setStatus(status);
             flowModel.setUpdatedAt(approveTime);
             int flowResult = sysApprovalFlowMapper.updateApprovalFlow(flowModel);
-            
-            return result > 0 && flowResult > 0;
+
+            // 更新token状态
+            int tokenResult = sysTokenMapper.updateTokenByFlowId(flowId);
+
+            // 如果审批流的stage为1，需要发送邮件给stage为2的审批人
+            SysApprovalFlowModel approvalFlow = sysApprovalFlowMapper.getApprovalFlowById(flowId);
+            int stage = approvalFlow.getStage();
+            if(stage==1){
+                // 发邮件给stage为2的审批人(IT)
+                // 1.获得当前审批请求的信息
+                SysApprovalRequestModel approvalRequestModel = applyMapper.getByApprovalId(requestId);
+                // 2.根据1中的信息构造邮件
+
+                // 3.发送邮件
+            }
+
+            if(stage==2){
+                // 告知用户审批完成，进入分配/待分配状态
+
+            }
+            return result > 0 && flowResult > 0 && tokenResult>0;
         } catch (Exception e) {
             throw new RuntimeException("更新审批状态失败", e);
         }

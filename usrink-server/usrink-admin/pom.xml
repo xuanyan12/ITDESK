@@ -62,6 +62,11 @@
             <artifactId>usrink-framework-shiro</artifactId>
         </dependency>
 
+        <!--    邮件模块    -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
 
     </dependencies>
 

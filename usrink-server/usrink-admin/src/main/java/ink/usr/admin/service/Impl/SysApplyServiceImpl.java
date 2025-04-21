@@ -99,6 +99,7 @@ public class SysApplyServiceImpl implements SysApplyService {
         sysApprovalFlowModel4ITApprover.setCreatedAt(createTime);
         sysApprovalFlowModel4ITApprover.setUpdatedAt(createTime);
         sysApplyMapper.addApplyFlow(sysApprovalFlowModel4ITApprover);
+        Long flow2Id = sysApprovalFlowModel4ITApprover.getFlowId();
         //  4.发送邮件给一级审批工作流用户，附带可不登陆直接审批的链接
         //  4.1 生成唯一token并存入
         SysApprovalTokenModel sysApprovalTokenModel = new SysApprovalTokenModel();
@@ -110,7 +111,18 @@ public class SysApplyServiceImpl implements SysApplyService {
         sysApprovalTokenModel.setUpdatedAt(createTime);
         sysApprovalTokenModel.setUsed(0);
 
+        // 生成第二个token
+        SysApprovalTokenModel sysApprovalTokenModel2 = new SysApprovalTokenModel();
+        sysApprovalTokenModel2.setFlowId(flow2Id);
+        String token2 = UUID.randomUUID().toString().replace("-", "");
+        sysApprovalTokenModel2.setToken(token2);
+        sysApprovalTokenModel2.setCreatedAt(createTime);
+        sysApprovalTokenModel2.setExpireTime(timestamp);
+        sysApprovalTokenModel2.setUpdatedAt(createTime);
+        sysApprovalTokenModel2.setUsed(0);
+
         sysApplyMapper.InsertToken(sysApprovalTokenModel);
+        sysApplyMapper.InsertToken(sysApprovalTokenModel2);
         //  4.2 发送邮件
         String url = frontendUrl + "/public-page" + "?flowId=" + flow1Id + "&token=" + token;
         return url;

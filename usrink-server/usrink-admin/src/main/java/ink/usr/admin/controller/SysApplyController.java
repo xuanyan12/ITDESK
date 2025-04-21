@@ -1,7 +1,9 @@
 package ink.usr.admin.controller;
 
 import com.github.pagehelper.Page;
+import ink.usr.admin.config.EmailConfig;
 import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
+import ink.usr.admin.dao.DTO.TempApprovalDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
@@ -45,6 +47,9 @@ public class SysApplyController {
     @Autowired
     private SysUserService sysUserService;
 
+    @Autowired
+    private EmailConfig emailConfig;
+
     /**
      * 根据id获取对应的设备申请列表
      * @return
@@ -85,13 +90,54 @@ public class SysApplyController {
      */
     @RequestMapping("/submitApply")
     public Res submitApply(@RequestBody SysApplyRequestDTO sysApplyRequestDTO){
+        try {
+            //  1.先创建一个request,并创建一个属于部门leader的一级工作流与二级工作流,获得带有唯一标识的url
+            String url = sysApplyService.addApply(sysApplyRequestDTO);
+            
+            // 获取申请人姓名
+            String applicantName = sysUserService.getUserNickNameByUserId(sysApplyRequestDTO.getApplicant());
+            applicantName = applicantName != null ? applicantName : "未知申请人";
+            
+            // 构建邮件内容，包含所有申请信息
+            StringBuilder emailContent = new StringBuilder();
+            emailContent.append("设备申请审批\n\n");
+            emailContent.append("申请人: ").append(applicantName).append("\n");
+            emailContent.append("申请类别: ").append(sysApplyRequestDTO.getDeviceCategory()).append("\n");
+            emailContent.append("电脑类型: ").append(sysApplyRequestDTO.getDeviceType()).append("\n");
+            emailContent.append("成本中心: ").append(sysApplyRequestDTO.getCostCenter()).append("\n");
+            emailContent.append("所属公司: ").append(sysApplyRequestDTO.getCompany()).append("\n");
+            emailContent.append("责任人: ").append(sysUserService.getUserInfoByUserName(sysApplyRequestDTO.getResponsibilityName()).getUserNick()).append("\n");
+            emailContent.append("电脑情形: ").append(sysApplyRequestDTO.getDeviceSituation()).append("\n");
+            emailContent.append("公司系统: ").append(sysApplyRequestDTO.getCompanySystem()).append("\n");
+            emailContent.append("申请理由: ").append(sysApplyRequestDTO.getReason()).append("\n");
+            
+            if (sysApplyRequestDTO.getCiName() != null && !sysApplyRequestDTO.getCiName().isEmpty()) {
+                emailContent.append("需要更换的电脑: ").append(sysApplyRequestDTO.getCiName()).append("\n");
+            }
+            
+            emailContent.append("\n请点击以下链接进行审批: \n").append(url);
 
-        //  1.先创建一个request,并创建一个属于部门leader的一级工作流与二级工作流,获得带有唯一标识的url
-        String url = sysApplyService.addApply(sysApplyRequestDTO);
-        //  2.发送带有唯一标识的邮件
-        //  3.再创建一个属于IT部门审批者的二级工作流
-        //  4.再通过邮件发送链接给对应的审批者进行审批(一级工作流审批者),一级通过后触发邮件给二级审批者
-        return Res.success();
+            // 发邮件给一级审批人
+            // 1.获取一级审批人id
+            Long approverId = sysApproverService.getApproverId(sysApplyRequestDTO.getApplicant());
+            // 2.根据审批人id获取邮箱
+            String email = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(approverId)).getEmail();
+            String approverEmail = email;
+            
+            // 组装邮件主题
+            String emailSubject = String.format("设备申请审批 - %s - %s", applicantName, sysApplyRequestDTO.getDeviceCategory());
+            
+            // 发送邮件
+            emailConfig.sendMail(approverEmail, emailSubject, emailContent.toString());
+            log.info("邮件发送成功，发送给：{}", approverEmail);
+            
+            return Res.success("申请提交成功，已发送审批邮件");
+        } catch (Exception e) {
+            log.error("申请提交失败", e);
+            return Res.error("申请提交失败: " + e.getMessage());
+        }
+        //  3.再通过邮件发送链接给对应的审批者进行审批(一级工作流审批者),一级通过后触发邮件给二级审批者
+//        return Res.success();
     }
 
     /**
@@ -173,7 +219,7 @@ public class SysApplyController {
             }
             
             // 获取申请详情
-            SysApprovalRequestModel requestModel = sysApprovalRequestService.getByApprovalId(flowModel.getApprovalId());
+            SysApprovalRequestListVO requestModel = sysApprovalRequestService.getInfoByApprovalId(flowModel.getApprovalId());
             if (requestModel == null) {
                 return Res.error("未找到申请详情");
             }
@@ -189,37 +235,44 @@ public class SysApplyController {
      * 提交临时审批结果
      * @return
      */
-//    @RequestMapping("/submitTempApproval")
-//    public Res submitTempApproval(@RequestBody Dict params) {
-//        Long flowId = params.getLong("flowId");
-//        String token = params.getStr("token");
-//        Long id = params.getLong("id");
-//        String status = params.getStr("status");
-//        String comment = params.getStr("comment");
-//
-//        if (flowId == null || token == null || token.isEmpty() || id == null || status == null) {
-//            return Res.error("审批参数不完整");
-//        }
-//
-//        try {
-//            // 验证token是否有效
-//            boolean isValidToken = sysApprovalFlowService.validateApprovalToken(flowId, token);
-//            if (!isValidToken) {
-//                return Res.error("凭证为空或凭证过期，请重新登录！");
-//            }
-//
-//            // 更新审批状态
-//            boolean result = sysApprovalFlowService.updateApprovalStatus(flowId, id, status, comment);
-//            if (!result) {
-//                return Res.error("审批操作失败");
-//            }
-//
-//            return Res.success("审批操作成功");
-//        } catch (Exception e) {
-//            log.error("提交临时审批结果失败", e);
-//            return Res.error("提交审批结果失败：" + e.getMessage());
-//        }
-//    }
+    @RequestMapping("/submitTempApproval")
+    public Res submitTempApproval(@RequestBody TempApprovalDTO tempApprovalDTO) {
+        Long flowId = tempApprovalDTO.getFlowId();
+        String token = tempApprovalDTO.getToken();
+        Long id = tempApprovalDTO.getId();
+        String status = tempApprovalDTO.getStatus();
+
+        if (flowId == null || token == null || token.isEmpty() || id == null || status == null) {
+            return Res.error("审批参数不完整");
+        }
+
+        // 验证状态值是否合法
+        if (!status.equals("审批通过") && !status.equals("审批不通过")) {
+            return Res.error("审批状态值不合法");
+        }
+
+        try {
+            // 验证token是否有效
+            boolean isValidToken = sysApprovalFlowService.validateApprovalToken(flowId, token);
+            if (!isValidToken) {
+                return Res.error("凭证为空或凭证过期，请重新登录！");
+            }
+
+            // 将前端传来的状态值转换为数据库中使用的状态值
+            String dbStatus = status.equals("审批通过") ? "审批通过" : "审批不通过";
+
+            // 更新审批状态
+            boolean result = sysApprovalFlowService.updateApprovalStatus(flowId, id, dbStatus);
+            if (!result) {
+                return Res.error("审批操作失败");
+            }
+
+            return Res.success("审批操作成功");
+        } catch (Exception e) {
+            log.error("提交临时审批结果失败", e);
+            return Res.error("提交审批结果失败：" + e.getMessage());
+        }
+    }
 
     /**
      * 根据userName找到用户信息

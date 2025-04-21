@@ -1,12 +1,10 @@
 package ink.usr.admin.dao.VO;
 
 import ink.usr.common.model.mysql.SysControlModel;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.logging.log4j.util.Strings;
 
 import java.util.List;
 
@@ -20,5 +18,9 @@ public class SysApproversVO {
     private String approver1;
     // approver2
     private String approver2;
+    // status1
+    private String status1;
+    // status2
+    private String status2;
 
 }

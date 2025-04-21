@@ -78,9 +78,25 @@ public interface ISysUserService {
      */
     String getNameByUserId(Long userId);
 
+    /**
+     * 通过userName获取用户信息
+     * @param userName
+     * @return
+     */
     SysUserModel getUserInfoByUserName(String userName);
 
+    /**
+     * 通过userId获取用户的名称（nickName）
+     * @param userId
+     * @return
+     */
     String getUserNickNameByUserId(Long userId);
 
+    /**
+     * 通过userName获取userId
+     * @param responsibilityName
+     * @return
+     */
     Long getUserIdByUserName(String responsibilityName);
+
 }
