@@ -98,18 +98,12 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     @Transactional
     public boolean updateApprovalStatus(Long flowId, Long requestId, String status) {
         try {
-            // 更新审批状态
-            SysApprovalRequestModel requestModel = new SysApprovalRequestModel();
-            requestModel.setApprovalId(requestId);
-            requestModel.setStatus(status);
-            
             // 设置审批时间
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String approveTime = LocalDateTime.now().format(formatter);
-            requestModel.setUpdatedAt(approveTime);
-            
-            // 更新审批请求状态
-            int result = sysApprovalFlowMapper.updateApprovalStatus(requestModel);
+
+            // result定义
+            int result = 0;
             
             // 更新审批流状态
             SysApprovalFlowModel flowModel = new SysApprovalFlowModel();
@@ -125,6 +119,16 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             SysApprovalFlowModel approvalFlow = sysApprovalFlowMapper.getApprovalFlowById(flowId);
             int stage = approvalFlow.getStage();
             if(stage==1){
+                // 如果为审批不通过，直接修改request
+                if(status=="审批不通过"){
+                    SysApprovalRequestModel requestModel = new SysApprovalRequestModel();
+                    requestModel.setApprovalId(requestId);
+                    requestModel.setStatus(status);
+                    requestModel.setUpdatedAt(approveTime);
+                    result = sysApprovalFlowMapper.updateApprovalStatus(requestModel);
+                    return result > 0 && flowResult > 0 && tokenResult>0;
+                }
+
                 // 发邮件给stage为2的审批人(IT)
                 // 1.获得当前审批请求的信息
                 SysApprovalRequestModel approvalRequestModel = applyMapper.getByApprovalId(requestId);
@@ -134,10 +138,18 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             }
 
             if(stage==2){
+                // 更新审批请求状态
+                SysApprovalRequestModel requestModel = new SysApprovalRequestModel();
+                requestModel.setApprovalId(requestId);
+                requestModel.setStatus(status);
+                requestModel.setUpdatedAt(approveTime);
+                result = sysApprovalFlowMapper.updateApprovalStatus(requestModel);
                 // 告知用户审批完成，进入分配/待分配状态
 
+
+                return result > 0 && flowResult > 0 && tokenResult>0;
             }
-            return result > 0 && flowResult > 0 && tokenResult>0;
+            return flowResult > 0 && tokenResult>0;
         } catch (Exception e) {
             throw new RuntimeException("更新审批状态失败", e);
         }

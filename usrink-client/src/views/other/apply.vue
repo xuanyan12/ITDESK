@@ -172,17 +172,30 @@
 
     <!-- 申请状态显示 -->
     <el-card shadow="never" class="usr_card_override top" style="margin-top: 20px;">
-      <h3>我的申请状态</h3>
-      <el-table :data="applicationList" :loading="loading" style="width: 100%;">
-        <el-table-column label="申请时间" prop="createdAt" width="150"></el-table-column>
-        <el-table-column label="使用人" prop="userName" width="100"></el-table-column>
-        <el-table-column label="责任人" prop="responsibilityName" width="100"></el-table-column>
+      <div class="table-header">
+        <h3>我的申请状态</h3>
+        <el-button type="primary" size="small" @click="refreshApplyList">
+          <i class="el-icon-refresh"></i> 刷新
+        </el-button>
+      </div>
+      <el-table 
+        :data="paginatedList" 
+        :loading="loading" 
+        style="width: 100%;"
+        border
+        stripe
+        row-key="approvalId"
+        highlight-current-row
+        class="application-table">
+        <el-table-column label="申请时间" prop="createdAt" width="140"></el-table-column>
+        <el-table-column label="使用人" prop="userName" width="85"></el-table-column>
+        <el-table-column label="责任人" prop="responsibilityName" width="85"></el-table-column>
         <el-table-column label="电脑类型" prop="deviceType" width="150">
           <template #default="{ row }">
             {{ getDeviceTypeName(row.deviceType) }}
           </template>
         </el-table-column>
-        <el-table-column label="电脑名称" prop="ciName" width="150">
+        <el-table-column label="电脑名称" prop="ciName" width="140">
           <template #default="{ row }">
             {{ row.ciName || '申请新电脑' }}
           </template>
@@ -193,34 +206,87 @@
           </template>
         </el-table-column>
         <el-table-column label="申请理由" prop="reason" show-overflow-tooltip></el-table-column>
-        <el-table-column label="更新时间" prop="updatedAt" width="150"></el-table-column>
-        <el-table-column label="状态" prop="status" width="100">
+        <el-table-column label="更新时间" prop="updatedAt" width="140"></el-table-column>
+        <el-table-column label="状态" prop="status" width="130">
           <template #default="{ row }">
-            <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
-              {{ row.status }}
-            </el-tag>
+            <div style="text-align: center;">
+              <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
+                {{ row.status }}
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" text @click="viewApplicationDetails(row)">查看详情</el-button>
+            <div style="text-align: center;">
+              <el-button type="primary" text @click="viewApplicationDetails(row)">查看详情</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
+      
+      <!-- 分页组件 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :small="false"
+          :disabled="loading"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalItems"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
     <!-- 审批进度弹窗 -->
     <el-dialog v-model="approvalProgressDialogVisible" title="审批进度" width="700px">
-      <div v-if="approvalProgress" class="approval-progress-container">
-        <el-steps :active="approvalProgressStep" finish-status="success" align-center>
+      <div v-if="approvalProgress" class="approval-progress-container custom-steps">
+        <el-steps :active="approvalProgressStep" :process-status="getProcessStatus()" align-center>
           <el-step 
             v-for="(step, index) in approvalProgress" 
             :key="index" 
             :title="step.title" 
-            :status="getStepStatus(index, step.title)"
-            :description="step.description">
+            :status="getStepStatus(index)"
+            :class="{'final-step': index === approvalProgress.length - 1}">
+            <template #description>
+              <div class="step-description">
+                <div>{{ step.description }}</div>
+                <div v-if="index === 1 && step.status" class="step-status" 
+                  :class="{
+                    'error-status': step.status === '审批不通过',
+                    'success-status': step.status === '审批通过',
+                    'warning-status': step.status.includes('上一级审批不通过')
+                  }">
+                  {{ step.status }}
+                </div>
+                <div v-if="index === 2 && step.status" class="step-status" 
+                  :class="{
+                    'error-status': step.status === '审批不通过',
+                    'success-status': step.status === '审批通过',
+                    'warning-status': step.status.includes('上一级审批不通过')
+                  }">
+                  {{ step.status }}
+                </div>
+              </div>
+            </template>
           </el-step>
         </el-steps>
+        
+        <!-- 状态详情 -->
+        <div class="approval-status-detail" v-if="currentApplication">
+          <div class="status-box" :class="getStatusClass(currentApplication.status)">
+            <div class="status-icon">
+              <i :class="getStatusIcon(currentApplication.status)"></i>
+            </div>
+            <div class="status-text">
+              当前状态: <span class="status-value">{{ currentApplication.status }}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -315,6 +381,12 @@ export default {
     // 电脑下拉选择相关
     const computerList = ref([]);
     const selectedComputer = ref('');
+
+    // 分页相关
+    const currentPage = ref(1);
+    const pageSize = ref(10);
+    const totalItems = ref(0);
+    const paginatedList = ref([]);
 
     // 获取用户信息（成本中心、所属公司、责任人）
     const fetchUserInfo = (userName) => {
@@ -496,10 +568,19 @@ export default {
     // 获取申请列表
     const getApplyList = () => {
       loading.value = true;
-      httpUtil.post("/sysApply/getApplyList").then(res => {
+      // 构建请求参数，使用后端期望的参数名称
+      const params = {
+        pageNum: currentPage.value,  // 当前页码
+        pageSize: pageSize.value     // 每页条数
+      };
+      
+      httpUtil.post("/sysApply/getApplyList", params).then(res => {
         applicationList.value = res.data.list || [];
+        totalItems.value = res.data.total || 0;
+        paginatedList.value = applicationList.value;
       }).catch(err => {
         console.error("获取申请列表失败:", err);
+        ElMessage.error("获取申请列表失败");
       }).finally(() => {
         loading.value = false;
       });
@@ -552,6 +633,9 @@ export default {
               message: '申请提交成功'
             });
             resetForm();
+            // 重置分页到第一页
+            currentPage.value = 1;
+            // 刷新列表数据
             getApplyList();
           }).catch(err => {
             console.error("提交申请失败:", err);
@@ -626,16 +710,82 @@ export default {
 
     // 查看审批进度
     const viewApprovalProgress = (row) => {
+      currentApplication.value = row; // 设置当前应用
+      
       httpUtil.get("/sysApply/getApproversByAprrovalId", {
         params: { approvalId: row.approvalId }
       }).then(res => {
         const flowRoles = res.data.list;
+        const status1 = flowRoles.status1 || '';
+        const status2 = flowRoles.status2 || '';
+        
+        // 检查是否符合"status1为审批不通过，且status2为审批中"的条件
+        let status2Display = flowRoles.status2 || '待审批';
+        if (status1 === '审批不通过' && (status2 === '审批中' || status2 === '待审批')) {
+          status2Display = '上一级审批不通过，审批流程终止';
+        }
+        
         approvalProgress.value = [
-          { title: '已提交', description: flowRoles.username || '未知用户' },
-          { title: '审批中', description: flowRoles.approver1 || '暂无审批' },
-          { title: '审核中', description: flowRoles.approver2 || '暂无批准' }
+          { 
+            title: '已提交',
+            description: flowRoles.username || '未知用户',
+            status: '已提交'
+          },
+          { 
+            title: '审批人1', 
+            description: flowRoles.approver1 || '暂无审批',
+            status: flowRoles.status1 || '待审批'
+          },
+          { 
+            title: '审批人2', 
+            description: flowRoles.approver2 || '暂无批准',
+            status: status2Display
+          },
+          { 
+            title: '完成', 
+            description: row.status || '处理中',
+            status: row.status || '处理中'
+          }
         ];
-        approvalProgressStep.value = getApprovalStep(row.status);
+        
+        // 根据status1和status2确定当前的活跃步骤
+        
+        // 根据规则设置活跃步骤
+        let activeStep = 0;
+        
+        // 1. status1为待审批时，step置为1（当前活跃节点为第二个节点——审批人1）
+        if (status1 === '待审批' || status1 === '审批中') {
+          activeStep = 1;
+        }
+        // 2. status1为审批通过，status2为待审批时，step置为2（当前活跃节点为第三个节点——审批人2）
+        else if (status1 === '审批通过' && (status2 === '待审批' || status2 === '审批中')) {
+          activeStep = 2;
+        }
+        // 3. status1，status2均为审批通过时，step置为3（当前活跃节点为第四个节点——完成）
+        else if (status1 === '审批通过' && status2 === '审批通过') {
+          activeStep = 3;
+        }
+        // 4. status1为审批通过，status2为审批不通过时，step置为3（当前活跃节点为第四个节点——完成）
+        else if (status1 === '审批通过' && status2 === '审批不通过') {
+          activeStep = 3;
+        }
+        // 5. status1为审批不通过，step直接置为3（当前活跃节点为第四个节点——完成）
+        else if (status1 === '审批不通过') {
+          activeStep = 3;
+        }
+        // 兼容旧状态值
+        else if (row.status === '审批通过' || row.status === '已通过') {
+          activeStep = 3;
+        }
+        else if (row.status === '审批不通过' || row.status === '已驳回') {
+          activeStep = 3;
+        }
+        // 默认状态设置为已提交
+        else {
+          activeStep = 0;
+        }
+        
+        approvalProgressStep.value = activeStep;
         approvalProgressDialogVisible.value = true;
       }).catch(err => {
         console.error("获取审批进度失败:", err);
@@ -646,12 +796,82 @@ export default {
       });
     };
 
+    // 获取步骤状态
+    const getStepStatus = (index) => {
+      const status = currentApplication.value?.status || '';
+      const currentStep = approvalProgressStep.value;
+      const isLastStep = index === approvalProgress.value.length - 1;
+      
+      // 从审批数据中获取状态信息
+      let status1 = '';
+      let status2 = '';
+      
+      if (approvalProgress.value && approvalProgress.value.length > 1) {
+        status1 = approvalProgress.value[1].status || '';
+        if (approvalProgress.value.length > 2) {
+          status2 = approvalProgress.value[2].status || '';
+        }
+      }
+      
+      // 检查是否有任何拒绝状态
+      const hasRejection = status1 === '审批不通过' || status2 === '审批不通过' || 
+                          status === '审批不通过' || status === '已驳回';
+                          
+      // 如果有任何拒绝状态，确定当前拒绝的节点
+      if (hasRejection) {
+        // 找出哪个节点拒绝了
+        const rejectionNodeIndex = status1 === '审批不通过' ? 1 : 
+                                 status2 === '审批不通过' ? 2 : 3;
+        
+        // 如果是最终节点，总是显示为错误
+        if (isLastStep) {
+          return 'error';
+        }
+        // 如果是拒绝的节点，显示为错误
+        else if (index === rejectionNodeIndex) {
+          return 'error';
+        }
+        // 如果是拒绝节点之后的节点，也显示为错误
+        else if (index > rejectionNodeIndex) {
+          return 'error';
+        }
+        // 如果是拒绝节点之前的节点，保持成功
+        else {
+          return 'success';
+        }
+      }
+      // 审批通过时的逻辑
+      else if ((status1 === '审批通过' && status2 === '审批通过') || 
+               status === '审批通过' || status === '已通过') {
+        return 'success';
+      }
+      // 处理中的状态
+      else {
+        // 已完成的步骤
+        if (index < currentStep) {
+          return 'success';
+        }
+        // 当前步骤
+        else if (index === currentStep) {
+          return 'process';
+        }
+        // 未完成的步骤
+        else {
+          return 'wait';
+        }
+      }
+    };
+
     // 获取审批步骤
     const getApprovalStep = (status) => {
       switch (status) {
         case '已提交': return 0;
         case '审批中': return 1;
         case '审核中': return 2;
+        case '审批通过': return 3;
+        case '审批不通过': return 3;
+        case '已通过': return 3; // 兼容旧数据
+        case '已驳回': return 3; // 兼容旧数据
         default: return 0;
       }
     };
@@ -661,7 +881,9 @@ export default {
       switch (status) {
         case '审批中': return 'warning';
         case '审批通过': return 'success';
-        case '审批驳回': return 'danger';
+        case '审批不通过': return 'danger';
+        case '已通过': return 'success'; // 兼容旧数据
+        case '已驳回': return 'danger'; // 兼容旧数据
         default: return 'info';
       }
     };
@@ -883,15 +1105,88 @@ export default {
     const applicationDetailDialogVisible = ref(false);
     const currentApplication = ref(null);
 
-    // 获取步骤状态
-    const getStepStatus = (index, title) => {
-      if (index < approvalProgressStep.value) {
+    // 获取处理状态样式
+    const getProcessStatus = () => {
+      const status = currentApplication.value?.status || '';
+      
+      // 尝试从流程数据中获取审批状态
+      let status1 = '';
+      let status2 = '';
+      
+      if (approvalProgress.value && approvalProgress.value.length > 1) {
+        status1 = approvalProgress.value[1].status || '';
+        if (approvalProgress.value.length > 2) {
+          status2 = approvalProgress.value[2].status || '';
+        }
+      }
+      
+      // 如果任一审批者拒绝，返回错误状态
+      if (status1 === '审批不通过' || status2 === '审批不通过' || 
+          status === '审批不通过' || status === '已驳回') {
+        return 'error';
+      }
+      
+      // 如果所有审批者都通过，返回成功状态
+      else if ((status1 === '审批通过' && status2 === '审批通过') || 
+               status === '审批通过' || status === '已通过') {
         return 'success';
-      } else if (index === approvalProgressStep.value) {
-        // 如果当前步骤是"审批中"，返回处理中状态
-        return title === '审批中' ? 'process' : 'wait';
-      } else {
-        return 'wait';
+      }
+      
+      // 其他情况返回处理中状态
+      else {
+        return 'process';
+      }
+    };
+
+    // 处理页面大小变化
+    const handleSizeChange = (newSize) => {
+      pageSize.value = newSize;
+      currentPage.value = 1; // 重置为第一页
+      getApplyList(); // 重新获取数据
+    };
+
+    // 处理当前页变化
+    const handleCurrentChange = (newPage) => {
+      currentPage.value = newPage;
+      getApplyList(); // 重新获取数据
+    };
+
+    // 刷新申请列表
+    const refreshApplyList = () => {
+      getApplyList();
+    };
+
+    // 获取状态对应的CSS类名
+    const getStatusClass = (status) => {
+      switch (status) {
+        case '审批通过':
+        case '已通过':
+          return 'status-success';
+        case '审批不通过':
+        case '已驳回':
+          return 'status-error';
+        case '审批中':
+        case '待审批':
+          return 'status-process';
+        default:
+          return 'status-info';
+      }
+    };
+
+    // 获取状态对应的图标
+    const getStatusIcon = (status) => {
+      switch (status) {
+        case '审批通过':
+        case '已通过':
+          return 'el-icon-check-circle';
+        case '审批不通过':
+        case '已驳回':
+          return 'el-icon-close-circle';
+        case '审批中':
+        case '待审批':
+          return 'el-icon-loading';
+        default:
+          return 'el-icon-info-circle';
       }
     };
 
@@ -1091,9 +1386,21 @@ export default {
       computerList,
       selectedComputer,
       handleComputerSelect,
-      // 审批进度相关
+      // 分页相关
+      currentPage,
+      pageSize,
+      totalItems,
+      paginatedList,
+      handleSizeChange,
+      handleCurrentChange,
+      // 刷新申请列表
+      refreshApplyList,
+      // 状态和步骤相关
       getApprovalStep,
-      getStepStatus
+      getStepStatus,
+      getStatusClass,
+      getStatusIcon,
+      getProcessStatus
     };
   }
 };
@@ -1257,6 +1564,43 @@ export default {
   font-size: 16px;
 }
 
+/* 最终节点样式 */
+.final-step:deep(.el-step__head.is-success) {
+  color: #409EFF;
+  border-color: #409EFF;
+}
+
+.final-step:deep(.el-step__head.is-success .el-step__icon) {
+  background-color: #409EFF;
+  color: #fff;
+}
+
+.final-step:deep(.el-step__title.is-success) {
+  color: #409EFF;
+}
+
+.final-step:deep(.el-step__description.is-success) {
+  color: #409EFF;
+}
+
+.final-step:deep(.el-step__head.is-error) {
+  color: #F56C6C;
+  border-color: #F56C6C;
+}
+
+.final-step:deep(.el-step__head.is-error .el-step__icon) {
+  background-color: #F56C6C;
+  color: #fff;
+}
+
+.final-step:deep(.el-step__title.is-error) {
+  color: #F56C6C;
+}
+
+.final-step:deep(.el-step__description.is-error) {
+  color: #F56C6C;
+}
+
 /* 对话框标题样式 */
 :deep(.el-dialog__title) {
   font-size: 18px;
@@ -1290,5 +1634,237 @@ export default {
 
 .title-with-select h3 {
   margin: 0;
+}
+
+/* 状态详情样式 */
+.approval-status-detail {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.status-box {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #909399;
+}
+
+.status-success {
+  border-left-color: #67c23a;
+  background-color: rgba(103, 194, 58, 0.1);
+}
+
+.status-error {
+  border-left-color: #f56c6c;
+  background-color: rgba(245, 108, 108, 0.1);
+}
+
+.status-process {
+  border-left-color: #409EFF;
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+.status-info {
+  border-left-color: #909399;
+  background-color: rgba(144, 147, 153, 0.1);
+}
+
+.status-icon {
+  font-size: 28px;
+  margin-right: 16px;
+}
+
+.status-success .status-icon {
+  color: #67c23a;
+}
+
+.status-error .status-icon {
+  color: #f56c6c;
+}
+
+.status-process .status-icon {
+  color: #409EFF;
+}
+
+.status-text {
+  font-size: 16px;
+  color: #606266;
+}
+
+.status-value {
+  font-weight: bold;
+  font-size: 16px;
+  color: #303133;
+}
+
+.status-success .status-value {
+  color: #67c23a;
+}
+
+.status-error .status-value {
+  color: #f56c6c;
+}
+
+.status-process .status-value {
+  color: #409EFF;
+}
+
+/* 分页组件样式 */
+.pagination-container {
+  margin-top: 20px;
+  padding: 10px 0;
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 15px;
+}
+
+.pagination-container:deep(.el-pagination) {
+  padding: 0;
+  margin: 0;
+  font-weight: normal;
+}
+
+.pagination-container:deep(.el-pagination__total) {
+  margin-right: 16px;
+  color: #606266;
+}
+
+.pagination-container:deep(.el-pagination__sizes) {
+  margin-right: 16px;
+}
+
+.pagination-container:deep(.el-pagination .el-select .el-input) {
+  width: 110px;
+}
+
+.pagination-container:deep(.el-pagination .btn-prev),
+.pagination-container:deep(.el-pagination .btn-next) {
+  background-color: #f4f4f5;
+  border-radius: 4px;
+  margin: 0 5px;
+}
+
+.pagination-container:deep(.el-pagination .el-pager li) {
+  margin: 0 2px;
+  background-color: #f4f4f5;
+  border-radius: 4px;
+  color: #606266;
+}
+
+.pagination-container:deep(.el-pagination .el-pager li.active) {
+  background-color: #409EFF;
+  color: #ffffff;
+}
+
+/* 表格样式 */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #303133;
+}
+
+.application-table {
+  margin-bottom: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.application-table:deep(.el-table__row) {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.application-table:deep(.el-table__row:hover) {
+  background-color: #f0f7ff !important;
+}
+
+.application-table:deep(.el-table__header-wrapper) {
+  background-color: #f5f7fa;
+}
+
+.application-table:deep(.el-table__header) {
+  background-color: #f5f7fa;
+}
+
+.application-table:deep(.el-table__header th) {
+  background-color: #f5f7fa;
+  color: #606266;
+  font-weight: bold;
+  padding: 12px 0;
+}
+
+/* 步骤描述样式 */
+.step-description {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+  min-height: 40px;
+}
+
+.step-status {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #409EFF;
+  background-color: rgba(64, 158, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.error-status {
+  color: #F56C6C;
+  background-color: rgba(245, 108, 108, 0.1);
+}
+
+.success-status {
+  color: #67C23A;
+  background-color: rgba(103, 194, 58, 0.1);
+}
+
+.warning-status {
+  color: #E6A23C;
+  background-color: rgba(230, 162, 60, 0.1);
+}
+
+/* 自定义步骤线样式 */
+.custom-steps:deep(.el-step__line) {
+  background-color: #dcdfe6 !important; /* 统一设置为灰色 */
+}
+
+/* 覆盖不同状态下的连接线样式 */
+.custom-steps:deep(.el-step__line-inner) {
+  border-color: #dcdfe6 !important;
+  background-color: #dcdfe6 !important;
+}
+
+.custom-steps:deep(.el-step.is-success .el-step__line),
+.custom-steps:deep(.el-step.is-process .el-step__line),
+.custom-steps:deep(.el-step.is-error .el-step__line),
+.custom-steps:deep(.el-step.is-wait .el-step__line) {
+  background-color: #dcdfe6 !important;
+}
+
+.custom-steps:deep(.el-step.is-success .el-step__line-inner),
+.custom-steps:deep(.el-step.is-process .el-step__line-inner),
+.custom-steps:deep(.el-step.is-error .el-step__line-inner),
+.custom-steps:deep(.el-step.is-wait .el-step__line-inner) {
+  border-color: #dcdfe6 !important;
+  background-color: #dcdfe6 !important;
 }
 </style>

@@ -223,7 +223,7 @@ public class SysApplyController {
             if (requestModel == null) {
                 return Res.error("未找到申请详情");
             }
-            
+            requestModel.setStatus(flowModel.getStatus());
             return Res.success(requestModel);
         } catch (Exception e) {
             log.error("获取临时审批信息失败", e);
