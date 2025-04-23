@@ -37,7 +37,7 @@ const queryForm = ref({
     assetsNo: '',
     temp: '',
     pageNum: 1,
-    pageSize: 6
+    pageSize: 10
 })
 
 const editPartForm = ref({
@@ -77,7 +77,7 @@ const deletePartForm = ref([])
 const loading = ref(false)
 const total = ref(0)
 const pageNum = ref(1)
-const pageSize = ref(6)
+const pageSize = ref(10)
 const partList = ref([])
 const editPartDialogVisible = ref(false);
 const deletePartDialogVisible = ref(false);
@@ -594,56 +594,175 @@ const deletePart = () => {
 
 
             <!-- 编辑设备弹窗 -->
-            <el-dialog v-model="editPartDialogVisible" title="编辑设备">
+            <el-dialog v-model="editPartDialogVisible" title="编辑设备" width="80%">
                 <el-form :model="editPartForm" ref="editPartFormRef" label-width="100px">
-                    <el-form-item label="NT账号" prop="ntAccount" :rules="[{ required: true, message: '请输入NT账号', trigger: 'blur' }]">
-                        <el-input v-model="editPartForm.ntAccount"></el-input>
-                    </el-form-item>
-                    <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
-                        <el-input v-model="editPartForm.pcClass"></el-input>
-                    </el-form-item>
-                    <el-form-item label="电脑状态" prop="pcStatus" :rules="[{ required: true, message: '请选择状态', trigger: 'blur' }]">
-                        <el-select v-model="editPartForm.pcStatus">
-                            <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
-                            <el-option label="IN USE" value="IN USE"></el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="CPU" prop="cpu">
-                        <el-input v-model="editPartForm.cpu"></el-input>
-                    </el-form-item>
-                    <el-form-item label="内存" prop="memory">
-                        <el-input v-model="editPartForm.memory"></el-input>
-                    </el-form-item>
-                    <el-form-item label="硬盘" prop="disk">
-                        <el-input v-model="editPartForm.disk"></el-input>
-                    </el-form-item>
-                    <el-form-item label="显卡" prop="graphic">
-                        <el-input v-model="editPartForm.graphic"></el-input>
-                    </el-form-item>
-                    <el-form-item label="硬件状态" prop="hardwareStatus">
-                        <el-input v-model="editPartForm.hardwareStatus"></el-input>
-                    </el-form-item>
-                    <el-form-item label="下单号" prop="pr">
-                        <el-input v-model="editPartForm.pr"></el-input>
-                    </el-form-item>
-                    <el-form-item label="订单号" prop="po">
-                        <el-input v-model="editPartForm.po"></el-input>
-                    </el-form-item>
-                    <el-form-item label="供应商公司" prop="vendor">
-                        <el-input v-model="editPartForm.vendor"></el-input>
-                    </el-form-item>
-                    <el-form-item label="公司" prop="company">
-                        <el-input v-model="editPartForm.company"></el-input>
-                    </el-form-item>
-                    <el-form-item label="资产号" prop="assetsNo">
-                        <el-input v-model="editPartForm.assetsNo"></el-input>
-                    </el-form-item>
-                    <el-form-item label="临时分配" prop="temp">
-                        <el-select v-model="editPartForm.temp">
-                            <el-option label="否" :value="0"></el-option>
-                            <el-option label="是" :value="1"></el-option>
-                        </el-select>
-                    </el-form-item>
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="电脑名称" prop="ciName">
+                                <el-input v-model="editPartForm.ciName"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="电脑状态" prop="pcStatus" :rules="[{ required: true, message: '请选择状态', trigger: 'blur' }]">
+                                <el-select v-model="editPartForm.pcStatus" style="width: 100%">
+                                    <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
+                                    <el-option label="IN USE" value="IN USE"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="NT账号" prop="ntAccount" :rules="[{ required: true, message: '请输入NT账号', trigger: 'blur' }]">
+                                <el-input v-model="editPartForm.ntAccount"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
+                                <el-input v-model="editPartForm.pcClass"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="设备类型" prop="deviceClass">
+                                <el-input v-model="editPartForm.deviceClass"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="电脑序列号" prop="serialNumber">
+                                <el-input v-model="editPartForm.serialNumber"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="制造商" prop="manufacture">
+                                <el-input v-model="editPartForm.manufacture"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="电脑型号" prop="modelOrVersion">
+                                <el-input v-model="editPartForm.modelOrVersion"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="备注" prop="comment">
+                                <el-input v-model="editPartForm.comment"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="姓" prop="lastName">
+                                <el-input v-model="editPartForm.lastName"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="名" prop="firstName">
+                                <el-input v-model="editPartForm.firstName"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="邮箱地址" prop="emailAddress">
+                                <el-input v-model="editPartForm.emailAddress"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="电话号码" prop="telephone">
+                                <el-input v-model="editPartForm.telephone"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="所属部门" prop="department">
+                                <el-input v-model="editPartForm.department"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="成本中心" prop="costCenter">
+                                <el-input v-model="editPartForm.costCenter"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="出厂时间" prop="lifeCycleStart">
+                                <el-input v-model="editPartForm.lifeCycleStart"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="CPU" prop="cpu">
+                                <el-input v-model="editPartForm.cpu"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="内存" prop="memory">
+                                <el-input v-model="editPartForm.memory"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="硬盘" prop="disk">
+                                <el-input v-model="editPartForm.disk"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="显卡" prop="graphic">
+                                <el-input v-model="editPartForm.graphic"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="硬件状态" prop="hardwareStatus">
+                                <el-input v-model="editPartForm.hardwareStatus"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="下单号" prop="pr">
+                                <el-input v-model="editPartForm.pr"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="订单号" prop="po">
+                                <el-input v-model="editPartForm.po"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="供应商公司" prop="vendor">
+                                <el-input v-model="editPartForm.vendor"></el-input>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="公司" prop="company">
+                                <el-input v-model="editPartForm.company"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="资产号" prop="assetsNo">
+                                <el-input v-model="editPartForm.assetsNo"></el-input>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="临时分配" prop="temp">
+                                <el-select v-model="editPartForm.temp" style="width: 100%">
+                                    <el-option label="否" :value="0"></el-option>
+                                    <el-option label="是" :value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
                 </el-form>
                 <template #footer>
                     <el-button @click="editPartDialogVisible = false">取 消</el-button>
