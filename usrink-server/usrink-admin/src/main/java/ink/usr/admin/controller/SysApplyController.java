@@ -129,15 +129,12 @@ public class SysApplyController {
             
             // 发送邮件
             emailConfig.sendMail(approverEmail, emailSubject, emailContent.toString());
-            log.info("邮件发送成功，发送给：{}", approverEmail);
             
             return Res.success("申请提交成功，已发送审批邮件");
         } catch (Exception e) {
             log.error("申请提交失败", e);
             return Res.error("申请提交失败: " + e.getMessage());
         }
-        //  3.再通过邮件发送链接给对应的审批者进行审批(一级工作流审批者),一级通过后触发邮件给二级审批者
-//        return Res.success();
     }
 
     /**

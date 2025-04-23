@@ -1,5 +1,5 @@
 // 服务器开发地址
-const HTTP_BASE_URL = "http://usr.ink/admin-api"
+const HTTP_BASE_URL = "http://10.161.68.46:9999"
 // 服务器生产地址
 const HTTP_BASE_URL_DEV = "http://localhost:9999"
 
