@@ -3,6 +3,7 @@ package ink.usr.admin.controller;
 import com.github.pagehelper.Page;
 import ink.usr.admin.config.EmailConfig;
 import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
+import ink.usr.admin.dao.DTO.SysApprovalDTO;
 import ink.usr.admin.dao.DTO.TempApprovalDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
@@ -138,18 +139,18 @@ public class SysApplyController {
     }
 
     /**
-     * 根据用户id找到该用户所有的审批流
+     * 根据用户id找到该用户所有的审批流，0代表待办审批，1代表审批历史
      * @return
      */
     @RequestMapping("/getApprovalListById")
-    public Res getApprovalListById(){
+    public Res getApprovalListById(@RequestParam("approvalType") Long approvalType){
         ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
         Long userId = shiroUserInfo.getUserId();
         // 通过userId获得approverId
         Long approverId = sysApproverService.getApproverId(userId);
         // 通过approverId找到该用户所有的审批流
         Page<Object> pages = PageUtil.startPage();
-        List<SysApprovalFlowModel> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId);
+        List<SysApprovalFlowModel> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);
 
         // 遍历每一条flowList，找到每一条的approvalRequest的内容，并拼接为新的List
         List<SysApprovalRequestListVO> newList = new ArrayList<>();
@@ -168,6 +169,7 @@ public class SysApplyController {
             objects.setApproverId(singleOfList.getApproverId());
             objects.setFlowId(singleOfList.getFlowId());
             BeanUtils.copyProperties(sysApprovalRequestModel,objects);
+            objects.setStatus(singleOfList.getStatus());
 //            BeanUtils.copyProperties(singleOfList,objects);
             newList.add(objects);
         }
@@ -268,6 +270,94 @@ public class SysApplyController {
         } catch (Exception e) {
             log.error("提交临时审批结果失败", e);
             return Res.error("提交审批结果失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 处理审批操作（通过/拒绝）
+     * @param approvalDTO 审批信息
+     * @return 处理结果
+     */
+    @RequestMapping("/processApproval")
+    public Res processApproval(@RequestBody SysApprovalDTO approvalDTO) {
+        try {
+            // 参数校验
+            if (approvalDTO.getId() == null || approvalDTO.getFlowId() == null || 
+                approvalDTO.getStatus() == null || approvalDTO.getStatus().isEmpty()) {
+                return Res.error("审批参数不完整");
+            }
+
+            // 验证状态值是否合法
+            if (!approvalDTO.getStatus().equals("审批通过") && 
+                !approvalDTO.getStatus().equals("审批不通过") &&
+                !approvalDTO.getStatus().equals("已通过") && 
+                !approvalDTO.getStatus().equals("已驳回")) {
+                return Res.error("审批状态值不合法");
+            }
+
+            // 获取当前用户信息
+            ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+            if (shiroUserInfo == null) {
+                return Res.error("用户未登录或会话已过期");
+            }
+            
+            Long userId = shiroUserInfo.getUserId();
+            
+            // 确认当前用户是否有权限操作该审批流程
+            Long approverId = sysApproverService.getApproverId(userId);
+            SysApprovalFlowModel flowModel = sysApprovalFlowService.getApprovalFlowById(approvalDTO.getFlowId());
+            
+            if (flowModel == null) {
+                return Res.error("未找到对应的审批流程");
+            }
+            
+            if (!flowModel.getApproverId().equals(approverId)) {
+                return Res.error("您不是该审批流程的审批人，无权操作");
+            }
+            
+            // 检查审批流程状态
+            if (!flowModel.getStatus().equals("审批中") && !flowModel.getStatus().equals("待审批")) {
+                return Res.error("该审批流程已被处理，当前状态: " + flowModel.getStatus());
+            }
+
+            // 更新审批状态
+            boolean result = sysApprovalFlowService.updateApprovalStatus(
+                approvalDTO.getFlowId(), 
+                approvalDTO.getId(), 
+                approvalDTO.getStatus()
+            );
+            
+            if (!result) {
+                return Res.error("审批操作失败");
+            }
+            
+            // 获取申请详情
+            SysApprovalRequestModel requestModel = sysApprovalRequestService.getByApprovalId(flowModel.getApprovalId());
+            
+            // 获取申请人信息
+            String applicantName = sysUserService.getUserNickNameByUserId(requestModel.getApplicant());
+            String approverName = sysUserService.getUserNickNameByUserId(userId);
+            String applicantEmail = sysUserService.getUserInfoByUserName(
+                sysUserService.getNameByUserId(requestModel.getApplicant())).getEmail();
+            
+            // 发送审批结果邮件给申请人
+            String emailSubject = "设备申请审批结果通知";
+            StringBuilder emailContent = new StringBuilder();
+            emailContent.append("您的设备申请已审批通过\n\n");
+            emailContent.append("申请类别: ").append(requestModel.getDeviceCategory()).append("\n");
+            emailContent.append("电脑类型: ").append(requestModel.getDeviceType()).append("\n");
+            emailContent.append("审批结果: ").append(approvalDTO.getStatus()).append("\n");
+            emailContent.append("审批人: ").append(approverName).append("\n");
+            emailContent.append("审批时间: ").append(approvalDTO.getApprovedAt()).append("\n");
+            if(flowModel.getStage() == 2){
+                emailConfig.sendMail(applicantEmail, emailSubject, emailContent.toString());
+                return Res.success("审批操作成功，已通知申请人");
+            }
+            return Res.success("审批操作成功");
+
+        } catch (Exception e) {
+            log.error("审批操作失败", e);
+            return Res.error("审批操作失败: " + e.getMessage());
         }
     }
 

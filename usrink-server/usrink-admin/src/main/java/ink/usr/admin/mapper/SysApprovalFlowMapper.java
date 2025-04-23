@@ -13,8 +13,11 @@ import java.util.List;
 @Mapper
 public interface SysApprovalFlowMapper {
 
-    @Select("select * from sys_approval_flow where approverId = #{approverId}")
+    @Select("select * from sys_approval_flow where approverId = #{approverId} and status = '审批中'")
     List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId);
+
+    @Select("select * from sys_approval_flow where approverId = #{approverId} and status != '审批中'")
+    List<SysApprovalFlowModel> getApprovalFlowListHistoryByApproverId(Long approverId);
 
     String getApproversByAprroval1Id(Long aprrovalId);
 

@@ -59,9 +59,9 @@ public class SysApplyServiceImpl implements SysApplyService {
         ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
         Long userId = shiroUserInfo.getUserId();
         sysApplyRequestDTO.setApplicant(userId);
-        //  1.2 设置审批流有效期，默认值为2天
+        //  1.2 设置审批流有效期，默认值为999天
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String timestamp = LocalDateTime.now().plusDays(2).format(formatter);
+        String timestamp = LocalDateTime.now().plusDays(999).format(formatter);
         String createTime = LocalDateTime.now().format(formatter);
         sysApplyRequestDTO.setTimestamp(timestamp);
         sysApplyRequestDTO.setCreatedAt(createTime);

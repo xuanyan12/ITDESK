@@ -8,7 +8,7 @@ import java.util.List;
 public interface SysApprovalFlowService {
 
 
-    List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId);
+    List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId, Long approvalType);
 
     SysApproversVO getApproversByAprrovalId(Long aprrovalId);
     

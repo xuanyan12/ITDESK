@@ -33,8 +33,13 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     private SysTokenMapper sysTokenMapper;
 
     @Override
-    public List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId) {
-        List<SysApprovalFlowModel> FlowList = sysApprovalFlowMapper.getApprovalFlowListByApproverId(approverId);
+    public List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
+        List<SysApprovalFlowModel> FlowList = null;
+        if(approvalType==0){
+            FlowList = sysApprovalFlowMapper.getApprovalFlowListByApproverId(approverId);
+        } else {
+            FlowList = sysApprovalFlowMapper.getApprovalFlowListHistoryByApproverId(approverId);
+        }
         return FlowList;
     }
 
@@ -120,7 +125,8 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             int stage = approvalFlow.getStage();
             if(stage==1){
                 // 如果为审批不通过，直接修改request
-                if(status=="审批不通过"){
+                if("审批不通过".equals(status)){
+                    // 1.修改request
                     SysApprovalRequestModel requestModel = new SysApprovalRequestModel();
                     requestModel.setApprovalId(requestId);
                     requestModel.setStatus(status);
@@ -144,7 +150,6 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                 requestModel.setStatus(status);
                 requestModel.setUpdatedAt(approveTime);
                 result = sysApprovalFlowMapper.updateApprovalStatus(requestModel);
-                // 告知用户审批完成，进入分配/待分配状态
 
 
                 return result > 0 && flowResult > 0 && tokenResult>0;
