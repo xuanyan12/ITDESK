@@ -207,7 +207,7 @@
         </el-table-column>
         <el-table-column label="申请理由" prop="reason" show-overflow-tooltip></el-table-column>
         <el-table-column label="更新时间" prop="updatedAt" width="140"></el-table-column>
-        <el-table-column label="状态" prop="status" width="130">
+        <el-table-column label="状态" prop="status" width="130" align="center">
           <template #default="{ row }">
             <div style="text-align: center;">
               <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
@@ -216,7 +216,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="{ row }">
             <div style="text-align: center;">
               <el-button type="primary" text @click="viewApplicationDetails(row)">查看详情</el-button>
@@ -361,12 +361,12 @@
         </div>
         
         <!-- 底部操作区 -->
-        <div class="detail-footer">
+        <div class="approval-actions">
           <el-button type="primary" @click="applicationDetailDialogVisible = false">
-            <i class="el-icon-close"></i> 关闭
+            关闭
           </el-button>
-          <el-button @click="viewApprovalProgress(currentApplication)">
-            <i class="el-icon-view"></i> 查看审批进度
+          <el-button type="info" @click="viewApprovalProgress(currentApplication)">
+            查看审批进度
           </el-button>
         </div>
       </div>
@@ -1921,126 +1921,288 @@ export default {
 }
 
 /* 申请详情弹窗样式 */
-.application-detail-dialog :deep(.el-dialog__header) {
-  padding: 0;
-  background: none;
-  border-bottom: none;
-}
+.application-detail-dialog {
+  :deep(.el-dialog__header) {
+    padding: 0;
+  }
 
-.application-detail-dialog :deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-}
+  :deep(.el-dialog__body) {
+    padding: 0;
+  }
 
-.application-detail-dialog :deep(.el-dialog__body) {
-  padding: 0;
-}
+  :deep(.el-dialog__headerbtn) {
+    z-index: 10;
+    top: 10px;
+    right: 10px;
+  }
 
-.application-detail-dialog :deep(.el-dialog__footer) {
-  display: none;
+  :deep(.el-dialog__headerbtn .el-dialog__close) {
+    color: #fff;
+    font-size: 18px;
+    transition: transform 0.3s ease;
+  }
+  
+  :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
+    transform: rotate(90deg);
+  }
+  
+  /* Dialog animation */
+  :deep(.el-dialog) {
+    transform: translateY(0);
+    opacity: 1;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  :deep(.el-dialog__wrapper) {
+    &:not(.is-visible) {
+      .el-dialog {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+    }
+  }
 }
 
 .application-detail-container {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .detail-header {
+  background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+  color: #fff;
   padding: 20px;
-  background-color: #fff;
-  border-bottom: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  
+  /* Remove the grid pattern and add shimmer animation */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(to right, 
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    animation: shimmer 5s infinite;
+  }
 }
 
 .application-title {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  position: relative;
 }
 
 .computer-name {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  /* Add subtle text shadow for better readability */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  /* Add subtle animation on load */
+  animation: fadeInLeft 0.5s ease-out;
 }
 
 .status-tag {
-  font-size: 14px;
-  padding: 5px 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  transform-origin: right;
+  animation: scaleIn 0.4s ease-out 0.2s both;
 }
 
 .application-info {
-  color: #606266;
-  font-size: 14px;
   display: flex;
   gap: 20px;
+  font-size: 14px;
+  position: relative;
+  animation: fadeInUp 0.5s ease-out 0.1s both;
 }
 
 .info-item {
   display: flex;
   align-items: center;
   gap: 5px;
+  
+  /* Add subtle hover effect */
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .detail-content {
   padding: 20px;
   background-color: #f8f9fa;
+  animation: fadeIn 0.5s ease-out 0.1s both;
+  position: relative;
+  
+  /* Remove the grid pattern */
+  &::before {
+    display: none;
+  }
 }
 
-.detail-descriptions :deep(.el-descriptions__body) {
-  background-color: #fff;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-}
-
-.detail-descriptions :deep(.item-label) {
-  width: 120px;
-  background-color: #f5f7fa;
-  color: #606266;
-  font-weight: 600;
-}
-
-.detail-descriptions :deep(.item-content) {
-  color: #303133;
+.detail-descriptions {
+  margin-bottom: 20px;
+  
+  :deep(.item-label) {
+    background-color: rgba(100, 180, 255, 0.1);
+    width: 100px;
+    text-align: right;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+  }
+  
+  :deep(.item-content) {
+    padding: 8px 12px;
+    transition: background-color 0.3s ease;
+  }
+  
+  :deep(.el-descriptions__table) {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out 0.2s both;
+  }
+  
+  :deep(.el-descriptions__cell) {
+    &:hover {
+      .item-label {
+        background-color: rgba(100, 180, 255, 0.2);
+      }
+      .item-content {
+        background-color: rgba(240, 247, 255, 0.5);
+      }
+    }
+  }
 }
 
 .reason-section {
-  margin-top: 20px;
   background-color: #fff;
+  border: 1px solid #ebeef5;
   border-radius: 4px;
   padding: 15px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  animation: fadeInUp 0.5s ease-out 0.3s both;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 128, 191, 0.1);
+  }
 }
 
 .reason-title {
-  font-size: 15px;
   font-weight: 600;
-  color: #303133;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
+  margin-bottom: 8px;
+  color: #2580bf;
   border-bottom: 1px solid #ebeef5;
+  padding-bottom: 5px;
+  
+  /* Add glowing dot before the title */
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #2580bf;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    animation: pulse 2s infinite;
+  }
 }
 
 .reason-content {
-  color: #606266;
-  line-height: 1.6;
-  font-size: 14px;
   white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 60px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+  line-height: 1.6;
+  padding: 5px;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(240, 247, 255, 0.5);
+  }
 }
 
-.detail-footer {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 128, 191, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(37, 128, 191, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 128, 191, 0);
+  }
+}
+
+.approval-actions {
   padding: 15px 20px;
   display: flex;
   justify-content: flex-end;
-  gap: 15px;
-  border-top: 1px solid #ebeef5;
+  gap: 10px;
   background-color: #fff;
+  border-top: 1px solid #ebeef5;
+  
+  .el-button {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+    
+    &:hover::after {
+      animation: ripple 0.6s ease-out;
+    }
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scale(25, 25);
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(40, 40);
+  }
 }
 
 /* 响应式调整 */
@@ -2054,6 +2216,426 @@ export default {
     :deep(.el-descriptions__body) {
       margin: 0;
     }
+  }
+}
+
+/* Add keyframe animations */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -150%;
+  }
+  50% {
+    left: 150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+/* 审批进度弹窗样式 */
+.el-dialog__wrapper:has(.approval-progress-container) {
+  :deep(.el-dialog__header) {
+    background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+    color: #fff;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: none;
+    
+    /* Add shimmer animation */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 150%;
+      height: 100%;
+      background: linear-gradient(to right, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-25deg);
+      animation: shimmer 5s infinite;
+    }
+  }
+  
+  :deep(.el-dialog__title) {
+    color: #fff;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    animation: fadeInLeft 0.5s ease-out;
+  }
+  
+  :deep(.el-dialog__headerbtn .el-dialog__close) {
+    color: #fff;
+    font-size: 18px;
+    transition: transform 0.3s ease;
+  }
+  
+  :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
+    transform: rotate(90deg);
+  }
+  
+  /* Dialog animation */
+  :deep(.el-dialog) {
+    transform: translateY(0);
+    opacity: 1;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  :deep(.el-dialog__body) {
+    background-color: #f8fafc;
+    padding: 0;
+  }
+  
+  :deep(.el-dialog__footer) {
+    background-color: #f8fafc;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(37, 128, 191, 0.1);
+  }
+}
+
+.approval-progress-container {
+  padding: 30px 20px;
+  background-color: #f8fafc;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* 自定义审批步骤样式 */
+.approval-progress-container :deep(.el-step__title.is-process) {
+  color: #2580bf;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.approval-progress-container :deep(.el-step__head.is-process) {
+  color: #2580bf;
+  border-color: #2580bf;
+}
+
+.approval-progress-container :deep(.el-step__head.is-process .el-step__icon.is-text) {
+  background-color: #2580bf;
+  color: #fff;
+}
+
+.approval-progress-container :deep(.el-step__description.is-process) {
+  color: #2580bf;
+  font-size: 14px;
+}
+
+.approval-progress-container :deep(.el-step__title.is-success) {
+  color: #20b2aa;
+}
+
+.approval-progress-container :deep(.el-step__head.is-success) {
+  color: #20b2aa;
+  border-color: #20b2aa;
+}
+
+.approval-progress-container :deep(.el-step__head.is-success .el-step__icon.is-text) {
+  background-color: #20b2aa;
+  color: #fff;
+}
+
+/* 增加所有步骤的字体大小 */
+.approval-progress-container :deep(.el-step__title) {
+  font-size: 16px;
+  font-weight: 500;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.approval-progress-container :deep(.el-step__description) {
+  font-size: 14px;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* 步骤动画效果 */
+.approval-progress-container :deep(.el-step) {
+  &:hover {
+    .el-step__title, 
+    .el-step__description {
+      transform: translateY(-2px);
+    }
+    
+    .el-step__head.is-process,
+    .el-step__head.is-wait {
+      transform: scale(1.05);
+    }
+  }
+}
+
+/* 增加图标大小和动画 */
+.approval-progress-container :deep(.el-step__icon) {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &.is-text {
+    box-shadow: 0 0 0 4px rgba(32, 178, 170, 0.1);
+  }
+}
+
+.approval-progress-container :deep(.el-step__head) {
+  transition: transform 0.3s ease;
+}
+
+/* 最终节点样式 */
+.final-step:deep(.el-step__head.is-success) {
+  color: #20b2aa;
+  border-color: #20b2aa;
+}
+
+.final-step:deep(.el-step__head.is-success .el-step__icon) {
+  background-color: #20b2aa;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(32, 178, 170, 0.2);
+}
+
+.final-step:deep(.el-step__title.is-success) {
+  color: #20b2aa;
+}
+
+.final-step:deep(.el-step__description.is-success) {
+  color: #20b2aa;
+}
+
+.final-step:deep(.el-step__head.is-error) {
+  color: #f5587b;
+  border-color: #f5587b;
+}
+
+.final-step:deep(.el-step__head.is-error .el-step__icon) {
+  background-color: #f5587b;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(245, 88, 123, 0.2);
+}
+
+.final-step:deep(.el-step__title.is-error) {
+  color: #f5587b;
+}
+
+.final-step:deep(.el-step__description.is-error) {
+  color: #f5587b;
+}
+
+/* 步骤描述样式 */
+.step-description {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+  min-height: 40px;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.step-status {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #2580bf;
+  background-color: rgba(37, 128, 191, 0.1);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  animation: scaleIn 0.4s ease-out;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.error-status {
+  color: #f5587b;
+  background-color: rgba(245, 88, 123, 0.1);
+}
+
+.success-status {
+  color: #20b2aa;
+  background-color: rgba(32, 178, 170, 0.1);
+}
+
+.warning-status {
+  color: #e6a23c;
+  background-color: rgba(230, 162, 60, 0.1);
+}
+
+/* 状态详情样式 */
+.approval-status-detail {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  animation: fadeInUp 0.5s ease-out 0.3s both;
+}
+
+.status-box {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #909399;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Add subtle shimmer */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, 
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: subtleShimmer 3s infinite;
+  }
+}
+
+.status-success {
+  border-left-color: #20b2aa;
+  background-color: rgba(32, 178, 170, 0.05);
+}
+
+.status-error {
+  border-left-color: #f5587b;
+  background-color: rgba(245, 88, 123, 0.05);
+}
+
+.status-process {
+  border-left-color: #2580bf;
+  background-color: rgba(37, 128, 191, 0.05);
+}
+
+.status-info {
+  border-left-color: #909399;
+  background-color: rgba(144, 147, 153, 0.05);
+}
+
+.status-icon {
+  font-size: 28px;
+  margin-right: 16px;
+  animation: pulse 2s infinite;
+}
+
+.status-success .status-icon {
+  color: #20b2aa;
+}
+
+.status-error .status-icon {
+  color: #f5587b;
+}
+
+.status-process .status-icon {
+  color: #2580bf;
+}
+
+.status-text {
+  font-size: 16px;
+  color: #606266;
+}
+
+.status-value {
+  font-weight: bold;
+  font-size: 16px;
+  color: #303133;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s ease;
+  }
+}
+
+.status-box:hover .status-value::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.status-success .status-value {
+  color: #20b2aa;
+}
+
+.status-error .status-value {
+  color: #f5587b;
+}
+
+.status-process .status-value {
+  color: #2580bf;
+}
+
+/* 自定义步骤线样式 */
+.custom-steps:deep(.el-step__line) {
+  background: linear-gradient(to right, rgba(37, 128, 191, 0.2), rgba(32, 178, 170, 0.2)) !important;
+  height: 2px !important;
+}
+
+@keyframes subtleShimmer {
+  0% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
   }
 }
 </style>
