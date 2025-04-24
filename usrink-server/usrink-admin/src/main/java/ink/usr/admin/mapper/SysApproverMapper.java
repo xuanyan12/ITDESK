@@ -8,4 +8,7 @@ public interface SysApproverMapper {
 
     @Select("select approverId from sys_approver where userId = #{userId}")
     Long getApproverIdByUserId(Long userId);
+
+    @Select("select role from sys_approver where approverId = #{approverId}")
+    String getApproverRoleByApproverId(Long approverId);
 }

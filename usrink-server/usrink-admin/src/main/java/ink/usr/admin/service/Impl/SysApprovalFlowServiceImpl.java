@@ -3,6 +3,7 @@ package ink.usr.admin.service.Impl;
 import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.mapper.SysApprovalFlowMapper;
+import ink.usr.admin.mapper.SysApproverMapper;
 import ink.usr.admin.mapper.SysTokenMapper;
 import ink.usr.admin.service.SysApplyService;
 import ink.usr.admin.service.SysApprovalFlowService;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,11 +34,32 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     @Autowired
     private SysTokenMapper sysTokenMapper;
 
+    @Autowired
+    private SysApproverMapper sysApproverMapper;
+
     @Override
     public List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
         List<SysApprovalFlowModel> FlowList = null;
+        List newList = new ArrayList<SysApprovalFlowModel>();
         if(approvalType==0){
             FlowList = sysApprovalFlowMapper.getApprovalFlowListByApproverId(approverId);
+
+            // 新增逻辑
+            // 1.通过approverId查看role是不是ITapprover
+            // 2.如果role为ITApprover，则仅仅返回一级审批流不是“待审批”的二级审批流
+            String role = sysApproverMapper.getApproverRoleByApproverId(approverId);
+            if(role.equals("ITApprover")){
+                for(SysApprovalFlowModel single : FlowList){
+                    if(single.getStage() == 2){
+                        String status = sysApprovalFlowMapper.getStatusCaseInApprover2(single.getApprovalId());
+                        if(!"待审批".equals(status)){
+                            newList.add(single);
+                        }
+                    }
+                }
+                return newList;
+            }
+            // 新增逻辑
         } else {
             FlowList = sysApprovalFlowMapper.getApprovalFlowListHistoryByApproverId(approverId);
         }

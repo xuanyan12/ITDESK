@@ -30,6 +30,9 @@ public interface SysApprovalFlowMapper {
      */
     @Select("select * from sys_approval_flow where flowId = #{flowId}")
     SysApprovalFlowModel getApprovalFlowById(Long flowId);
+
+    @Select("select status from sys_approval_flow where approvalId = #{approvalId} and stage = 1")
+    String getStatusCaseInApprover2(Long approvalId);
     
     /**
      * 获取审批token
