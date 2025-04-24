@@ -19,17 +19,17 @@
       </div>
       <div v-if="myComputer" class="my-computer-container">
         <el-descriptions :column="3" border size="small" class="elegant-descriptions" :label-width="120" :content-width="200">
-          <el-descriptions-item label="ciName" width="300">{{ myComputer.ciName }}</el-descriptions-item>
-          <el-descriptions-item label="ntAccount" width="300">{{ myComputer.ntAccount }}</el-descriptions-item>
-          <el-descriptions-item label="department" width="300">{{ myComputer.department }}</el-descriptions-item>
-          <el-descriptions-item label="lastName" width="300">{{ myComputer.lastName }}</el-descriptions-item>
-          <el-descriptions-item label="firstName" width="300">{{ myComputer.firstName }}</el-descriptions-item>
-          <el-descriptions-item label="pcStatus" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
-          <el-descriptions-item label="lifeCycleStart" width="300">{{ myComputer.lifeCycleStart }}</el-descriptions-item>
-          <el-descriptions-item label="costCenter" width="300">{{ myComputer.costCenter }}</el-descriptions-item>
+          <el-descriptions-item label="电脑名称" width="300">{{ myComputer.ciName }}</el-descriptions-item>
+          <el-descriptions-item label="NT账号" width="300">{{ myComputer.ntAccount }}</el-descriptions-item>
+          <el-descriptions-item label="部门号" width="300">{{ myComputer.department }}</el-descriptions-item>
+          <el-descriptions-item label="名" width="300">{{ myComputer.lastName }}</el-descriptions-item>
+          <el-descriptions-item label="姓" width="300">{{ myComputer.firstName }}</el-descriptions-item>
+          <el-descriptions-item label="电脑使用状态" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
+          <el-descriptions-item label="电脑归属情况" v-if="myComputer.pcClass" width="300">{{ myComputer.pcClass }}</el-descriptions-item>
+          <el-descriptions-item label="电脑情况备注" width="300">{{ myComputer.comment }}</el-descriptions-item>
+          <el-descriptions-item label="出厂时间" width="300">{{ myComputer.lifeCycleStart }}</el-descriptions-item>
           <el-descriptions-item label="manufacturer" v-if="myComputer.manufacturer" width="300">{{ myComputer.manufacturer }}</el-descriptions-item>
           <el-descriptions-item label="model" v-if="myComputer.model" width="300">{{ myComputer.model }}</el-descriptions-item>
-          <el-descriptions-item label="serialNumber" v-if="myComputer.serialNumber" width="300">{{ myComputer.serialNumber }}</el-descriptions-item>
           <el-descriptions-item label="assetTag" v-if="myComputer.assetTag" width="300">{{ myComputer.assetTag }}</el-descriptions-item>
           <el-descriptions-item label="ipAddress" v-if="myComputer.ipAddress" width="300">{{ myComputer.ipAddress }}</el-descriptions-item>
           <el-descriptions-item label="macAddress" v-if="myComputer.macAddress" width="300">{{ myComputer.macAddress }}</el-descriptions-item>
@@ -43,7 +43,7 @@
 
     <!-- 设备申请表单 -->
     <el-card shadow="never" class="usr_card_override top">
-      <h3>办公电脑申请</h3>
+      <h3>电脑申请</h3>
       <el-form :model="applicationForm" ref="applicationFormRef" label-width="120px" class="application-form" :rules="rules">
         <el-row :gutter="20">
 
@@ -173,7 +173,7 @@
     <!-- 申请状态显示 -->
     <el-card shadow="never" class="usr_card_override top" style="margin-top: 20px;">
       <div class="table-header">
-        <h3>我的申请状态</h3>
+        <h3 class="section-title">我的申请状态</h3>
         <el-button type="primary" size="small" @click="refreshApplyList">
           <i class="el-icon-refresh"></i> 刷新
         </el-button>
@@ -296,26 +296,79 @@
     </el-dialog>
     
     <!-- 申请详情弹窗 -->
-    <el-dialog v-model="applicationDetailDialogVisible" title="申请详情" width="650px">
-      <div v-if="currentApplication">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="需要更换的电脑">{{ currentApplication.ciName || '申请新电脑' }}</el-descriptions-item>
-          <el-descriptions-item label="申请人">{{ currentApplication.userName }}</el-descriptions-item>
-          <el-descriptions-item label="申请类别">{{ getApplicationTypeName(currentApplication.deviceCategory) }}</el-descriptions-item>
-          <el-descriptions-item label="电脑类型">{{ getDeviceTypeName(currentApplication.deviceType) }}</el-descriptions-item>
-          <el-descriptions-item label="成本中心">{{ currentApplication.costCenter }}</el-descriptions-item>
-          <el-descriptions-item label="所属公司">{{ currentApplication.company }}</el-descriptions-item>
-          <el-descriptions-item label="责任人">{{ currentApplication.responsibilityName }}</el-descriptions-item>
-          <el-descriptions-item label="电脑情形">{{ currentApplication.deviceSituation }}</el-descriptions-item>
-          <el-descriptions-item label="公司系统">{{ currentApplication.companySystem }}</el-descriptions-item>
-          <el-descriptions-item label="申请理由" :span="2">{{ currentApplication.reason }}</el-descriptions-item>
-          <el-descriptions-item label="申请状态">
-            <el-tag :type="statusTagType(currentApplication.status)">{{ currentApplication.status }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="有效期">{{ currentApplication.timestamp }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ currentApplication.createdAt }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ currentApplication.updatedAt }}</el-descriptions-item>
-        </el-descriptions>
+    <el-dialog 
+      v-model="applicationDetailDialogVisible" 
+      title=""
+      width="700px"
+      class="application-detail-dialog"
+      destroy-on-close>
+      <div v-if="currentApplication" class="application-detail-container">
+        <!-- 顶部概要信息 -->
+        <div class="detail-header">
+          <div class="application-title">
+            <span class="computer-name">{{ currentApplication.ciName || '申请新电脑' }}</span>
+            <el-tag class="status-tag" :type="statusTagType(currentApplication.status)">
+              {{ currentApplication.status }}
+            </el-tag>
+          </div>
+          <div class="application-info">
+            <span class="info-item">
+              <i class="el-icon-user"></i> 申请人: {{ currentApplication.userName }}
+            </span>
+            <span class="info-item">
+              <i class="el-icon-date"></i> 申请时间: {{ currentApplication.createdAt }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 详细信息 -->
+        <div class="detail-content">
+          <el-descriptions :column="2" border size="default" class="detail-descriptions">
+            <el-descriptions-item label="申请类别" label-class-name="item-label" content-class-name="item-content">
+              {{ getApplicationTypeName(currentApplication.deviceCategory) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="电脑类型" label-class-name="item-label" content-class-name="item-content">
+              {{ getDeviceTypeName(currentApplication.deviceType) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="成本中心" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.costCenter }}
+            </el-descriptions-item>
+            <el-descriptions-item label="所属公司" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.company }}
+            </el-descriptions-item>
+            <el-descriptions-item label="责任人" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.responsibilityName }}
+            </el-descriptions-item>
+            <el-descriptions-item label="电脑情形" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.deviceSituation }}
+            </el-descriptions-item>
+            <el-descriptions-item label="公司系统" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.companySystem }}
+            </el-descriptions-item>
+            <el-descriptions-item label="有效期" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.timestamp }}
+            </el-descriptions-item>
+            <el-descriptions-item label="更新时间" label-class-name="item-label" content-class-name="item-content">
+              {{ currentApplication.updatedAt }}
+            </el-descriptions-item>
+          </el-descriptions>
+          
+          <!-- 申请理由区域 -->
+          <div class="reason-section">
+            <div class="reason-title">申请理由</div>
+            <div class="reason-content">{{ currentApplication.reason }}</div>
+          </div>
+        </div>
+        
+        <!-- 底部操作区 -->
+        <div class="detail-footer">
+          <el-button type="primary" @click="applicationDetailDialogVisible = false">
+            <i class="el-icon-close"></i> 关闭
+          </el-button>
+          <el-button @click="viewApprovalProgress(currentApplication)">
+            <i class="el-icon-view"></i> 查看审批进度
+          </el-button>
+        </div>
       </div>
     </el-dialog>
 
@@ -1771,10 +1824,9 @@ export default {
   margin-bottom: 15px;
 }
 
-.table-header h3 {
+.table-header h3.section-title {
+  font-size: 16px;
   margin: 0;
-  font-size: 18px;
-  color: #303133;
 }
 
 .application-table {
@@ -1866,5 +1918,142 @@ export default {
 .custom-steps:deep(.el-step.is-wait .el-step__line-inner) {
   border-color: #dcdfe6 !important;
   background-color: #dcdfe6 !important;
+}
+
+/* 申请详情弹窗样式 */
+.application-detail-dialog :deep(.el-dialog__header) {
+  padding: 0;
+  background: none;
+  border-bottom: none;
+}
+
+.application-detail-dialog :deep(.el-dialog__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.application-detail-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.application-detail-dialog :deep(.el-dialog__footer) {
+  display: none;
+}
+
+.application-detail-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-header {
+  padding: 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.application-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.computer-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.status-tag {
+  font-size: 14px;
+  padding: 5px 10px;
+}
+
+.application-info {
+  color: #606266;
+  font-size: 14px;
+  display: flex;
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.detail-content {
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.detail-descriptions :deep(.el-descriptions__body) {
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.detail-descriptions :deep(.item-label) {
+  width: 120px;
+  background-color: #f5f7fa;
+  color: #606266;
+  font-weight: 600;
+}
+
+.detail-descriptions :deep(.item-content) {
+  color: #303133;
+}
+
+.reason-section {
+  margin-top: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.reason-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.reason-content {
+  color: #606266;
+  line-height: 1.6;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 60px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.detail-footer {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  border-top: 1px solid #ebeef5;
+  background-color: #fff;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+  .application-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .detail-descriptions {
+    :deep(.el-descriptions__body) {
+      margin: 0;
+    }
+  }
 }
 </style>
