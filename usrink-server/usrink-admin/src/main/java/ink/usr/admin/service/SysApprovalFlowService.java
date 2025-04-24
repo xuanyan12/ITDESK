@@ -1,5 +1,6 @@
 package ink.usr.admin.service;
 
+import ink.usr.admin.dao.VO.SysApprovalFlowVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 
@@ -8,7 +9,7 @@ import java.util.List;
 public interface SysApprovalFlowService {
 
 
-    List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId, Long approvalType);
+    List<SysApprovalFlowVO> getApprovalFlowListByApproverId(Long approverId, Long approvalType);
 
     SysApproversVO getApproversByAprrovalId(Long aprrovalId);
     

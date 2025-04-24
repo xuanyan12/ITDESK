@@ -1,5 +1,6 @@
 package ink.usr.admin.service.Impl;
 
+import ink.usr.admin.dao.VO.SysApprovalFlowVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.mapper.SysApprovalFlowMapper;
@@ -12,6 +13,7 @@ import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysApprovalTokenModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,32 +40,47 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     private SysApproverMapper sysApproverMapper;
 
     @Override
-    public List<SysApprovalFlowModel> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
+    public List<SysApprovalFlowVO> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
         List<SysApprovalFlowModel> FlowList = null;
-        List newList = new ArrayList<SysApprovalFlowModel>();
+        List newList = new ArrayList<SysApprovalFlowVO>();
         if(approvalType==0){
             FlowList = sysApprovalFlowMapper.getApprovalFlowListByApproverId(approverId);
 
             // 新增逻辑
             // 1.通过approverId查看role是不是ITapprover
-            // 2.如果role为ITApprover，则仅仅返回一级审批流不是“待审批”的二级审批流
+            // 2.如果role为ITApprover，则一级审批流是“审批中”的二级审批流需要添加标识0，其他情况不管（默认标识是1）
             String role = sysApproverMapper.getApproverRoleByApproverId(approverId);
+
             if(role.equals("ITApprover")){
                 for(SysApprovalFlowModel single : FlowList){
+                    SysApprovalFlowVO sysApprovalFlowVO = new SysApprovalFlowVO();
+                    BeanUtils.copyProperties(single, sysApprovalFlowVO);
                     if(single.getStage() == 2){
                         String status = sysApprovalFlowMapper.getStatusCaseInApprover2(single.getApprovalId());
-                        if(!"待审批".equals(status)){
-                            newList.add(single);
+                        if("审批中".equals(status)){
+                            sysApprovalFlowVO.setStatus1Signal(0);
                         }
                     }
+                    newList.add(sysApprovalFlowVO);
                 }
-                return newList;
+            } else {
+                for(SysApprovalFlowModel single : FlowList){
+                    SysApprovalFlowVO sysApprovalFlowVO = new SysApprovalFlowVO();
+                    BeanUtils.copyProperties(single, sysApprovalFlowVO);
+                    newList.add(sysApprovalFlowVO);
+                }
             }
+            return newList;
             // 新增逻辑
         } else {
             FlowList = sysApprovalFlowMapper.getApprovalFlowListHistoryByApproverId(approverId);
+            for(SysApprovalFlowModel single : FlowList){
+                SysApprovalFlowVO sysApprovalFlowVO = new SysApprovalFlowVO();
+                BeanUtils.copyProperties(single, sysApprovalFlowVO);
+                newList.add(sysApprovalFlowVO);
+            }
         }
-        return FlowList;
+        return newList;
     }
 
     @Override

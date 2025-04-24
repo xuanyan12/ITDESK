@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SysApprovalRequestListVO extends SysApprovalFlowModel {
+public class SysApprovalRequestListVO extends SysApprovalFlowVO {
     // 使用人id
     private Long applicant;
     // 申请类别

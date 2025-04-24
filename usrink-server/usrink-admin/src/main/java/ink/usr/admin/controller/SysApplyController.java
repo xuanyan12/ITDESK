@@ -6,6 +6,7 @@ import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
 import ink.usr.admin.dao.DTO.SysApprovalDTO;
 import ink.usr.admin.dao.DTO.TempApprovalDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
+import ink.usr.admin.dao.VO.SysApprovalFlowVO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
 import ink.usr.admin.service.*;
@@ -150,12 +151,12 @@ public class SysApplyController {
         Long approverId = sysApproverService.getApproverId(userId);
         // 通过approverId找到该用户所有的审批流
         Page<Object> pages = PageUtil.startPage();
-        List<SysApprovalFlowModel> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);
+        List<SysApprovalFlowVO> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);
 
         // 遍历每一条flowList，找到每一条的approvalRequest的内容，并拼接为新的List
         List<SysApprovalRequestListVO> newList = new ArrayList<>();
         SysApprovalRequestModel sysApprovalRequestModel = null;
-        for(SysApprovalFlowModel singleOfList : sysApprovalFlowList){
+        for(SysApprovalFlowVO singleOfList : sysApprovalFlowList){
             SysApprovalRequestListVO objects = new SysApprovalRequestListVO();
             Long approvalId = singleOfList.getApprovalId();
             sysApprovalRequestModel = sysApprovalRequestService.getByApprovalId(approvalId);
@@ -170,6 +171,7 @@ public class SysApplyController {
             objects.setFlowId(singleOfList.getFlowId());
             BeanUtils.copyProperties(sysApprovalRequestModel,objects);
             objects.setStatus(singleOfList.getStatus());
+            objects.setStatus1Signal(singleOfList.getStatus1Signal());
 //            BeanUtils.copyProperties(singleOfList,objects);
             newList.add(objects);
         }
