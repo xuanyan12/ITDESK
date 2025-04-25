@@ -54,7 +54,7 @@ public class SysUserModel implements Serializable {
     /**
      * 性别，0为女，1为男，-1为未知，默认-1
      */
-    public Integer sex;
+    public Integer sex = -1;
 
     /**
      * 创建时间
@@ -62,15 +62,20 @@ public class SysUserModel implements Serializable {
     public String createTime;
 
     /**
+     * 更新时间
+     */
+    public String updateTime;
+
+    /**
      * 用户状态, 0:正常, -1:禁用
      */
-    private Integer status;
+    private Integer status = 0;
 
 
     /**
      * 用户所属部门
      */
-    private Integer department;
+    private String department;
 
     /**
      * 责任人（正式员工为自己，实习生为mentor）

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysLadpMapper">
+
+    <delete id="deleteAllInfos">
+        DELETE FROM sys_user
+    </delete>
+
+    <insert id="linkLDAPRefreshAllInfo" parameterType="java.util.List">
+        INSERT INTO sys_user
+        (userName, userPassword, userRoleId, userNick, avatar, email, phone, createTime, updateTime, sex, status, department, responsibility, company, costCenter)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="item.userName != null and item.userName != ''">#{item.userName},</if>
+                <if test="item.userName == null or item.userName == ''">null,</if>
+                
+                <if test="item.userPassword != null and item.userPassword != ''">#{item.userPassword},</if>
+                <if test="item.userPassword == null or item.userPassword == ''">null,</if>
+                
+                <if test="item.userRoleId != null">#{item.userRoleId},</if>
+                <if test="item.userRoleId == null">null,</if>
+                
+                <if test="item.userNick != null and item.userNick != ''">#{item.userNick},</if>
+                <if test="item.userNick == null or item.userNick == ''">null,</if>
+                
+                <if test="item.avatar != null and item.avatar != ''">#{item.avatar},</if>
+                <if test="item.avatar == null or item.avatar == ''">null,</if>
+                
+                <if test="item.email != null and item.email != ''">#{item.email},</if>
+                <if test="item.email == null or item.email == ''">null,</if>
+                
+                <if test="item.phone != null and item.phone != ''">#{item.phone},</if>
+                <if test="item.phone == null or item.phone == ''">null,</if>
+                
+                <if test="item.createTime != null">#{item.createTime},</if>
+                <if test="item.createTime == null">null,</if>
+                
+                <if test="item.updateTime != null">#{item.updateTime},</if>
+                <if test="item.updateTime == null">null,</if>
+                
+                <if test="item.sex != null">#{item.sex},</if>
+                <if test="item.sex == null">null,</if>
+                
+                <if test="item.status != null">#{item.status},</if>
+                <if test="item.status == null">null,</if>
+                
+                <if test="item.department != null and item.department != ''">#{item.department},</if>
+                <if test="item.department == null or item.department == ''">null,</if>
+                
+                <if test="item.responsibility != null and item.responsibility != ''">#{item.responsibility},</if>
+                <if test="item.responsibility == null or item.responsibility == ''">null,</if>
+                
+                <if test="item.company != null and item.company != ''">#{item.company},</if>
+                <if test="item.company == null or item.company == ''">null,</if>
+                
+                <if test="item.costCenter != null and item.costCenter != ''">#{item.costCenter},</if>
+                <if test="item.costCenter == null or item.costCenter == ''">null,</if>
+            </trim>
+        </foreach>
+    </insert>
+</mapper>

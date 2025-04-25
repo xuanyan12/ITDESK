@@ -3,6 +3,7 @@ package ink.usr.admin.service.Impl;
 import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.mapper.SysApplyMapper;
+import ink.usr.admin.mapper.SysApproverMapper;
 import ink.usr.admin.service.SysApplyService;
 import ink.usr.admin.service.SysUserService;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
@@ -30,6 +31,9 @@ public class SysApplyServiceImpl implements SysApplyService {
 
     @Autowired
     private SysUserService sysUserService;
+
+    @Autowired
+    private SysApproverMapper sysApproverMapper;
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -93,7 +97,8 @@ public class SysApplyServiceImpl implements SysApplyService {
         //  3.创建一个属于IT Approver的二级审批工作流
         SysApprovalFlowModel sysApprovalFlowModel4ITApprover = new SysApprovalFlowModel();
         sysApprovalFlowModel4ITApprover.setApprovalId(approvalId);
-        sysApprovalFlowModel4ITApprover.setApproverId(Long.valueOf(3));
+        Long itApprover = sysApproverMapper.getITApprover();
+        sysApprovalFlowModel4ITApprover.setApproverId(itApprover);
         sysApprovalFlowModel4ITApprover.setStage(2);
         sysApprovalFlowModel4ITApprover.setStatus("审批中");
         sysApprovalFlowModel4ITApprover.setCreatedAt(createTime);
