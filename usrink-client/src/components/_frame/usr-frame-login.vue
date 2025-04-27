@@ -29,9 +29,7 @@ const submitLogin = () => {
     }
 
     loading.value = true
-    // 密码加密
-    loginForm.value.password = loginUtil.encryptPassword(loginForm.value.password)
-    // 登录请求
+    // 发送登录请求 - 不再加密密码
     httpUtil.post('/login', {...loginForm.value}).then(async res => {
         // 缓存用户信息
         loginUtil.cacheUserInfo(res.data)

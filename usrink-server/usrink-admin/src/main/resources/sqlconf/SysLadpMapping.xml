@@ -4,7 +4,7 @@
 <mapper namespace="ink.usr.admin.mapper.SysLadpMapper">
 
     <delete id="deleteAllInfos">
-        DELETE FROM sys_user
+        TRUNCATE TABLE sys_user
     </delete>
 
     <insert id="linkLDAPRefreshAllInfo" parameterType="java.util.List">

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysApproverMapper">
+
+    <insert id="insertITApprover" keyProperty="approverId" useGeneratedKeys="true">
+        insert into
+        sys_approver(name, email, role, costCenter, createdAt, updatedAt, userId) VALUES
+        (#{name},#{email},#{role},#{costCenter},#{createdAt},#{updatedAt},#{userId})
+    </insert>
+</mapper>

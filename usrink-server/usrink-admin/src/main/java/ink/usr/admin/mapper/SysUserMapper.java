@@ -3,6 +3,7 @@ package ink.usr.admin.mapper;
 import ink.usr.common.model.mysql.SysUserModel;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -93,4 +94,7 @@ public interface SysUserMapper {
 
     @Select("select userId from sys_user where userName = #{responsibilityName}")
     Long getUserIdByUserName(String responsibilityName);
+
+    @Update("update sys_user set userRoleId = 1 where userName = #{userName}")
+    void updateUserRole2AdminByName(String userName);
 }

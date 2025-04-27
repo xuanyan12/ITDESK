@@ -51,7 +51,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             // 2.如果role为ITApprover，则一级审批流是“审批中”的二级审批流需要添加标识0，其他情况不管（默认标识是1）
             String role = sysApproverMapper.getApproverRoleByApproverId(approverId);
 
-            if(role.equals("ITApprover")){
+            if("ITApprover".equals(role)){
                 for(SysApprovalFlowModel single : FlowList){
                     SysApprovalFlowVO sysApprovalFlowVO = new SysApprovalFlowVO();
                     BeanUtils.copyProperties(single, sysApprovalFlowVO);

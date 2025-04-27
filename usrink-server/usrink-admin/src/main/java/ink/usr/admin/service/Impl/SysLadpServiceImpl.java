@@ -2,12 +2,15 @@ package ink.usr.admin.service.Impl;
 
 import com.google.protobuf.ServiceException;
 import ink.usr.admin.dao.DTO.SysAutoLoginUserDto;
+import ink.usr.admin.mapper.SysApproverMapper;
 import ink.usr.admin.mapper.SysLadpMapper;
+import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysLadpService;
 import ink.usr.admin.utils.LdapUserUtil;
 import ink.usr.common.core.constants.Constants;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.core.utils.Md5Util;
+import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysLadpUserModel;
 import ink.usr.common.model.mysql.SysUserModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,10 @@ public class SysLadpServiceImpl implements SysLadpService {
 
     @Autowired
     private SysLadpMapper sysLadpMapper;
+    @Autowired
+    private SysApproverMapper sysApproverMapper;
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     @Resource
     private ink.usr.admin.config.LDAPConfig ldapConfig;
@@ -301,6 +308,39 @@ public class SysLadpServiceImpl implements SysLadpService {
         }
         boolean isDeleted = sysLadpMapper.deleteAllInfos();
         boolean isInserted = sysLadpMapper.linkLDAPRefreshAllInfo(newList);
+
+        // 更新user表： XJU1CS,TII2CS,YSG1CNG,YIL2CS,PEV2CS -> role = 1 (加if条件,存在时才进行修改)
+        String[] arr = {"XJU1CS", "TII2CS", "YSG1CNG", "YIL2CS", "PEV2CS"};
+        for(String singleArr : arr){
+            SysUserModel user4Approver = sysUserMapper.getUserInfoByUserName(singleArr);
+            // 用户非空时role=1(admin权限)
+            if(user4Approver!=null){
+                sysUserMapper.updateUserRole2AdminByName(singleArr);
+            }
+            // approver表： YSG1CNG -> ITApprover
+            // 修改一下，前端留一个弹窗：是否以当前服务器存储的文件为基础进行审批人表更新（user表更新的同时，approver表也需要更新，因为userId可能变了）
+            // 是 -> 删除所有的数据再插入
+            // 否 -> 删除所有数据，并存储新文件，以新文件为基础插入
+            if(singleArr.equals("YSG1CNG")){
+                // 如果sysapprover表里本来就有，要删除掉
+                Long userid = sysApproverMapper.getITApprover();
+                if(userid!=null){
+                    sysApproverMapper.deleteByNTAccount("YSG1CNG");
+                }
+                Long approverIdByUserId = sysApproverMapper.getApproverIdByUserId(user4Approver.getUserId());
+                if(approverIdByUserId==null){
+                    SysApproverModel sysApproverModel = new SysApproverModel();
+                    sysApproverModel.setName(singleArr);
+                    sysApproverModel.setEmail(user4Approver.getEmail());
+                    sysApproverModel.setRole("ITApprover");
+                    sysApproverModel.setCostCenter(user4Approver.getCostCenter());
+                    sysApproverModel.setCreatedAt(user4Approver.getCreateTime());
+                    sysApproverModel.setUpdatedAt(user4Approver.getUpdateTime());
+                    sysApproverModel.setUserId(user4Approver.getUserId());
+                    sysApproverMapper.insertITApprover(sysApproverModel);
+                }
+            }
+        }
         return isDeleted && isInserted;
     }
 
