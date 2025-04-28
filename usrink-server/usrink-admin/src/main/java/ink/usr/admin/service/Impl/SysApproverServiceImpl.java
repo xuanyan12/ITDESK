@@ -25,7 +25,7 @@ public class SysApproverServiceImpl implements SysApproverService {
     private SysApproverMapper sysApproverMapper;
 
     @Override
-    public Long getApproverId(Long userId) {
+    public Long getApproverId(Long userId, String costCenter) {
         Long ApproverId = sysApproverMapper.getApproverIdByUserId(userId);
         return ApproverId;
     }

@@ -15,7 +15,11 @@
                sex,
                createTime,
                department,
-               status
+               status,
+               company,
+               responsibility,
+               costCenter,
+               updateTime
         from sys_user
     </sql>
 
@@ -38,13 +42,12 @@
             resultType="ink.usr.common.model.mysql.SysUserModel">
         <include refid="selectSysUserSql"/>
         <where>
-            <if test="userId != null">and userId = #{userId}</if>
             <if test="userName != null and userName != ''">and userName like concat('%', #{userName}, '%')</if>
             <if test="userNick != null and userNick != ''">and userNick like concat('%', #{userNick}, '%')</if>
-            <if test="phone != null and phone != ''">and phone like concat('%', #{phone}, '%')</if>
-            <if test="email != null and email != ''">and email like concat('%', #{email}, '%')</if>
-            <if test="userRoleId != null">and userRoleId = #{userRoleId}</if>
+            <if test="department != null and department != ''">and department like concat('%', #{department}, '%')</if>
             <if test="status != null">and status = #{status}</if>
+            <if test="userRoleId != null and userRoleId != ''">and userRoleId = #{userRoleId}</if>
+            <if test="company != null and company != ''">and company = #{company}</if>
         </where>
         order by userId asc
     </select>

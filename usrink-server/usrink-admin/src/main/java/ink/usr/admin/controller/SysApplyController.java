@@ -121,7 +121,7 @@ public class SysApplyController {
 
             // 发邮件给一级审批人
             // 1.获取一级审批人id
-            Long approverId = sysApproverService.getApproverId(sysApplyRequestDTO.getApplicant());
+            Long approverId = sysApproverService.getApproverId(sysApplyRequestDTO.getApplicant(), sysApplyRequestDTO.getCostCenter());
             // 2.根据审批人id获取邮箱
             String email = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(approverId)).getEmail();
             String approverEmail = email;
@@ -148,7 +148,9 @@ public class SysApplyController {
         ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
         Long userId = shiroUserInfo.getUserId();
         // 通过userId获得approverId
-        Long approverId = sysApproverService.getApproverId(userId);
+
+        String costCenter = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userId)).getCostCenter();
+        Long approverId = sysApproverService.getApproverId(userId, costCenter);
         // 通过approverId找到该用户所有的审批流
         Page<Object> pages = PageUtil.startPage();
         List<SysApprovalFlowVO> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);
@@ -306,7 +308,8 @@ public class SysApplyController {
             Long userId = shiroUserInfo.getUserId();
             
             // 确认当前用户是否有权限操作该审批流程
-            Long approverId = sysApproverService.getApproverId(userId);
+            String costCenter = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userId)).getCostCenter();
+            Long approverId = sysApproverService.getApproverId(userId, costCenter);
             SysApprovalFlowModel flowModel = sysApprovalFlowService.getApprovalFlowById(approvalDTO.getFlowId());
             
             if (flowModel == null) {

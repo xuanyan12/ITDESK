@@ -3,6 +3,31 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="ink.usr.admin.mapper.SysApproverMapper">
 
+    <update id="updateApprover" parameterType="ink.usr.common.model.mysql.SysApproverModel">
+        UPDATE sys_approver
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            <if test="role != null and role != ''">
+                role = #{role},
+            </if>
+            <if test="costCenter != null and costCenter != ''">
+                costCenter = #{costCenter},
+            </if>
+            <if test="updatedAt != null">
+                updatedAt = #{updatedAt},
+            </if>
+            <if test="userId != null">
+                userId = #{userId},
+            </if>
+        </set>
+        WHERE approverId = #{approverId}
+    </update>
+
     <insert id="insertITApprover" keyProperty="approverId" useGeneratedKeys="true">
         insert into
         sys_approver(name, email, role, costCenter, createdAt, updatedAt, userId) VALUES

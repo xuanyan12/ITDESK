@@ -32,6 +32,8 @@
         <shiro-spring.version>1.13.0</shiro-spring.version>
         <jwt.version>4.2.1</jwt.version>
         <pagehelper.version>2.1.0</pagehelper.version>
+        <poi.version>5.2.3</poi.version>
+        <poi-ooxml.version>5.2.3</poi-ooxml.version>
     </properties>
 
     <!-- 仓库 -->
@@ -163,6 +165,20 @@
                 <groupId>com.github.pagehelper</groupId>
                 <artifactId>pagehelper-spring-boot-starter</artifactId>
                 <version>${pagehelper.version}</version>
+            </dependency>
+
+            <!-- Apache POI，Excel解析 -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version> <!-- 可以选最新稳定版 -->
+            </dependency>
+
+            <!-- Apache POI，处理.xlsx文件（必须要加） -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi-ooxml.version}</version>
             </dependency>
 
 

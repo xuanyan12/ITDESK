@@ -25,7 +25,7 @@
     <select id="getApproverIdByCostCenter" resultType="Long">
         select approverId
         from sys_approver
-        where costCenter = #{costCenter} and role = 'manager'
+        where costCenter = #{costCenter} and role in ('manager', 'ITApprover')
     </select>
 
     <insert id="addApplyFlow" useGeneratedKeys="true" keyProperty="flowId">

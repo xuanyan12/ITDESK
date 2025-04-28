@@ -60,4 +60,118 @@
             </trim>
         </foreach>
     </insert>
+
+    <!-- 更新单个LDAP用户 -->
+    <update id="updateLadpUser" parameterType="ink.usr.common.model.mysql.SysUserModel">
+        UPDATE sys_user
+        <set>
+            <if test="userPassword != null and userPassword != ''">
+                userPassword = #{userPassword},
+            </if>
+            <if test="userRoleId != null">
+                userRoleId = #{userRoleId},
+            </if>
+            <if test="userNick != null and userNick != ''">
+                userNick = #{userNick},
+            </if>
+            <if test="avatar != null and avatar != ''">
+                avatar = #{avatar},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            <if test="phone != null and phone != ''">
+                phone = #{phone},
+            </if>
+            <if test="createTime != null">
+                createTime = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                updateTime = #{updateTime},
+            </if>
+            <if test="sex != null">
+                sex = #{sex},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="department != null and department != ''">
+                department = #{department},
+            </if>
+            <if test="responsibility != null and responsibility != ''">
+                responsibility = #{responsibility},
+            </if>
+            <if test="company != null and company != ''">
+                company = #{company},
+            </if>
+            <if test="costCenter != null and costCenter != ''">
+                costCenter = #{costCenter},
+            </if>
+        </set>
+        WHERE userName = #{userName}
+    </update>
+
+    <!-- 批量插入LDAP用户 -->
+    <insert id="batchInsertLadpUsers" parameterType="java.util.List">
+        INSERT INTO sys_user
+        (userName, userPassword, userRoleId, userNick, avatar, email, phone, createTime, updateTime, sex, status, department, responsibility, company, costCenter)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="item.userName != null and item.userName != ''">#{item.userName},</if>
+                <if test="item.userName == null or item.userName == ''">null,</if>
+                
+                <if test="item.userPassword != null and item.userPassword != ''">#{item.userPassword},</if>
+                <if test="item.userPassword == null or item.userPassword == ''">null,</if>
+                
+                <if test="item.userRoleId != null">#{item.userRoleId},</if>
+                <if test="item.userRoleId == null">null,</if>
+                
+                <if test="item.userNick != null and item.userNick != ''">#{item.userNick},</if>
+                <if test="item.userNick == null or item.userNick == ''">null,</if>
+                
+                <if test="item.avatar != null and item.avatar != ''">#{item.avatar},</if>
+                <if test="item.avatar == null or item.avatar == ''">null,</if>
+                
+                <if test="item.email != null and item.email != ''">#{item.email},</if>
+                <if test="item.email == null or item.email == ''">null,</if>
+                
+                <if test="item.phone != null and item.phone != ''">#{item.phone},</if>
+                <if test="item.phone == null or item.phone == ''">null,</if>
+                
+                <if test="item.createTime != null">#{item.createTime},</if>
+                <if test="item.createTime == null">null,</if>
+                
+                <if test="item.updateTime != null">#{item.updateTime},</if>
+                <if test="item.updateTime == null">null,</if>
+                
+                <if test="item.sex != null">#{item.sex},</if>
+                <if test="item.sex == null">null,</if>
+                
+                <if test="item.status != null">#{item.status},</if>
+                <if test="item.status == null">null,</if>
+                
+                <if test="item.department != null and item.department != ''">#{item.department},</if>
+                <if test="item.department == null or item.department == ''">null,</if>
+                
+                <if test="item.responsibility != null and item.responsibility != ''">#{item.responsibility},</if>
+                <if test="item.responsibility == null or item.responsibility == ''">null,</if>
+                
+                <if test="item.company != null and item.company != ''">#{item.company},</if>
+                <if test="item.company == null or item.company == ''">null,</if>
+                
+                <if test="item.costCenter != null and item.costCenter != ''">#{item.costCenter},</if>
+                <if test="item.costCenter == null or item.costCenter == ''">null,</if>
+            </trim>
+        </foreach>
+    </insert>
+
+    <!-- 批量删除LDAP用户 -->
+    <delete id="batchDeleteLadpUsers" parameterType="java.util.List">
+        DELETE FROM sys_user 
+        WHERE userName IN
+        <foreach collection="list" item="userName" open="(" separator="," close=")">
+            #{userName}
+        </foreach>
+    </delete>
 </mapper>

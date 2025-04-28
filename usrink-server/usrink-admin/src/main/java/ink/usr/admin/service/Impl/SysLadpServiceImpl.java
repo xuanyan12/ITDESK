@@ -13,9 +13,18 @@ import ink.usr.common.core.utils.Md5Util;
 import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysLadpUserModel;
 import ink.usr.common.model.mysql.SysUserModel;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
@@ -35,6 +44,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class SysLadpServiceImpl implements SysLadpService {
 
     @Autowired
@@ -75,7 +85,7 @@ public class SysLadpServiceImpl implements SysLadpService {
         Hashtable<String,String> HashEnv = new Hashtable<String,String>();
         HashEnv.put(Context.SECURITY_AUTHENTICATION, "simple"); 							// LDAP访问安全级别(none,simple,strong)
         HashEnv.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.ldap.LdapCtxFactory"); 	// LDAP工厂类
-        HashEnv.put("com.sun.jndi.ldap.connect.timeout", "3000");							// 连接超时设置为3秒
+        HashEnv.put("com.sun.jndi.ldap.connect.timeout", "20000");							// 连接超时设置为10秒
         HashEnv.put(Context.PROVIDER_URL, ldapConfig.getLaps());			                                // AD域服务器地址
         HashEnv.put(Context.SECURITY_PRINCIPAL, "SG\\"+username); 								    // AD的用户名
         HashEnv.put(Context.SECURITY_CREDENTIALS, password);
@@ -179,9 +189,13 @@ public class SysLadpServiceImpl implements SysLadpService {
 
     }
 
+    /**
+     * 通过调用AD域中数据对当前数据库中数据作更新
+     * @return
+     */
     @Override
     @Transactional
-    public boolean linkLDAPRefreshAllInfo() {
+    public String linkLDAPRefreshAllInfo() {
         List<SysLadpUserModel> persons = this.searchLdapUser(null);
         // 1.仅仅筛选出l为changsha 或 changchun的用户数据，即filteredPersons
         List<SysLadpUserModel> filteredPersons = persons.stream()
@@ -191,7 +205,7 @@ public class SysLadpServiceImpl implements SysLadpService {
                 })
                 .collect(Collectors.toList());
 
-        List newList = new ArrayList<SysUserModel>();
+        List<SysUserModel> newList = new ArrayList<SysUserModel>();
 
         for(SysLadpUserModel singleLadpUserModel : filteredPersons){
             SysUserModel sysUserModel = new SysUserModel();
@@ -306,8 +320,81 @@ public class SysLadpServiceImpl implements SysLadpService {
             sysUserModel.setCostCenter(singleLadpUserModel.getDescription()); // 设置成本中心
             newList.add(sysUserModel);
         }
-        boolean isDeleted = sysLadpMapper.deleteAllInfos();
-        boolean isInserted = sysLadpMapper.linkLDAPRefreshAllInfo(newList);
+
+        // 对比当前数据库中的数据与新获取的数据的差别
+        // 1.先前表里有且现在也有时：一致：跳过   不一样：update
+        // 2.先前表里没有时：insert
+        // 3.先前表里有但现在没有：delete
+        //新增代码
+        // 获取数据库中现有的所有LDAP用户
+        List<SysUserModel> existingUsers = sysLadpMapper.getAllLadpUsers();
+        
+        // 创建一个Map来存储现有用户，以userName为键
+        Map<String, SysUserModel> existingUserMap = new HashMap<>();
+        for (SysUserModel user : existingUsers) {
+            existingUserMap.put(user.getUserName(), user);
+        }
+        
+        // 创建一个Map来存储新获取的用户，以userName为键
+        Map<String, SysUserModel> newUserMap = new HashMap<>();
+        for (SysUserModel user : newList) {
+            newUserMap.put(user.getUserName(), user);
+        }
+        
+        // 处理更新和新增
+        List<SysUserModel> toUpdate = new ArrayList<>();
+        List<SysUserModel> toInsert = new ArrayList<>();
+        
+        for (SysUserModel newUser : newList) {
+            String userName = newUser.getUserName();
+            if (existingUserMap.containsKey(userName)) {
+                // 用户已存在，检查是否需要更新
+                SysUserModel existingUser = existingUserMap.get(userName);
+                // 自定义比较逻辑，忽略userPassword字段
+                if (!compareUsersIgnoringPassword(newUser, existingUser)) {
+                    // 数据不一致，需要更新
+                    toUpdate.add(newUser);
+                }
+                // 如果一致，跳过
+            } else {
+                // 用户不存在，需要新增
+                toInsert.add(newUser);
+            }
+        }
+        
+        // 处理删除
+        List<SysUserModel> toDelete = new ArrayList<>();
+        for (SysUserModel existingUser : existingUsers) {
+            String userName = existingUser.getUserName();
+            if (!newUserMap.containsKey(userName)) {
+                // 现有用户不在新数据中，需要删除
+                toDelete.add(existingUser);
+            }
+        }
+        
+        // 执行批量操作
+        if (!toUpdate.isEmpty()) {
+            // 使用单用户更新方法逐个更新用户
+            for (SysUserModel user : toUpdate) {
+                sysLadpMapper.updateLadpUser(user);
+            }
+        }
+        
+        if (!toInsert.isEmpty()) {
+            sysLadpMapper.batchInsertLadpUsers(toInsert);
+        }
+        
+        if (!toDelete.isEmpty()) {
+            List<String> userNamesToDelete = toDelete.stream()
+                .map(SysUserModel::getUserName)
+                .collect(Collectors.toList());
+            sysLadpMapper.batchDeleteLadpUsers(userNamesToDelete);
+        }
+        
+        // 记录操作结果
+        String instructResult = String.format("LDAP用户同步完成: 更新 %d 条, 新增 %d 条, 删除 %d 条",
+                toUpdate.size(), toInsert.size(), toDelete.size());
+        //新增代码
 
         // 更新user表： XJU1CS,TII2CS,YSG1CNG,YIL2CS,PEV2CS -> role = 1 (加if条件,存在时才进行修改)
         String[] arr = {"XJU1CS", "TII2CS", "YSG1CNG", "YIL2CS", "PEV2CS"};
@@ -341,7 +428,257 @@ public class SysLadpServiceImpl implements SysLadpService {
                 }
             }
         }
-        return isDeleted && isInserted;
+        // 更新一次，从approver表里拿数据，如果拿到的话，就遍历name来匹配user表里的username，并将userRoleId置为5（YSG1CNG除外）
+        List<SysApproverModel> approvers = sysApproverMapper.getAllApprovers();
+        if (approvers != null && !approvers.isEmpty()) {
+            int roleUpdateCount = 0;
+            for (SysApproverModel approver : approvers) {
+                String approverName = approver.getName();
+                // 跳过YSG1CNG，因为它已经设置为ITApprover (role=1)
+                if ("YSG1CNG".equals(approverName)) {
+                    continue;
+                }
+                
+                SysUserModel user = sysUserMapper.getUserInfoByUserName(approverName);
+                if (user != null) {
+                    try {
+                        // 将userRoleId设置为5
+                        sysUserMapper.updateUserRoleById(user.getUserId(), 5L);
+                        roleUpdateCount++;
+                        log.info("从approver表更新用户角色: userId={}, name={}, roleId=5", user.getUserId(), approverName);
+                    } catch (Exception e) {
+                        log.error("更新用户角色失败: userId={}, name={}", user.getUserId(), approverName, e);
+                    }
+                } else {
+                    log.warn("无法在用户表中找到审批人: {}", approverName);
+                }
+            }
+            log.info("从approver表更新用户角色完成: 共更新 {} 条记录", roleUpdateCount);
+        }
+
+        return instructResult;
+    }
+
+    @Override
+    @Transactional
+    public boolean updateApprover(MultipartFile file) {
+        try {
+            // 使用POI读取Excel文件
+            Workbook workbook;
+            if (file.getOriginalFilename().endsWith(".xlsx")) {
+                workbook = new XSSFWorkbook(file.getInputStream());
+            } else if (file.getOriginalFilename().endsWith(".xls")) {
+                workbook = new HSSFWorkbook(file.getInputStream());
+            } else {
+                throw new IllegalArgumentException("不支持的文件格式，请上传.xlsx或.xls格式的Excel文件");
+            }
+
+            // 获取Sheet1
+            Sheet sheet = workbook.getSheetAt(0);
+            if (sheet == null) {
+                throw new IllegalStateException("Excel文件中不存在Sheet1");
+            }
+
+            // 获取列索引
+            int costCtrIndex = -1;
+            int approverIndex = -1;
+            Row headerRow = sheet.getRow(0);
+            for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                Cell cell = headerRow.getCell(i);
+                if (cell != null) {
+                    String cellValue = cell.getStringCellValue().trim();
+                    if ("Cost Ctr".equals(cellValue)) {
+                        costCtrIndex = i;
+                    } else if ("Select 1.approver".equals(cellValue)) {
+                        approverIndex = i;
+                    }
+                }
+            }
+
+            if (costCtrIndex == -1 || approverIndex == -1) {
+                throw new IllegalStateException("Excel文件中缺少必要的列：Cost Ctr 或 Select 1.approver");
+            }
+
+            // 处理数据行
+            Map<String, String> excelDataMap = new HashMap<>(); // 存储Excel中的costCenter -> approver的映射
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) { // 从第二行开始（索引1）
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                Cell costCtrCell = row.getCell(costCtrIndex);
+                Cell approverCell = row.getCell(approverIndex);
+
+                if (costCtrCell != null && approverCell != null) {
+                    String costCtr = "";
+                    // 处理不同类型的Cell
+                    if (costCtrCell.getCellType() == CellType.NUMERIC) {
+                        costCtr = String.valueOf((long) costCtrCell.getNumericCellValue());
+                    } else {
+                        costCtr = costCtrCell.getStringCellValue().trim();
+                    }
+
+                    // 处理Cost Ctr前四位为0的情况
+                    if (costCtr.length() > 4 && costCtr.substring(0, 4).matches("0000")) {
+                        costCtr = costCtr.substring(4);
+                    }
+
+                    String approver = "";
+                    if (approverCell.getCellType() == CellType.NUMERIC) {
+                        approver = String.valueOf((long) approverCell.getNumericCellValue());
+                    } else {
+                        approver = approverCell.getStringCellValue().trim();
+                    }
+
+                    if (!costCtr.isEmpty() && !approver.isEmpty()) {
+                        excelDataMap.put(costCtr, approver);
+                        log.info("读取到审批人数据: Cost Ctr={}, Approver={}", costCtr, approver);
+                    }
+                }
+            }
+
+            workbook.close();
+
+            if (excelDataMap.isEmpty()) {
+                log.warn("未从Excel中读取到有效的审批人数据");
+                return false;
+            }
+
+            log.info("成功从Excel中读取了{}条审批人数据", excelDataMap.size());
+
+            // 获取数据库中现有的审批人数据
+            List<SysApproverModel> existingApprovers = sysApproverMapper.getAllApprovers();
+            
+            // 创建一个Map来存储现有审批人，以costCenter为键
+            Map<String, SysApproverModel> existingApproverMap = new HashMap<>();
+            for (SysApproverModel approver : existingApprovers) {
+                existingApproverMap.put(approver.getCostCenter(), approver);
+            }
+            
+            // 处理更新和新增
+            List<SysApproverModel> toUpdate = new ArrayList<>();
+            List<SysApproverModel> toInsert = new ArrayList<>();
+            
+            // 用于记录Excel中包含的costCenter，以便后续删除不在Excel中的记录
+            Set<String> excelCostCenters = new HashSet<>(excelDataMap.keySet());
+            
+            // 处理Excel中的每一条记录
+            for (Map.Entry<String, String> entry : excelDataMap.entrySet()) {
+                String costCenter = entry.getKey();
+                String approverName = entry.getValue();
+                
+                if (existingApproverMap.containsKey(costCenter)) {
+                    // 已存在的costCenter - 检查name是否需要更新
+                    SysApproverModel existingApprover = existingApproverMap.get(costCenter);
+                    if (!approverName.equals(existingApprover.getName())) {
+                        // 名称不同，需要更新
+                        SysUserModel user = sysUserMapper.getUserInfoByUserName(approverName);
+                        if (user != null) {
+                            existingApprover.setName(approverName);
+                            existingApprover.setEmail(user.getEmail());
+                            existingApprover.setUserId(user.getUserId());
+                            existingApprover.setUpdatedAt(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                            toUpdate.add(existingApprover);
+                            log.info("需要更新的审批人: costCenter={}, 旧name={}, 新name={}", 
+                                    costCenter, existingApprover.getName(), approverName);
+                        } else {
+                            log.warn("无法在用户表中找到审批人: {}", approverName);
+                        }
+                    }
+                } else {
+                    // 不存在的costCenter - 新增记录
+                    SysUserModel user = sysUserMapper.getUserInfoByUserName(approverName);
+                    if (user != null) {
+                        SysApproverModel newApprover = new SysApproverModel();
+                        newApprover.setName(approverName);
+                        newApprover.setEmail(user.getEmail());
+                        if(!"YSG1CNG".equals(user.getUserName())){
+                            newApprover.setRole("manager"); // 默认设置为manager
+                        } else {
+                            newApprover.setRole("ITApprover");
+                        }
+                        newApprover.setCostCenter(costCenter);
+                        newApprover.setCreatedAt(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                        newApprover.setUpdatedAt(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                        newApprover.setUserId(user.getUserId());
+                        toInsert.add(newApprover);
+                        log.info("需要新增的审批人: costCenter={}, name={}", costCenter, approverName);
+                    } else {
+                        log.warn("无法在用户表中找到审批人: {}", approverName);
+                    }
+                }
+            }
+            
+            // 处理删除 - 找出数据库中存在但Excel中不存在的记录
+            List<SysApproverModel> toDelete = new ArrayList<>();
+            for (SysApproverModel approver : existingApprovers) {
+                String costCenter = approver.getCostCenter();
+                String role = approver.getRole();
+                // 跳过role为admin和ITApprover的记录
+                if ("admin".equals(role) || "ITApprover".equals(role)) {
+                    log.info("跳过删除特殊角色审批人: costCenter={}, name={}, role={}", 
+                            costCenter, approver.getName(), role);
+                    continue;
+                }
+                
+                if (!excelCostCenters.contains(costCenter)) {
+                    toDelete.add(approver);
+                    log.info("需要删除的审批人: costCenter={}, name={}", costCenter, approver.getName());
+                }
+            }
+            
+            // 执行批量操作
+            int updateCount = 0;
+            int insertCount = 0;
+            int deleteCount = 0;
+            
+            if (!toUpdate.isEmpty()) {
+                for (SysApproverModel approver : toUpdate) {
+                    sysApproverMapper.updateApprover(approver);
+                    updateCount++;
+                }
+            }
+            
+            if (!toInsert.isEmpty()) {
+                for (SysApproverModel approver : toInsert) {
+                    sysApproverMapper.insertApprover(approver);
+                    insertCount++;
+                }
+            }
+            
+            if (!toDelete.isEmpty()) {
+                for (SysApproverModel approver : toDelete) {
+                    sysApproverMapper.deleteApproverById(approver.getApproverId());
+                    deleteCount++;
+                }
+            }
+            
+            // 将所有manager角色的审批人对应的用户角色更新为5
+            List<SysApproverModel> managerApprovers = sysApproverMapper.getApproversByRole("manager");
+            if (managerApprovers != null && !managerApprovers.isEmpty()) {
+                int userRoleUpdateCount = 0;
+                for (SysApproverModel approver : managerApprovers) {
+                    Long userId = approver.getUserId();
+                    if (userId != null) {
+                        try {
+                            // 更新用户角色为5
+                            sysUserMapper.updateUserRoleById(userId, 5L);
+                            userRoleUpdateCount++;
+                            log.info("更新用户角色: userId={}, name={}, roleId=5", userId, approver.getName());
+                        } catch (Exception e) {
+                            log.error("更新用户角色失败: userId={}, name={}", userId, approver.getName(), e);
+                        }
+                    }
+                }
+                log.info("审批人对应用户角色更新完成: 共更新 {} 条记录", userRoleUpdateCount);
+            }
+            
+            log.info("审批人信息更新完成: 更新 {} 条, 新增 {} 条, 删除 {} 条", updateCount, insertCount, deleteCount);
+            
+            return true;
+        } catch (Exception e) {
+            log.error("处理审批人Excel文件时发生错误", e);
+            return false;
+        }
     }
 
     /*下次查询要用的cookie*/
@@ -366,5 +703,85 @@ public class SysLadpServiceImpl implements SysLadpService {
             return parts[0].substring(3); // 去掉 CN= 前缀
         }
         return null;
+    }
+
+    // 自定义比较逻辑，忽略userPassword字段
+    private boolean compareUsersIgnoringPassword(SysUserModel user1, SysUserModel user2) {
+        if (user1 == null || user2 == null) {
+            return user1 == user2;
+        }
+
+        // 比较用户名（必须相等）
+        if (!Objects.equals(user1.getUserName(), user2.getUserName())) {
+            return false;
+        }
+
+        // 比较用户角色ID
+        if (!Objects.equals(user1.getUserRoleId(), user2.getUserRoleId())) {
+            return false;
+        }
+
+        // 比较昵称
+        if (!Objects.equals(user1.getUserNick(), user2.getUserNick())) {
+            return false;
+        }
+
+        // 比较头像
+        if (!Objects.equals(user1.getAvatar(), user2.getAvatar())) {
+            return false;
+        }
+
+        // 比较邮箱
+        if (!Objects.equals(user1.getEmail(), user2.getEmail())) {
+            return false;
+        }
+
+        // 比较电话
+        if (!Objects.equals(user1.getPhone(), user2.getPhone())) {
+            return false;
+        }
+
+        // 比较创建时间
+        if (!Objects.equals(user1.getCreateTime(), user2.getCreateTime())) {
+            return false;
+        }
+
+        // 比较更新时间
+        if (!Objects.equals(user1.getUpdateTime(), user2.getUpdateTime())) {
+            return false;
+        }
+
+        // 比较性别
+        if (!Objects.equals(user1.getSex(), user2.getSex())) {
+            return false;
+        }
+
+        // 比较状态
+        if (!Objects.equals(user1.getStatus(), user2.getStatus())) {
+            return false;
+        }
+
+        // 比较部门
+        if (!Objects.equals(user1.getDepartment(), user2.getDepartment())) {
+            return false;
+        }
+
+        // 比较责任人
+        if (!Objects.equals(user1.getResponsibility(), user2.getResponsibility())) {
+            return false;
+        }
+
+        // 比较公司
+        if (!Objects.equals(user1.getCompany(), user2.getCompany())) {
+            return false;
+        }
+
+        // 比较成本中心
+        if (!Objects.equals(user1.getCostCenter(), user2.getCostCenter())) {
+            return false;
+        }
+
+        // 所有比较都相等
+        return true;
     }
 }

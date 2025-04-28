@@ -4,6 +4,7 @@ import ink.usr.common.model.mysql.SysUserModel;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -97,4 +98,13 @@ public interface SysUserMapper {
 
     @Update("update sys_user set userRoleId = 1 where userName = #{userName}")
     void updateUserRole2AdminByName(String userName);
+
+    /**
+     * 通过用户ID更新用户角色
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     * @return 更新的记录数
+     */
+    @Update("UPDATE sys_user SET userRoleId = #{roleId} WHERE userId = #{userId}")
+    int updateUserRoleById(@Param("userId") Long userId, @Param("roleId") Long roleId);
 }

@@ -6,10 +6,8 @@ import ink.usr.common.core.domain.Res;
 import ink.usr.common.model.mysql.SysLadpUserModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @Slf4j
@@ -30,8 +28,24 @@ public class SysLadpController {
         return Res.success(sysLadpUserModel);
     }
 
-    @GetMapping("/linkLDAPRefreshAllInfo")
+    /**
+     * 将ad的数据更新到数据库中
+     * @return
+     */
+    @RequestMapping("/linkLDAPRefreshAllInfo")
     public Res linkLDAPRefreshAllInfo() {
-        return Res.success( sysLadpService.linkLDAPRefreshAllInfo() );
+        String instructResult = sysLadpService.linkLDAPRefreshAllInfo();
+        return Res.success(instructResult);
+    }
+
+    /**
+     * 通过导入的excel更新approver表
+     * @return
+     */
+    @RequestMapping("/updateApprover")
+    public Res updateApprover(@RequestParam("file") MultipartFile file){
+        boolean flag = sysLadpService.updateApprover(file);
+
+        return Res.success(flag);
     }
 }

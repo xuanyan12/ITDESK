@@ -2,6 +2,7 @@ package ink.usr.admin.service;
 
 import ink.usr.admin.dao.DTO.SysAutoLoginUserDto;
 import ink.usr.common.model.mysql.SysLadpUserModel;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,5 +18,7 @@ public interface SysLadpService {
 
     List<SysLadpUserModel> searchLdapUser(String username);
 
-    boolean linkLDAPRefreshAllInfo();
+    String linkLDAPRefreshAllInfo();
+
+    boolean updateApprover(MultipartFile file);
 }
