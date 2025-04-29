@@ -29,4 +29,9 @@ public interface SysControlMapper {
 
     @Select("select * from sys_control where ciName = #{ciName}")
     SysControlModel getComputerInfoByCiName(String ciName);
+
+    @Select("select * from sys_control where ciName = #{ciName} and pcStatus != 'Scrapped'")
+    List<SysControlModel> selectNonScrappedComputersByCiName(String ciName);
+
+    boolean insertSysControl(SysControlModel sysControlModel);
 }

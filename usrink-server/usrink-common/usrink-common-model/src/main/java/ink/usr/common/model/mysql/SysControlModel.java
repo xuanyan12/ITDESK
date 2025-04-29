@@ -93,8 +93,11 @@ public class SysControlModel implements Serializable {
     private String company;
 
     // 资产号
-    private String assetsNo;
+    private String wbsNum;
 
     // 临时分配标识，0代表非临时分配，1代表临时分配
     private int temp;
+
+    // 价格
+    private String price;
 }

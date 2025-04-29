@@ -112,8 +112,8 @@
             <if test="company!=null and company!=''">
                 company = #{company},
             </if>
-            <if test="assetsNo!=null and assetsNo!=''">
-                assetsNo = #{assetsNo},
+            <if test="wbsNum!=null and wbsNum!=''">
+                wbsNum = #{wbsNum},
             </if>
             <if test="temp != null">
                 temp = #{temp},
@@ -121,7 +121,75 @@
             <if test="pcStatus!=null and pcStatus!=''">
                 pcStatus = #{pcStatus}
             </if>
+            <if test="price!=null and price!=''">
+                price = #{price}
+            </if>
         </set>
         where id = #{id}
     </update>
+
+    <!-- 插入新的电脑记录 -->
+    <insert id="insertSysControl" parameterType="ink.usr.common.model.mysql.SysControlModel">
+        insert into sys_control
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="ciName != null and ciName != ''">ciName,</if>
+            <if test="pcStatus != null and pcStatus != ''">pcStatus,</if>
+            <if test="serialNumber != null and serialNumber != ''">serialNumber,</if>
+            <if test="deviceClass != null and deviceClass != ''">deviceClass,</if>
+            <if test="manufacture != null and manufacture != ''">manufacture,</if>
+            <if test="modelOrVersion != null and modelOrVersion != ''">modelOrVersion,</if>
+            <if test="ntAccount != null and ntAccount != ''">ntAccount,</if>
+            <if test="pcClass != null and pcClass != ''">pcClass,</if>
+            <if test="comment != null and comment != ''">comment,</if>
+            <if test="lastName != null and lastName != ''">lastName,</if>
+            <if test="firstName != null and firstName != ''">firstName,</if>
+            <if test="emailAddress != null and emailAddress != ''">emailAddress,</if>
+            <if test="department != null and department != ''">department,</if>
+            <if test="telephone != null and telephone != ''">telephone,</if>
+            <if test="costCenter != null and costCenter != ''">costCenter,</if>
+            <if test="lifeCycleStart != null and lifeCycleStart != ''">lifeCycleStart,</if>
+            <if test="cpu != null and cpu != ''">cpu,</if>
+            <if test="memory != null and memory != ''">memory,</if>
+            <if test="disk != null and disk != ''">disk,</if>
+            <if test="graphic != null and graphic != ''">graphic,</if>
+            <if test="hardwareStatus != null and hardwareStatus != ''">hardwareStatus,</if>
+            <if test="pr != null and pr != ''">pr,</if>
+            <if test="po != null and po != ''">po,</if>
+            <if test="vendor != null and vendor != ''">vendor,</if>
+            <if test="company != null and company != ''">company,</if>
+            <if test="wbsNum != null and wbsNum != ''">wbsNum,</if>
+            <if test="price != null and price != ''">price,</if>
+            <if test="temp != null">temp,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="ciName != null and ciName != ''">#{ciName},</if>
+            <if test="pcStatus != null and pcStatus != ''">#{pcStatus},</if>
+            <if test="serialNumber != null and serialNumber != ''">#{serialNumber},</if>
+            <if test="deviceClass != null and deviceClass != ''">#{deviceClass},</if>
+            <if test="manufacture != null and manufacture != ''">#{manufacture},</if>
+            <if test="modelOrVersion != null and modelOrVersion != ''">#{modelOrVersion},</if>
+            <if test="ntAccount != null and ntAccount != ''">#{ntAccount},</if>
+            <if test="pcClass != null and pcClass != ''">#{pcClass},</if>
+            <if test="comment != null and comment != ''">#{comment},</if>
+            <if test="lastName != null and lastName != ''">#{lastName},</if>
+            <if test="firstName != null and firstName != ''">#{firstName},</if>
+            <if test="emailAddress != null and emailAddress != ''">#{emailAddress},</if>
+            <if test="department != null and department != ''">#{department},</if>
+            <if test="telephone != null and telephone != ''">#{telephone},</if>
+            <if test="costCenter != null and costCenter != ''">#{costCenter},</if>
+            <if test="lifeCycleStart != null and lifeCycleStart != ''">#{lifeCycleStart},</if>
+            <if test="cpu != null and cpu != ''">#{cpu},</if>
+            <if test="memory != null and memory != ''">#{memory},</if>
+            <if test="disk != null and disk != ''">#{disk},</if>
+            <if test="graphic != null and graphic != ''">#{graphic},</if>
+            <if test="hardwareStatus != null and hardwareStatus != ''">#{hardwareStatus},</if>
+            <if test="pr != null and pr != ''">#{pr},</if>
+            <if test="po != null and po != ''">#{po},</if>
+            <if test="vendor != null and vendor != ''">#{vendor},</if>
+            <if test="company != null and company != ''">#{company},</if>
+            <if test="wbsNum != null and wbsNum != ''">#{wbsNum},</if>
+            <if test="price != null and price != ''">#{price},</if>
+            <if test="temp != null">#{temp},</if>
+        </trim>
+    </insert>
 </mapper>

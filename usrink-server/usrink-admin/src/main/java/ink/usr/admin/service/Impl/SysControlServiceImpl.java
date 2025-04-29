@@ -58,4 +58,14 @@ public class SysControlServiceImpl implements SysControlService {
         SysControlModel sysControlModel = sysControlMapper.getComputerInfoByCiName(ciName);
         return sysControlModel;
     }
+
+    @Override
+    public List<SysControlModel> selectNonScrappedComputersByCiName(String ciName) {
+        return sysControlMapper.selectNonScrappedComputersByCiName(ciName);
+    }
+
+    @Override
+    public boolean insertSysControl(SysControlModel sysControlModel) {
+        return sysControlMapper.insertSysControl(sysControlModel);
+    }
 }

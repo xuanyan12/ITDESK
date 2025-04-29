@@ -18,4 +18,18 @@ public interface SysControlService {
     List getComputerListByUserName(String userName);
 
     SysControlModel getComputerInfoByCiName(String ciName);
+    
+    /**
+     * 查询指定ciName的电脑，但排除pcStatus为Scrapped的记录
+     * @param ciName 电脑名称
+     * @return 非报废状态的电脑列表
+     */
+    List<SysControlModel> selectNonScrappedComputersByCiName(String ciName);
+    
+    /**
+     * 插入新的电脑记录
+     * @param sysControlModel 电脑信息
+     * @return 插入是否成功
+     */
+    boolean insertSysControl(SysControlModel sysControlModel);
 }

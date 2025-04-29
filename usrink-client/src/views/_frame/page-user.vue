@@ -3,6 +3,7 @@ import {onMounted, ref, watch} from "vue";
 import httpUtil from "@/utils/HttpUtil";
 import {Warning} from "@element-plus/icons-vue";
 import loginUtil from "@/utils/LoginUtil";
+import {ElMessage} from "element-plus";
 
 const queryForm = ref({
     userId: '',
@@ -12,12 +13,16 @@ const queryForm = ref({
     userRoleId: '',
     status: '0',
     department: '',
+    company: '',
     pageNum: 1,
     pageSize: 10
 })
 const loading = ref(false)
 const total = ref(0)
 const userList = ref([])
+
+// 需要过滤的角色名称
+const excludedRoles = ['游客', '开发工程师']
 
 onMounted(() => {
     // 查询角色列表
@@ -38,10 +43,12 @@ const selectRoleListData = () => {
     roleListLoading.value = true
     // 获取角色列表
     httpUtil.get("/sysRole/selectSysRoleCommonList").then(res => {
+        // 过滤掉游客和开发工程师角色
+        const filteredList = (res.data.list || []).filter(role => !excludedRoles.includes(role.roleName))
         roleList.value = [{
             roleId: '',
             roleName: '全部角色',
-            children: res.data.list || []
+            children: filteredList
         }]
     }).catch(err => {
         console.error(err)
@@ -88,6 +95,7 @@ const filterRoleListNode = (value, node) => {
  */
 const roleTreeClick = (treeData) => {
     queryForm.value.userRoleId = treeData.roleId
+    queryForm.value.pageNum = 1 // 重置页码为第一页
     selectUserListData()
 }
 
@@ -98,6 +106,76 @@ const roleTreeClick = (treeData) => {
 const handleCurrentChange = (val) => {
     queryForm.value.pageNum = val
     selectUserListData()
+}
+
+const updateAdUsersLoading = ref(false)
+
+/**
+ * 更新AD域用户
+ */
+const updateAdUsers = () => {
+    updateAdUsersLoading.value = true
+    httpUtil.get("/sysLadp/linkLDAPRefreshAllInfo").then(res => {
+        // 刷新用户列表
+        selectUserListData()
+    }).catch(err => {
+        console.error(err)
+    }).finally(() => {
+        updateAdUsersLoading.value = false
+    })
+}
+
+// 审批人更新相关变量
+const updateApproverLoading = ref(false)
+const updateApproverDialogVisible = ref(false)
+const uploadFile = ref(null)
+const uploadLoading = ref(false)
+
+/**
+ * 打开审批人更新对话框
+ */
+const openUpdateApproverDialog = () => {
+    updateApproverDialogVisible.value = true
+}
+
+/**
+ * 上传文件并更新审批人
+ */
+const updateApprover = () => {
+    if (!uploadFile.value) {
+        ElMessage.warning('请选择Excel文件')
+        return
+    }
+    
+    uploadLoading.value = true
+    
+    const formData = new FormData()
+    formData.append('file', uploadFile.value)
+    
+    httpUtil.post("/sysLadp/updateApprover", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    }).then(res => {
+        ElMessage.success('审批人更新成功')
+        // 刷新用户列表
+        selectUserListData()
+    }).catch(err => {
+        console.error(err)
+        ElMessage.error('审批人更新失败')
+    }).finally(() => {
+        uploadLoading.value = false
+        updateApproverDialogVisible.value = false
+        uploadFile.value = null
+    })
+}
+
+/**
+ * 文件上传改变事件
+ * @param file 上传的文件
+ */
+const handleFileChange = (file) => {
+    uploadFile.value = file.raw
 }
 
 const addUserForm = ref({})
@@ -275,7 +353,8 @@ const distributeRoleDialog = (row) => {
     distributeRoleDialogIng.value = true
     // 获取角色列表
     httpUtil.get("/sysRole/selectSysRoleCommonList").then(res => {
-        distributeRoleList.value = res.data.list || []
+        // 过滤掉游客和开发工程师角色
+        distributeRoleList.value = (res.data.list || []).filter(role => !excludedRoles.includes(role.roleName))
     }).catch(err => {
         console.error(err)
     }).finally(() => {
@@ -394,30 +473,28 @@ const deleteRole = () => {
     })
 }
 
-
 </script>
 
 <template>
     <div class="page">
         <el-card shadow="never" class="usr_card_override top">
             <el-form :inline="true" :model="queryForm">
-                <el-form-item label="用户ID">
-                    <el-input v-model="queryForm.userId" placeholder="用户ID" clearable style="width: 180px"/>
-                </el-form-item>
-                <el-form-item label="用户名">
-                    <el-input v-model="queryForm.userName" placeholder="用户名" clearable style="width: 180px"/>
+                <el-form-item label="NT账号">
+                    <el-input v-model="queryForm.userName" placeholder="NT账号" clearable style="width: 180px"/>
                 </el-form-item>
                 <el-form-item label="部门">
                     <el-input v-model="queryForm.department" placeholder="部门" clearable style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="用户昵称">
-                    <el-input v-model="queryForm.userNick" placeholder="用户昵称" clearable style="width: 180px"/>
+                <el-form-item label="用户名称">
+                    <el-input v-model="queryForm.userNick" placeholder="用户名称" clearable style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="手机号">
-                    <el-input v-model="queryForm.phone" placeholder="手机号" clearable style="width: 180px"/>
-                </el-form-item>
-                <el-form-item label="邮箱">
-                    <el-input v-model="queryForm.email" placeholder="邮箱地址" clearable style="width: 180px"/>
+                <el-form-item label="公司">
+                    <el-select v-model="queryForm.company" size="default" placeholder="选择公司" clearable
+                               style="width: 180px">
+                        <el-option label="SGCS" value="SGCS"/>
+                        <el-option label="SES" value="SES"/>
+                        <el-option label="SGCC" value="SGCC"/>
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="状态">
                     <el-select v-model="queryForm.status" size="default" placeholder="选择状态" clearable
@@ -432,7 +509,8 @@ const deleteRole = () => {
             </el-form>
         </el-card>
         <div class="top_btn_panel">
-            <el-button type="primary" @click="addUserDialog">添加用户</el-button>
+            <el-button type="primary" @click="updateAdUsers" :loading="updateAdUsersLoading">更新AD域用户</el-button>
+            <el-button type="success" @click="openUpdateApproverDialog" :loading="updateApproverLoading">审批人更新</el-button>
         </div>
         <div class="usr_user_panel">
             <!-- 角色列表 -->
@@ -463,75 +541,89 @@ const deleteRole = () => {
                         class="user_table"
                         :data="userList"
                         row-key="roleId">
-                        <el-table-column prop="userId" label="用户ID" width="120" align="center">
-                            <template #default="scope">
-                                {{ scope.row.userId }}
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="userName" label="用户名" width="150">
+                        <el-table-column prop="userName" label="NT账号" min-width="180">
                             <template #default="scope">
                                 {{ scope.row.userName }}
                             </template>
                         </el-table-column>
-                        <el-table-column prop="department" label="部门" width="150">
-                            <template #default="scope">
-                                {{ scope.row.department }}
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="userNick" label="用户昵称" width="150">
+                        <el-table-column prop="userNick" label="用户名称" min-width="300">
                             <template #default="scope">
                                 {{ scope.row.userNick }}
                             </template>
                         </el-table-column>
-                        <el-table-column prop="roleName" label="角色" width="150">
-                            <template #default="scope">
-                                {{ scope.row.roleName }}
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="phone" label="手机号" width="150">
+                        <el-table-column prop="phone" label="手机号" min-width="300">
                             <template #default="scope">
                                 {{ scope.row.phone }}
                             </template>
                         </el-table-column>
-                        <el-table-column prop="email" label="邮箱" width="150">
+                        <el-table-column prop="email" label="邮箱" min-width="300">
                             <template #default="scope">
                                 {{ scope.row.email }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="性别" align="center">
+                        <el-table-column prop="department" label="部门" min-width="220">
+                            <template #default="scope">
+                                {{ scope.row.department }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="roleName" label="角色" min-width="180">
+                            <template #default="scope">
+                                {{ scope.row.roleName }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="responsibility" label="责任人" min-width="180">
+                            <template #default="scope">
+                                {{ scope.row.responsibility }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="company" label="公司" min-width="120">
+                            <template #default="scope">
+                                {{ scope.row.company }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="costCenter" label="成本中心" min-width="150">
+                            <template #default="scope">
+                                {{ scope.row.costCenter }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="性别" align="center" min-width="100">
                             <template #default="scope">
                                 <el-text v-if="scope.row.sex === 0">女</el-text>
                                 <el-text v-else-if="scope.row.sex === 1">男</el-text>
                                 <el-text v-else>未知</el-text>
                             </template>
                         </el-table-column>
-                        <el-table-column label="状态" align="center">
+                        <el-table-column prop="createTime" label="创建时间" min-width="150">
+                            <template #default="scope">
+                                {{ scope.row.createTime }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="updateTime" label="更新时间" min-width="150">
+                            <template #default="scope">
+                                {{ scope.row.updateTime }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="状态" align="center" min-width="100">
                             <template #default="scope">
                                 <el-tag v-if="scope.row.status === 0">正常</el-tag>
                                 <el-tag v-else-if="scope.row.status === -1" type="warning">已删除</el-tag>
                             </template>
                         </el-table-column>
-                        <el-table-column fixed="right" label="操作" width="360">
+                        <el-table-column fixed="right" label="操作" min-width="180">
                             <template #default="scope">
                                 <div class="action_btn">
                                     <template v-if="scope.row.status === 0">
-                                        <el-button type="success" plain @click="editUserDialog(scope.row)">编辑
-                                        </el-button>
-                                        <el-button type="warning" plain @click="restorePasswordDialog(scope.row)">
-                                            重置密码
-                                        </el-button>
-                                        <el-button type="primary" v-if="scope.row.userId > 1" plain
-                                                   @click="distributeRoleDialog(scope.row)">分配角色
-                                        </el-button>
-                                        <el-button type="danger" v-if="scope.row.userId > 1" plain
-                                                   @click="deleteLogicRoleDialog(scope.row)">删除
-                                        </el-button>
+                                        <template v-if="scope.row.roleName === '超级管理员'">
+                                            <el-button class="highest-authority-btn" type="warning" disabled>最高权限</el-button>
+                                        </template>
+                                        <template v-else>
+                                            <el-button type="primary" plain
+                                                    @click="distributeRoleDialog(scope.row)">分配角色
+                                            </el-button>
+                                        </template>
                                     </template>
                                     <template v-if="scope.row.status === -1">
-                                        <el-button type="warning" plain @click="restoreUserDialog(scope.row)">恢复
-                                        </el-button>
-                                        <el-button type="info" plain @click="deleteRoleDialog(scope.row)">删除
-                                        </el-button>
+                                        <el-button type="info" plain disabled>账号已禁用</el-button>
                                     </template>
                                 </div>
                             </template>
@@ -717,6 +809,28 @@ const deleteRole = () => {
                 </div>
             </template>
         </el-dialog>
+        <!-- 审批人更新对话框 -->
+        <el-dialog title="审批人更新" :close-on-click-modal="false" v-model="updateApproverDialogVisible" width="400">
+            <div class="update-approver-dialog" v-loading="uploadLoading">
+                <p>请上传审批人Excel文件</p>
+                <el-upload
+                    class="upload-excel"
+                    action="#"
+                    :auto-upload="false"
+                    :show-file-list="true"
+                    accept=".xlsx, .xls"
+                    :limit="1"
+                    :on-change="handleFileChange">
+                    <el-button type="primary">选择文件</el-button>
+                </el-upload>
+            </div>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="updateApproverDialogVisible = false">取消</el-button>
+                    <el-button type="primary" @click="updateApprover" :loading="uploadLoading">确定</el-button>
+                </div>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -780,14 +894,23 @@ const deleteRole = () => {
     margin-bottom: 20px;
 }
 
-:deep(.user_table) .action_btn {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 10px;
-}
-
-:deep(.user_table) .action_btn .el-button + .el-button {
-    margin-left: 0;
+:deep(.user_table) {
+    /* Ensure table rows have consistent height */
+    .el-table__row {
+        height: auto;
+        line-height: 1.5;
+    }
+    
+    /* Style for action buttons */
+    .action_btn {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 10px;
+    }
+    
+    .action_btn .el-button + .el-button {
+        margin-left: 0;
+    }
 }
 
 :deep(.add_user_dialog) .el-form .el-form-item__content,
@@ -795,5 +918,45 @@ const deleteRole = () => {
     column-gap: 10px;
 }
 
+/* Style for the highest authority button */
+:deep(.highest-authority-btn) {
+    background: linear-gradient(45deg, #E6A23C, #F56C6C);
+    border: none;
+    color: white;
+    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+}
+
+:deep(.highest-authority-btn)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+.update-approver-dialog {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.upload-excel {
+    width: 100%;
+}
 
 </style>

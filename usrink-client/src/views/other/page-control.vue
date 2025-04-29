@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import httpUtil from "@/utils/HttpUtil";
-import { Warning } from "@element-plus/icons-vue";
+import { Warning, Download, UploadFilled, InfoFilled, Check } from "@element-plus/icons-vue";
 import { ElTooltip, ElMessage } from 'element-plus';
 
 
@@ -34,7 +34,8 @@ const queryForm = ref({
     po: '',
     vendor: '',
     company: '',
-    assetsNo: '',
+    wbsNum: '',
+    price: '',
     temp: '',
     pageNum: 1,
     pageSize: 10
@@ -68,7 +69,8 @@ const editPartForm = ref({
     po: '',
     vendor: '',
     company: '',
-    assetsNo: '',
+    wbsNum: '',
+    price: '',
     temp: ''
 })
 
@@ -84,6 +86,11 @@ const deletePartDialogVisible = ref(false);
 const editPartFormRef = ref(null)
 const deletePartIng = ref(false)
 const deletePartTips = ref('')
+
+// 添加文件上传相关变量
+const uploadFileDialogVisible = ref(false);
+const uploadLoading = ref(false);
+const uploadFile = ref(null);
 
 onMounted(() => {
     // 查询配件列表
@@ -246,6 +253,88 @@ const deletePart = () => {
     })
 }
 
+// Add computed properties for date formatting and years calculation
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    // Handle ISO date format like 2013-08-28T00:00 as well as other formats
+    if (dateString.includes('T')) {
+        return dateString.split('T')[0];
+    }
+    // Handle other date formats that might use space as separator
+    return dateString.split(' ')[0];
+}
+
+const calculateYearsToToday = (dateString) => {
+    if (!dateString) return '';
+    const manufactureDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = Math.abs(today - manufactureDate);
+    const diffYears = (diffTime / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1);
+    return diffYears;
+}
+
+/**
+ * 打开文件上传对话框
+ */
+const openUploadFileDialog = () => {
+    uploadFileDialogVisible.value = true;
+    uploadFile.value = null;
+}
+
+/**
+ * 文件上传改变事件
+ * @param file 上传的文件
+ */
+const handleFileChange = (file) => {
+    uploadFile.value = file.raw;
+}
+
+/**
+ * 上传文件并更新电脑信息
+ */
+const importComputerByExcel = () => {
+    if (!uploadFile.value) {
+        ElMessage.warning('请选择Excel文件');
+        return;
+    }
+    
+    uploadLoading.value = true;
+    
+    const formData = new FormData();
+    formData.append('file', uploadFile.value);
+    
+    httpUtil.post("/sysControl/importComputerByExcel", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        },
+        timeout: 300000 // 增加超时时间到5分钟
+    }).then(res => {
+        ElMessage.success(res.msg || '电脑信息更新成功');
+        // 刷新电脑列表
+        selectPartListData();
+    }).catch(err => {
+        console.error(err);
+        ElMessage.error(err.response?.data?.msg || '电脑信息更新失败');
+    }).finally(() => {
+        uploadLoading.value = false;
+        uploadFileDialogVisible.value = false;
+        uploadFile.value = null;
+    });
+}
+
+/**
+ * 下载模板文件
+ */
+const downloadTemplate = () => {
+    // 创建一个a标签，用于下载文件
+    const link = document.createElement('a');
+    link.href = '/template.xlsx'; // 模板文件路径
+    link.download = 'template.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 </script>
 
 
@@ -272,8 +361,11 @@ const deletePart = () => {
                 <el-form-item label="电脑状态" class="form-item">
                     <el-select v-model="queryForm.pcStatus" placeholder="请选择电脑状态" class="input-field">
                         <el-option label="ALL STATUS" value=""></el-option>
-                        <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
-                        <el-option label="IN USE" value="IN USE"></el-option>
+                        <el-option label="In Use" value="In Use"></el-option>
+                        <el-option label="Scrapped" value="Scrapped"></el-option>
+                        <el-option label="ShareNoteBook" value="ShareNoteBook"></el-option>
+                        <el-option label="To be assigned" value="To be assigned"></el-option>
+                        <el-option label="To be scrapped" value="To be scrapped"></el-option>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="出厂时间" class="form-item">
@@ -281,9 +373,7 @@ const deletePart = () => {
                 </el-form-item>
                 <el-form-item class="form-item">
                     <el-button type="primary" @click="selectPartListData">查询</el-button>
-                </el-form-item>
-                <el-form-item class="form-item">
-                    <el-button type="primary" @click="addPartDialog">新增设备</el-button>
+                    <el-button type="primary" @click="openUploadFileDialog" class="update-btn">电脑更新</el-button>
                 </el-form-item>
             </el-form>
         </el-card>
@@ -341,7 +431,7 @@ const deletePart = () => {
                 </el-table-column>
 
                 <!-- 电脑型号 -->
-                <el-table-column label="电脑型号" prop="modelOrVersion" :width="150">
+                <el-table-column label="电脑型号" prop="modelOrVersion" :width="200">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.modelOrVersion" placement="top">
                             <div class="text-ellipsis">{{ row.modelOrVersion }}</div>
@@ -359,7 +449,7 @@ const deletePart = () => {
                 </el-table-column>
 
                 <!-- 电脑归属情况 -->
-                <el-table-column label="电脑归属情况" prop="pcClass" :width="150">
+                <el-table-column label="电脑归属情况" prop="pcClass" :width="200">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.pcClass" placement="top">
                             <div class="text-ellipsis">{{ row.pcClass }}</div>
@@ -368,7 +458,7 @@ const deletePart = () => {
                 </el-table-column>
 
                 <!-- 备注 -->
-                <el-table-column label="备注" prop="comment" :width="150">
+                <el-table-column label="备注" prop="comment" :width="200">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.comment" placement="top">
                             <div class="text-ellipsis">{{ row.comment }}</div>
@@ -434,8 +524,8 @@ const deletePart = () => {
                 <!-- 出厂时间 -->
                 <el-table-column label="出厂时间" prop="lifeCycleStart" :width="150">
                     <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="row.lifeCycleStart" placement="top">
-                            <div class="text-ellipsis">{{ row.lifeCycleStart }}</div>
+                        <el-tooltip class="item" effect="light" :content="formatDate(row.lifeCycleStart)" placement="top">
+                            <div class="text-ellipsis">{{ formatDate(row.lifeCycleStart) }}</div>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -443,8 +533,8 @@ const deletePart = () => {
                 <!-- 出厂日期截至今天的时间 -->
                 <el-table-column label="出厂日期截至今天的时间" prop="yrs_To_Day" :width="120">
                     <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="row.yrsToDay" placement="top" open-delay=1000>
-                            <div class="text-ellipsis">{{ row.yrsToDay }}</div>
+                        <el-tooltip class="item" effect="light" :content="calculateYearsToToday(row.lifeCycleStart) + ' 年'" placement="top" open-delay=1000>
+                            <div class="text-ellipsis">{{ calculateYearsToToday(row.lifeCycleStart) }} 年</div>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -531,10 +621,10 @@ const deletePart = () => {
                 </el-table-column>
 
                 <!-- 资产号 -->
-                <el-table-column label="资产号" prop="assetsNo" :width="150">
+                <el-table-column label="wbs号" prop="wbsNum" :width="150">
                     <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="row.assetsNo" placement="top">
-                            <div class="text-ellipsis">{{ row.assetsNo }}</div>
+                        <el-tooltip class="item" effect="light" :content="row.wbsNum" placement="top">
+                            <div class="text-ellipsis">{{ row.wbsNum }}</div>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -750,8 +840,8 @@ const deletePart = () => {
                             </el-form-item>
                         </el-col>
                         <el-col :span="8">
-                            <el-form-item label="资产号" prop="assetsNo">
-                                <el-input v-model="editPartForm.assetsNo"></el-input>
+                            <el-form-item label="wbs号" prop="wbsNum">
+                                <el-input v-model="editPartForm.wbsNum"></el-input>
                             </el-form-item>
                         </el-col>
                         <el-col :span="8">
@@ -760,6 +850,14 @@ const deletePart = () => {
                                     <el-option label="否" :value="0"></el-option>
                                     <el-option label="是" :value="1"></el-option>
                                 </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                            <el-form-item label="价格" prop="price">
+                                <el-input v-model="editPartForm.price"></el-input>
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -777,6 +875,69 @@ const deletePart = () => {
                 <template #footer>
                     <el-button @click="deletePartDialogVisible = false">取 消</el-button>
                     <el-button type="primary" @click="deletePart">确 定</el-button>
+                </template>
+            </el-dialog>
+
+            <!-- 文件上传对话框 -->
+            <el-dialog v-model="uploadFileDialogVisible" width="580px" :close-on-click-modal="false" :destroy-on-close="true" custom-class="rounded-dialog" :show-close="true" :title="null">
+                <div class="upload-dialog-container" v-loading="uploadLoading">
+                    <div class="upload-dialog-left">
+                        <div class="upload-icon-container">
+                            <div class="upload-icon">
+                                <el-icon class="upload-icon-svg"><UploadFilled /></el-icon>
+                            </div>
+                        </div>
+                        <h3 class="upload-title">批量更新电脑信息</h3>
+                        <p class="upload-subtitle">请上传符合模板格式的Excel文件</p>
+                        
+                        <div class="upload-tips">
+                            <el-icon><InfoFilled /></el-icon>
+                            <span>首次使用请先下载模板，按格式填写</span>
+                        </div>
+                        
+                        <el-button 
+                            type="primary" 
+                            class="template-download-btn" 
+                            @click="downloadTemplate">
+                            <el-icon><Download /></el-icon>
+                            下载模板
+                        </el-button>
+                    </div>
+                    
+                    <div class="upload-dialog-divider"></div>
+                    
+                    <div class="upload-dialog-right">
+                        <div class="upload-container">
+                            <el-upload
+                                class="upload-excel"
+                                drag
+                                action="#"
+                                :auto-upload="false"
+                                :show-file-list="true"
+                                :limit="1"
+                                accept=".xlsx, .xls"
+                                :on-change="handleFileChange">
+                                <el-icon class="el-icon--upload"><Upload /></el-icon>
+                                <div class="el-upload__text">
+                                    拖拽文件到此处或 <em>点击上传</em>
+                                </div>
+                                <template #tip>
+                                    <div class="el-upload__tip">
+                                        仅支持 .xlsx/.xls 格式的 Excel 文件
+                                    </div>
+                                </template>
+                            </el-upload>
+                        </div>
+                    </div>
+                </div>
+                <template #footer>
+                    <div class="dialog-footer">
+                        <el-button @click="uploadFileDialogVisible = false" class="cancel-btn">取 消</el-button>
+                        <el-button type="primary" @click="importComputerByExcel" :loading="uploadLoading" class="confirm-btn">
+                            <el-icon v-if="!uploadLoading"><Check /></el-icon>
+                            <span>{{ uploadLoading ? '处理中...' : '确认导入' }}</span>
+                        </el-button>
+                    </div>
                 </template>
             </el-dialog>
         </div>
@@ -882,11 +1043,14 @@ const deletePart = () => {
 
 /* 查询按钮样式 */
 .query-form .el-form-item .el-button {
-    background-color: rgb(236, 245, 255);  /* 按钮背景色与之前一致 */
-    color: rgb(64, 158, 255);  /* 字体颜色保持白色 */
-    font-size: 14px; /* 按钮文字大小与之前一致 */
-    border-radius: 4px; /* 保持圆角 */
-    width: 20%;
+    background-color: rgb(236, 245, 255);
+    color: rgb(64, 158, 255);
+    font-size: 14px;
+    border-radius: 4px;
+    width: auto;
+    padding: 0 15px;
+    margin-right: 10px;
+    height: 36px;
 }
 
 /* 按钮悬停效果 */
@@ -896,5 +1060,299 @@ const deletePart = () => {
     color: white;
 }
 
+/* 更新按钮样式 */
+.update-btn {
+    background-color: rgb(236, 245, 255) !important;
+    color: rgb(64, 158, 255) !important;
+}
 
+.update-btn:hover {
+    background-color: #66b1ff !important;
+    border-color: #66b1ff !important;
+    color: white !important;
+}
+
+/* 圆角对话框样式 */
+:deep(.rounded-dialog) {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 
+                0 1px 8px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.rounded-dialog .el-dialog__header) {
+    padding: 12px 15px;
+    text-align: right;
+    border-bottom: none;
+    margin-right: 0;
+    background: linear-gradient(to right, #f8fafc, #f0f4ff);
+}
+
+:deep(.rounded-dialog .el-dialog__title) {
+    display: none;
+}
+
+:deep(.rounded-dialog .el-dialog__headerbtn) {
+    top: 12px;
+    right: 15px;
+}
+
+:deep(.rounded-dialog .el-dialog__body) {
+    padding: 20px;
+    background: linear-gradient(145deg, #ffffff, #fafcff);
+}
+
+:deep(.rounded-dialog .el-dialog__footer) {
+    border-top: 1px solid #f0f2f5;
+    padding: 14px 20px;
+    background: linear-gradient(to right, #f8fafc, #f0f4ff);
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.dialog-footer .cancel-btn {
+    border-color: #dcdfe6;
+    color: #606266;
+    background: #fff;
+    transition: all 0.3s;
+    padding: 9px 15px;
+}
+
+.dialog-footer .cancel-btn:hover {
+    color: #409EFF;
+    border-color: #c6e2ff;
+    background-color: #f0f7ff;
+}
+
+.dialog-footer .confirm-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #4db8ff, #1890ff);
+    border: none;
+    box-shadow: 0 4px 10px rgba(64, 158, 255, 0.3);
+    transition: all 0.3s ease;
+    min-width: 100px;
+    padding: 10px 16px;
+    height: auto;
+    border-radius: 6px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.dialog-footer .confirm-btn:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #66c2ff, #3aa0ff);
+    box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
+}
+
+.dialog-footer .confirm-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(64, 158, 255, 0.3);
+}
+
+@keyframes glow {
+    from {
+        filter: drop-shadow(0 0 2px rgba(64, 158, 255, 0.6));
+    }
+    to {
+        filter: drop-shadow(0 0 8px rgba(64, 158, 255, 0.8));
+    }
+}
+
+/* 文件上传对话框新布局样式 */
+.upload-dialog-container {
+    display: flex;
+    gap: 0;
+    padding: 15px 0;
+    min-height: 300px;
+}
+
+.upload-dialog-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 20px 10px 10px;
+}
+
+.upload-dialog-divider {
+    width: 1px;
+    background: linear-gradient(to bottom, 
+        rgba(235, 238, 245, 0), 
+        rgba(235, 238, 245, 1) 15%, 
+        rgba(235, 238, 245, 1) 85%, 
+        rgba(235, 238, 245, 0));
+    margin: 20px 0;
+}
+
+.upload-dialog-right {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px 10px 10px 20px;
+}
+
+.upload-icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.upload-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f0f4ff, #e6f0ff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(64, 158, 255, 0.2),
+                inset 0 -2px 5px rgba(255, 255, 255, 0.8),
+                inset 0 2px 5px rgba(64, 158, 255, 0.1);
+}
+
+.upload-icon-svg {
+    font-size: 36px;
+    color: #409EFF;
+    filter: drop-shadow(0 2px 4px rgba(64, 158, 255, 0.3));
+}
+
+.upload-title {
+    font-size: 20px;
+    color: #303133;
+    margin: 0 0 12px 0;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.upload-subtitle {
+    font-size: 14px;
+    color: #606266;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.upload-container {
+    width: 100%;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #f8fafc, #f0f4ff);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05),
+                inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    padding: 2px;
+}
+
+.upload-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08),
+                inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.upload-excel {
+    width: 100%;
+}
+
+.upload-excel :deep(.el-upload-dragger) {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(145deg, #ffffff, #f6f9fc);
+    border: 1px dashed #c0d3ff;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.upload-excel :deep(.el-upload-dragger:hover) {
+    border-color: #409EFF;
+    background: linear-gradient(145deg, #fafcff, #f0f7ff);
+    box-shadow: inset 0 2px 8px rgba(64, 158, 255, 0.08);
+}
+
+.upload-excel :deep(.el-upload-dragger .el-icon--upload) {
+    font-size: 38px;
+    color: #409EFF;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 2px 4px rgba(64, 158, 255, 0.2));
+}
+
+.upload-excel :deep(.el-upload__text) {
+    color: #606266;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.upload-excel :deep(.el-upload__text em) {
+    color: #409EFF;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.upload-excel :deep(.el-upload__tip) {
+    text-align: center;
+    color: #909399;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+.upload-tips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #909399;
+    margin-top: auto;
+    margin-bottom: 18px;
+    padding: 10px 12px;
+    background-color: rgba(255, 236, 204, 0.2);
+    border-left: 3px solid #E6A23C;
+    border-radius: 4px;
+}
+
+.upload-tips .el-icon {
+    color: #E6A23C;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.template-download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #4db8ff, #1890ff);
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(64, 158, 255, 0.3);
+    transition: all 0.3s ease;
+    margin-top: 0;
+    padding: 10px 16px;
+    height: auto;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.template-download-btn:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #66c2ff, #3aa0ff);
+    box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
+}
+
+.template-download-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(64, 158, 255, 0.3);
+}
 </style>
