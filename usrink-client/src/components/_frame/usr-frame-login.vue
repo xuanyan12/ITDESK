@@ -55,59 +55,62 @@ const submitLogin = () => {
             <div class="particle-network"></div>
         </div>
 
-        <div class="login-content">
-            <div class="logo-container">
-                <img src="/SEG-logo.png" alt="SEG Logo" class="seg-logo">
+        <div class="login-card">
+            <!-- 左侧品牌区域 -->
+            <div class="brand-section">
+                <div class="logo-container">
+                    <img src="/SEG-logo.png" alt="SEG Logo" class="seg-logo">
+                </div>
+                <h2 class="brand-title">SEG IT Management</h2>
+                <p class="brand-slogan">智能、高效、安全的IT管理平台</p>
             </div>
             
-            <el-form
-                :model="loginForm"
-                class="tech-form"
-                @submit.native.prevent @keyup.enter="submitLogin">
-                <h3 class="tech-title">
-                    <span class="gradient-text">系统登录</span>
-                </h3>
-                <div class="title-decoration"></div>
-                
-                <el-form-item>
-                    <el-input
-                        v-model="loginForm.userName"
-                        placeholder="用户名"
-                        size="large"
-                        prefix-icon="UserFilled"
-                        clearable
-                        class="tech-input"/>
-                </el-form-item>
-                <el-form-item>
-                    <el-input
-                        v-model="loginForm.password"
-                        placeholder="密码"
-                        type="password"
-                        size="large"
-                        prefix-icon="Lock"
-                        show-password
-                        class="tech-input"/>
-                </el-form-item>
-                <el-form-item>
-                    <el-button
-                        type="primary"
-                        :loading="loading"
-                        @click="submitLogin"
-                        size="large"
-                        class="tech-button">
-                        登录
-                    </el-button>
-                </el-form-item>
-                <el-form-item>
-                    <div class="guest-account">
-                        <el-text type="info">测试账号：admin/xiajun(请勿随意进行操作)</el-text>
-                    </div>
-                </el-form-item>
-            </el-form>
-            
-            <div class="tech-footer">
-                <span>© 2025 SEG IT 部门. 保留所有权利</span>
+            <!-- 右侧登录表单区域 -->
+            <div class="login-form-section">
+                <el-form
+                    :model="loginForm"
+                    class="tech-form"
+                    @submit.native.prevent @keyup.enter="submitLogin">
+                    <h3 class="tech-title">
+                        <span class="gradient-text">系统登录</span>
+                    </h3>
+                    <div class="title-decoration"></div>
+                    
+                    <el-form-item>
+                        <el-input
+                            v-model="loginForm.userName"
+                            placeholder="用户名"
+                            size="large"
+                            prefix-icon="UserFilled"
+                            clearable
+                            class="tech-input"/>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-input
+                            v-model="loginForm.password"
+                            placeholder="密码"
+                            type="password"
+                            size="large"
+                            prefix-icon="Lock"
+                            show-password
+                            class="tech-input"/>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button
+                            type="primary"
+                            :loading="loading"
+                            @click="submitLogin"
+                            size="large"
+                            class="tech-button">
+                            登录
+                        </el-button>
+                    </el-form-item>
+                </el-form>
             </div>
+        </div>
+        
+        <div class="tech-footer">
+            <span>© 2025 SEG IT 部门. 保留所有权利</span>
         </div>
     </section>
 </template>
@@ -120,6 +123,7 @@ const submitLogin = () => {
     height: 100vh;
     width: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -177,51 +181,93 @@ const submitLogin = () => {
     background-position: 0 0, 20px 20px;
 }
 
-/* 登录内容区域 */
-.login-content {
+/* 登录卡片 */
+.login-card {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 420px;
+    width: 860px;
+    max-width: 90%;
+    min-height: 480px;
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
     z-index: 10;
     position: relative;
 }
 
+/* 左侧品牌区域 */
+.brand-section {
+    width: 40%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #005389, #029165);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.1;
+}
+
 .logo-container {
     margin-bottom: 30px;
+    position: relative;
+    z-index: 5;
 }
 
 .seg-logo {
     width: 160px;
     height: auto;
     object-fit: contain;
+    filter: brightness(0) invert(1);
+}
+
+.brand-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    position: relative;
+    z-index: 5;
+}
+
+.brand-slogan {
+    font-size: 16px;
+    opacity: 0.9;
+    text-align: center;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 5;
+}
+
+/* 右侧登录表单区域 */
+.login-form-section {
+    width: 60%;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tech-form {
     width: 100%;
-    padding: 40px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 83, 137, 0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-.tech-form::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #005389, #029165);
+    max-width: 360px;
 }
 
 .tech-title {
-    font-size: 32px;
+    font-size: 28px;
     text-align: center;
     margin-bottom: 15px;
     font-weight: 700;
@@ -244,7 +290,7 @@ const submitLogin = () => {
 }
 
 .title-decoration {
-    width: 120px;
+    width: 80px;
     height: 3px;
     background: linear-gradient(90deg, #005389, #029165);
     margin: 0 auto 30px;
@@ -308,32 +354,46 @@ const submitLogin = () => {
     box-shadow: 0 4px 10px rgba(0, 83, 137, 0.1);
 }
 
-.guest-account {
-    text-align: center;
-    margin-top: 10px;
-    font-size: 14px;
-    opacity: 0.7;
-}
-
 .tech-footer {
-    margin-top: 30px;
+    margin-top: 20px;
     color: rgba(0, 83, 137, 0.7);
     font-size: 14px;
     text-align: center;
+    z-index: 10;
 }
 
 /* 响应式调整 */
-@media (max-width: 480px) {
-    .tech-form {
-        padding: 30px 20px;
+@media (max-width: 768px) {
+    .login-card {
+        flex-direction: column;
+        width: 90%;
+        max-width: 420px;
     }
     
-    .tech-title {
-        font-size: 28px;
+    .brand-section {
+        width: 100%;
+        padding: 30px 20px;
+        min-height: 180px;
+    }
+    
+    .login-form-section {
+        width: 100%;
+    }
+    
+    .tech-form {
+        max-width: 100%;
     }
     
     .seg-logo {
         width: 120px;
+    }
+    
+    .brand-title {
+        font-size: 20px;
+    }
+    
+    .brand-slogan {
+        font-size: 14px;
     }
 }
 </style>
