@@ -57,7 +57,11 @@ public class SysLoginController {
         try {
             ladpUserModel = sysLadpService.authenticate(userName, password);
         } catch (Exception e) {
-            // 捕获LDAP认证过程中的异常，不做处理，继续使用Shiro认证
+            // 检查是否是用户不存在的异常
+            if (e.getMessage() != null && e.getMessage().equals("用户不在域中，请联系IT处理")) {
+                return Res.error(e.getMessage());
+            }
+            // 其他异常继续使用Shiro认证
         }
         
         if (ladpUserModel != null) {
