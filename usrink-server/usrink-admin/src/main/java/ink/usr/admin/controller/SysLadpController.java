@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ink.usr.admin.utils.SystemUtil;
 import ink.usr.common.core.domain.Dict;
 
 @RestController
@@ -49,15 +48,5 @@ public class SysLadpController {
         boolean flag = sysLadpService.updateApprover(file);
 
         return Res.success(flag);
-    }
-
-    /**
-     * 获取当前系统登录的用户名
-     * @return 当前系统登录的用户名
-     */
-    @RequestMapping("/getCurrentOsUser")
-    public Res getCurrentOsUser() {
-        String osUserName = SystemUtil.getCurrentOsUser();
-        return Res.success(Dict.create().set("osUser", osUserName));
     }
 }

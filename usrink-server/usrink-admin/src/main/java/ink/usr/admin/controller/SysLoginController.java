@@ -57,9 +57,12 @@ public class SysLoginController {
         try {
             ladpUserModel = sysLadpService.authenticate(userName, password);
         } catch (Exception e) {
-            // 检查是否是用户不存在的异常
-            if (e.getMessage() != null && e.getMessage().equals("用户不在域中，请联系IT处理")) {
-                return Res.error(e.getMessage());
+            // 检查是否是预定义的错误消息
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (
+                errorMsg.equals("用户不在域中，请联系IT处理") || 
+                errorMsg.equals("AD域连接异常，请检查账号密码或联系IT"))) {
+                return Res.error(errorMsg);
             }
             // 其他异常继续使用Shiro认证
         }

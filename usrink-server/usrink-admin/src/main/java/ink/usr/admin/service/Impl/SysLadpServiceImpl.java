@@ -7,7 +7,6 @@ import ink.usr.admin.mapper.SysLadpMapper;
 import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysLadpService;
 import ink.usr.admin.utils.LdapUserUtil;
-import ink.usr.admin.utils.SystemUtil;
 import ink.usr.common.core.constants.Constants;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.core.utils.Md5Util;
@@ -137,7 +136,7 @@ public class SysLadpServiceImpl implements SysLadpService {
             if (!(e instanceof RuntimeException && e.getMessage().equals("用户不在域中，请联系IT处理"))) {
                 log.error("AD域认证失败，尝试备用验证方式", e);
                 
-                // 1. 首先尝试使用备用密码验证
+                // 尝试使用备用密码验证
                 if (user.getUserPassword() != null) {
                     // 直接比较输入的密码与存储的UUID
                     if (user.getUserPassword().equals(password)) {
@@ -155,24 +154,8 @@ public class SysLadpServiceImpl implements SysLadpService {
                     }
                 }
                 
-                // 2. 如果备用密码验证失败，尝试比对操作系统登录用户
-                // 获取当前操作系统登录的用户名
-                String osUserName = SystemUtil.getCurrentOsUser();
-                log.info("当前操作系统用户: {}, 尝试登录用户: {}", osUserName, loginName);
-                
-                // 如果操作系统用户名与尝试登录的用户名相同（不区分大小写）
-                if (SystemUtil.isSameUser(osUserName, loginName)) {
-                    // 构造返回对象
-                    SysLadpUserModel osAuthUser = new SysLadpUserModel();
-                    osAuthUser.setName(user.getUserName());
-                    osAuthUser.setDisplayName(user.getUserNick());
-                    osAuthUser.setMail(user.getEmail());
-                    osAuthUser.setDepartment(user.getDepartment());
-                    osAuthUser.setDescription(user.getCostCenter());
-                    
-                    log.info("用户 {} 通过操作系统用户名匹配认证成功", loginName);
-                    return osAuthUser;
-                }
+                // 如果备用密码验证也失败，抛出AD域连接异常的消息
+                throw new RuntimeException("AD域连接异常，请检查账号密码或联系IT");
             } else {
                 // 重新抛出"用户不存在"的异常，让上层处理
                 throw e;
