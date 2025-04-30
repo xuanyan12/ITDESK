@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class SysApplyRequestDTO extends SysApprovalRequestModel {
     // 责任人name
     private String responsibilityName;
+    // 使用人userName
+    private String userName;
 }

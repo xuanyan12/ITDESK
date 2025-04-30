@@ -59,9 +59,7 @@ public class SysApplyServiceImpl implements SysApplyService {
     @Transactional
     public String addApply(SysApplyRequestDTO sysApplyRequestDTO) {
         //  1.新建设备申请订单
-        //  1.1 从shiro中获取用户id
-        ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
-        Long userId = shiroUserInfo.getUserId();
+        Long userId = sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName());
         sysApplyRequestDTO.setApplicant(userId);
         //  1.2 设置审批流有效期，默认值为999天
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

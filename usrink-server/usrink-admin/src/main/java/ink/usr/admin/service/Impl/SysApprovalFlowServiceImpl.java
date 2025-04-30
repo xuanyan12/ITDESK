@@ -39,16 +39,19 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     @Autowired
     private SysApproverMapper sysApproverMapper;
 
+    // TODO 该方法需要修改，
     @Override
     public List<SysApprovalFlowVO> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
         List<SysApprovalFlowModel> FlowList = null;
         List newList = new ArrayList<SysApprovalFlowVO>();
         if(approvalType==0){
+            // approverId -> list
             FlowList = sysApprovalFlowMapper.getApprovalFlowListByApproverId(approverId);
 
             // 新增逻辑
             // 1.通过approverId查看role是不是ITapprover
-            // 2.如果role为ITApprover，则一级审批流是“审批中”的二级审批流需要添加标识0，其他情况不管（默认标识是1）
+            // 2.如果role为ITApprover，则一级审批流是"审批中"的二级审批流需要添加标识0，其他情况不管（默认标识是1）
+            // approverId ->
             String role = sysApproverMapper.getApproverRoleByApproverId(approverId);
 
             if("ITApprover".equals(role)){
@@ -73,6 +76,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             return newList;
             // 新增逻辑
         } else {
+            // approverId -> list
             FlowList = sysApprovalFlowMapper.getApprovalFlowListHistoryByApproverId(approverId);
             for(SysApprovalFlowModel single : FlowList){
                 SysApprovalFlowVO sysApprovalFlowVO = new SysApprovalFlowVO();
@@ -164,7 +168,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             SysApprovalFlowModel approvalFlow = sysApprovalFlowMapper.getApprovalFlowById(flowId);
             int stage = approvalFlow.getStage();
             if(stage==1){
-                // 如果为审批不通过，直接修改request
+                // 如果为审批不通过，直接修改request和二级审批流
                 if("审批不通过".equals(status)){
                     // 1.修改request
                     SysApprovalRequestModel requestModel = new SysApprovalRequestModel();
@@ -172,6 +176,18 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                     requestModel.setStatus(status);
                     requestModel.setUpdatedAt(approveTime);
                     result = sysApprovalFlowMapper.updateApprovalStatus(requestModel);
+                    
+                    // 2.找到对应的二级审批流并将其状态也设置为审批不通过
+                    SysApprovalFlowModel secondStageFlow = sysApprovalFlowMapper.getSecondStageFlowByApprovalId(requestId);
+                    if (secondStageFlow != null) {
+                        secondStageFlow.setStatus("审批不通过");
+                        secondStageFlow.setUpdatedAt(approveTime);
+                        sysApprovalFlowMapper.updateApprovalFlow(secondStageFlow);
+                        
+                        // 3.更新二级审批流的token状态
+                        sysTokenMapper.updateTokenBySecondStageFlow(requestId);
+                    }
+                    
                     return result > 0 && flowResult > 0 && tokenResult>0;
                 }
 

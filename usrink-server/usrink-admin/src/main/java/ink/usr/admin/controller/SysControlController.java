@@ -3,9 +3,11 @@ package ink.usr.admin.controller;
 import ink.usr.admin.dao.DTO.SysControlDTO;
 import ink.usr.admin.dao.VO.SysControlVO;
 import ink.usr.admin.service.SysControlService;
+import ink.usr.admin.service.SysUserService;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.model.mysql.SysControlModel;
+import ink.usr.common.model.mysql.SysUserModel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -33,6 +35,9 @@ public class SysControlController {
 
     @Autowired
     private SysControlService sysControlService;
+
+    @Autowired
+    private SysUserService sysUserService;
 
     /**
      * 获取电脑设备列表
@@ -244,6 +249,70 @@ public class SysControlController {
                     // 只处理非空值
                     if (cellValue != null && !cellValue.trim().isEmpty()) {
                         setProperty(computerModel, headerName, cellValue);
+                    }
+                }
+                
+                // 如果有ntAccount，从sys_user表获取用户信息并补充
+                if (computerModel.getNtAccount() != null && !computerModel.getNtAccount().trim().isEmpty()) {
+                    try {
+                        SysUserModel userInfo = sysUserService.getUserInfoByUserName(computerModel.getNtAccount());
+                        if (userInfo != null) {
+                            // 设置用户邮箱
+                            if (userInfo.getEmail() != null && !userInfo.getEmail().isEmpty()) {
+                                computerModel.setEmailAddress(userInfo.getEmail());
+                            }
+                            
+                            // 设置用户电话
+                            if (userInfo.getPhone() != null && !userInfo.getPhone().isEmpty()) {
+                                computerModel.setTelephone(userInfo.getPhone());
+                            }
+                            
+                            // 设置用户部门
+                            if (userInfo.getDepartment() != null && !userInfo.getDepartment().isEmpty()) {
+                                computerModel.setDepartment(userInfo.getDepartment());
+                            }
+                            
+                            // 设置成本中心
+                            if (userInfo.getCostCenter() != null && !userInfo.getCostCenter().isEmpty()) {
+                                computerModel.setCostCenter(userInfo.getCostCenter());
+                            }
+                            
+                            // 解析userNick设置firstName和lastName
+                            if (userInfo.getUserNick() != null && !userInfo.getUserNick().isEmpty()) {
+                                String userNick = userInfo.getUserNick();
+                                
+                                // 处理FIXED-TERM前缀
+                                if (userNick.startsWith("FIXED-TERM ")) {
+                                    userNick = userNick.substring("FIXED-TERM ".length()).trim();
+                                }
+                                
+                                // 假设格式是"YI, Dile (SES-TEF2)"
+                                // 先分离出括号部分
+                                int bracketIndex = userNick.indexOf(" (");
+                                if (bracketIndex > 0) {
+                                    userNick = userNick.substring(0, bracketIndex);
+                                }
+                                
+                                // 分离姓和名
+                                String[] nameParts = userNick.split(", ");
+                                if (nameParts.length == 2) {
+                                    // 姓氏是第一部分
+                                    computerModel.setLastName(nameParts[0]);
+                                    // 名字是第二部分
+                                    computerModel.setFirstName(nameParts[1]);
+                                } else {
+                                    // 如果不符合预期格式，使用整个userNick作为lastName
+                                    computerModel.setLastName(userNick);
+                                }
+                                
+                                log.info("解析用户 {} 姓名: 姓={}, 名={}", userInfo.getUserName(), 
+                                        computerModel.getLastName(), computerModel.getFirstName());
+                            }
+                        } else {
+                            log.warn("第 {} 行: ntAccount={} 在sys_user表中未找到对应用户", i + 1, computerModel.getNtAccount());
+                        }
+                    } catch (Exception e) {
+                        log.error("处理ntAccount={}的用户信息时出错: {}", computerModel.getNtAccount(), e.getMessage());
                     }
                 }
                 

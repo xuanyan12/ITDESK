@@ -1,5 +1,6 @@
 package ink.usr.admin.mapper;
 
+import ink.usr.admin.dao.VO.SysApprovalFlowVO;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysApprovalTokenModel;
@@ -57,4 +58,12 @@ public interface SysApprovalFlowMapper {
     String getStatusByAprroval1Id(Long aprrovalId);
 
     String getStatusByAprroval2Id(Long aprrovalId);
+
+    /**
+     * 根据申请ID获取二级审批流
+     * @param approvalId 申请ID
+     * @return 二级审批流
+     */
+    @Select("select * from sys_approval_flow where approvalId = #{approvalId} and stage = 2")
+    SysApprovalFlowModel getSecondStageFlowByApprovalId(Long approvalId);
 }

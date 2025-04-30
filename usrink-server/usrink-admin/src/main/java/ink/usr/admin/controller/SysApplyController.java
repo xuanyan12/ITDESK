@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -97,7 +98,7 @@ public class SysApplyController {
             String url = sysApplyService.addApply(sysApplyRequestDTO);
             
             // 获取申请人姓名
-            String applicantName = sysUserService.getUserNickNameByUserId(sysApplyRequestDTO.getApplicant());
+            String applicantName = sysUserService.getUserNickNameByUserId(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()));
             applicantName = applicantName != null ? applicantName : "未知申请人";
             
             // 构建邮件内容，包含所有申请信息
@@ -121,9 +122,11 @@ public class SysApplyController {
 
             // 发邮件给一级审批人
             // 1.获取一级审批人id
-            Long approverId = sysApproverService.getApproverId(sysApplyRequestDTO.getApplicant(), sysApplyRequestDTO.getCostCenter());
+            Long approverId = sysApproverService.getApproverIdUseCostCenter(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()), sysApplyRequestDTO.getCostCenter());
             // 2.根据审批人id获取邮箱
-            String email = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(approverId)).getEmail();
+            // 通过审批人id获取其userId
+            Long userApproverId = sysApproverService.getApproverInfoByApproverId(approverId);
+            String email = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userApproverId)).getEmail();
             String approverEmail = email;
             
             // 组装邮件主题
@@ -261,6 +264,12 @@ public class SysApplyController {
                 return Res.error("凭证为空或凭证过期，请重新登录！");
             }
 
+            // 获取审批流信息，检查是否是一级审批流
+            SysApprovalFlowModel flowModel = sysApprovalFlowService.getApprovalFlowById(flowId);
+            if (flowModel == null) {
+                return Res.error("未找到对应的审批流程");
+            }
+
             // 将前端传来的状态值转换为数据库中使用的状态值
             String dbStatus = status.equals("审批通过") ? "审批通过" : "审批不通过";
 
@@ -356,7 +365,9 @@ public class SysApplyController {
             emailContent.append("审批时间: ").append(approvalDTO.getApprovedAt()).append("\n");
             if(flowModel.getStage() == 2){
                 emailConfig.sendMail(applicantEmail, emailSubject, emailContent.toString());
-                return Res.success("审批操作成功，已通知申请人");
+                if("审批通过".equals(approvalDTO.getStatus())){
+                    return Res.success("审批操作成功，已通知申请人");
+                }
             }
             return Res.success("审批操作成功");
 
@@ -382,5 +393,31 @@ public class SysApplyController {
             throw new Exception(e);
         }
         return Res.success(sysUserModel);
+    }
+
+    /**
+     * 获取某个用户的approverId列表
+     * @return
+     */
+    @RequestMapping("/getApproverIdList")
+    public Res getApproverIdList(){
+        ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+        List<Long> approverIdList = sysApproverService.getApproverIdList(shiroUserInfo.getUserId());
+        Dict result = Dict.create()
+                .set("list", approverIdList);
+        return Res.success(result);
+    }
+    
+    /**
+     * 获取某个用户的审批人列表（包含成本中心名称）
+     * @return 审批人列表，包含ID和成本中心名称
+     */
+    @RequestMapping("/getApproverList")
+    public Res getApproverList(){
+        ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+        List<Map<String, Object>> approverList = sysApproverService.getApproverListWithCostCenter(shiroUserInfo.getUserId());
+        Dict result = Dict.create()
+                .set("list", approverList);
+        return Res.success(result);
     }
 }

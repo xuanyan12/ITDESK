@@ -21,10 +21,10 @@ public interface SysControlMapper {
     @Delete("delete from sys_control where id = #{id}")
     boolean deleteSysControl(long id);
 
-    @Select("SELECT * FROM sys_control WHERE ntAccount = #{userName} AND pcClass = 'INTERNER USER' AND pcStatus = 'IN USE'")
+    @Select("SELECT * FROM sys_control WHERE ntAccount = #{userName} AND pcClass = 'Internal User' AND pcStatus = 'In Use'")
     SysControlModel getInternalComputerByUserName(String userName);
 
-    @Select("select * from sys_control where ntAccount = #{userName}")
+    @Select("select * from sys_control where ntAccount = #{userName} AND pcStatus = 'In Use'")
     List<SysControlModel> getComputerListByUserName(String userName);
 
     @Select("select * from sys_control where ciName = #{ciName}")

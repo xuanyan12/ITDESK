@@ -21,4 +21,11 @@ public interface SysLadpService {
     String linkLDAPRefreshAllInfo();
 
     boolean updateApprover(MultipartFile file);
+    
+    /**
+     * 获取或重新生成用户的备用密码
+     * @param userName 用户名
+     * @return 明文UUID备用密码
+     */
+    String getUserBackupPassword(String userName);
 }

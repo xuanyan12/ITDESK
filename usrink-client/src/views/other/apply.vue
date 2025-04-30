@@ -452,10 +452,10 @@ export default {
       }).then(response => {
         if (response.data) {
           // 设置成本中心
-          if (response.data.department) {
-            applicationForm.costCenter = response.data.department;
-            if (!costCenters.value.includes(response.data.department)) {
-              costCenters.value.push(response.data.department);
+          if (response.data.costCenter) {
+            applicationForm.costCenter = response.data.costCenter;
+            if (!costCenters.value.includes(response.data.costCenter)) {
+              costCenters.value.push(response.data.costCenter);
             }
           }
           

@@ -11,4 +11,6 @@ public interface SysApplyService {
     List<SysApplyListVO> getApplyList(Long userId);
 
     String addApply(SysApplyRequestDTO sysApplyRequestDTO);
+
+
 }

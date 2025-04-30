@@ -21,7 +21,7 @@ public class SysApproverModel implements Serializable {
     private String email;
     // 审批人角色权限
     private String role;
-    // 部门id
+    // 成本中心
     private String costCenter;
     // 创建时间
     private String createdAt;

@@ -1,10 +1,7 @@
 package ink.usr.admin.mapper;
 
 import ink.usr.common.model.mysql.SysApproverModel;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -63,4 +60,14 @@ public interface SysApproverMapper {
      */
     @Delete("DELETE FROM sys_approver WHERE approverId = #{id}")
     int deleteApproverById(Long id);
+
+    @Select("select DISTINCT approverId from sys_approver where userId = #{userId}")
+    List<Long> getApproverIdListBySingleApproverId(Long userId);
+
+    @Select("select approverId from sys_approver where costCenter = #{costCenter}")
+    Long getApproverIdUseCostCenter(@Param("userId") Long userId, @Param("costCenter") String costCenter);
+
+
+    @Select("select * from sys_approver where approverId = #{approverId}")
+    SysApproverModel getApproverInfoByApproverId(Long approverId);
 }

@@ -167,5 +167,39 @@ public class SysLoginController {
         SysUserMenus userMenus = sysLoginService.selectUserMenuList(shiroRoleInfo.getRoleMenuIds());
         return Res.success(userMenus);
     }
+    
+    /**
+     * 为指定用户生成备用密码
+     * 仅供管理员使用
+     */
+    @Log("生成用户备用密码")
+    @RequestMapping(value = "/generateBackupPassword")
+    public Res generateBackupPassword(String userName) {
+        try {
+            // 验证当前用户是否为管理员
+            ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+            ShiroRoleInfo shiroRoleInfo = shiroService.getRoleByUserId(shiroUserInfo.getUserId());
+            
+            if (shiroRoleInfo == null || shiroRoleInfo.getRoleId() != 1) {
+                return Res.error("权限不足，仅管理员可以生成备用密码");
+            }
+            
+            // 生成备用密码
+            String backupPassword = sysLadpService.getUserBackupPassword(userName);
+            
+            if (backupPassword == null) {
+                return Res.error("用户不存在或生成备用密码失败");
+            }
+            
+            Dict result = Dict.create()
+                    .set("userName", userName)
+                    .set("backupPassword", backupPassword)
+                    .set("message", "备用密码已生成，请妥善保管");
+            
+            return Res.success(result);
+        } catch (Exception e) {
+            return Res.error("生成备用密码失败: " + e.getMessage());
+        }
+    }
 
 }

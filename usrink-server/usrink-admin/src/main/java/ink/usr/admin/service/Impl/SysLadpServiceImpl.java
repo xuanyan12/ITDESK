@@ -110,14 +110,36 @@ public class SysLadpServiceImpl implements SysLadpService {
     public SysLadpUserModel authenticate(String loginName, String password) {
         this.disConnect();
         int count = 0;
-        do{
-            count ++;
-            this.connect(loginName, password);
-        }while (this.ctx != null && count < 3);
-        if( this.ctx != null ){
-            List<SysLadpUserModel> ldapUserDOS = this.searchLdapUser(loginName);
-            if( ldapUserDOS.size() == 1 ){
-                return ldapUserDOS.get(0);
+        try {
+            do{
+                count ++;
+                this.connect(loginName, password);
+            }while (this.ctx != null && count < 3);
+            if( this.ctx != null ){
+                List<SysLadpUserModel> ldapUserDOS = this.searchLdapUser(loginName);
+                if( ldapUserDOS.size() == 1 ){
+                    return ldapUserDOS.get(0);
+                }
+            }
+        } catch (Exception e) {
+            log.error("AD域认证失败，尝试备用密码认证", e);
+            // AD认证失败时，使用备用密码认证
+            SysUserModel user = sysUserMapper.getUserInfoByUserName(loginName);
+            if (user != null && user.getUserPassword() != null) {
+                // 直接比较输入的密码与存储的UUID
+                if (user.getUserPassword().equals(password)) {
+                    // 密码匹配，构造返回对象
+                    SysLadpUserModel backupUser = new SysLadpUserModel();
+                    backupUser.setName(user.getUserName());
+                    backupUser.setDisplayName(user.getUserNick());
+                    backupUser.setMail(user.getEmail());
+                    backupUser.setDepartment(user.getDepartment());
+                    backupUser.setDescription(user.getCostCenter());
+                    // 其他必要字段...
+                    
+                    log.info("用户 {} 使用备用密码认证成功", loginName);
+                    return backupUser;
+                }
             }
         }
         return null;
@@ -210,8 +232,15 @@ public class SysLadpServiceImpl implements SysLadpService {
         for(SysLadpUserModel singleLadpUserModel : filteredPersons){
             SysUserModel sysUserModel = new SysUserModel();
             sysUserModel.setUserName(singleLadpUserModel.getName()); // 设置nt账号
-            String password = Md5Util.md5(Constants.DEFAULT_PASSWORD);
-            sysUserModel.setUserPassword(Md5Util.md5(password + Constants.SALT)); // 设置初始密码（实际上用不到）
+            
+            // 为每个用户生成一个唯一的UUID作为备用密码
+            String uuid = generateUuidForUser();
+            // 直接将UUID设置为密码，不进行加密
+            sysUserModel.setUserPassword(uuid);
+            
+            // 记录日志，便于管理员查看用户的UUID
+            log.info("为用户 {} 生成备用密码 UUID: {}", singleLadpUserModel.getName(), uuid);
+            
             // 添加逻辑：所有审批人表中的数据角色不能被设置为2
             sysUserModel.setUserRoleId(2L); // 设置初始用户角色（与用户能看到的内容有关）
 
@@ -783,5 +812,51 @@ public class SysLadpServiceImpl implements SysLadpService {
 
         // 所有比较都相等
         return true;
+    }
+    
+    /**
+     * 生成用户的UUID备用密码
+     * 为了防止太长难以使用，这里生成一个简短的UUID
+     * @return UUID字符串
+     */
+    private String generateUuidForUser() {
+        // 生成完整UUID
+        UUID uuid = UUID.randomUUID();
+        
+        // 转换为无连字符的字符串
+        String fullUuid = uuid.toString().replace("-", "");
+        
+        // 获取UUID的前12位，足够保证唯一性，又不会太长
+        return fullUuid.substring(0, 12);
+    }
+    
+    /**
+     * 获取指定用户的明文UUID备用密码
+     * 仅供管理员使用
+     * @param userName 用户名
+     * @return 明文UUID或null（如果用户不存在）
+     */
+    @Override
+    public String getUserBackupPassword(String userName) {
+        try {
+            // 生成新的UUID备用密码
+            String uuid = generateUuidForUser();
+            
+            // 直接保存UUID为密码，不进行加密
+            
+            // 更新用户密码
+            SysUserModel user = sysUserMapper.getUserInfoByUserName(userName);
+            if (user != null) {
+                user.setUserPassword(uuid);
+                sysUserMapper.updateSysUserPassword(user);
+                
+                // 返回UUID
+                return uuid;
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("为用户 {} 生成备用密码失败", userName, e);
+            return null;
+        }
     }
 }
