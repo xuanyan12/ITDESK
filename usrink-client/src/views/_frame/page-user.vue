@@ -810,19 +810,39 @@ const deleteRole = () => {
             </template>
         </el-dialog>
         <!-- 审批人更新对话框 -->
-        <el-dialog title="审批人更新" :close-on-click-modal="false" v-model="updateApproverDialogVisible" width="400">
-            <div class="update-approver-dialog" v-loading="uploadLoading">
-                <p>请上传审批人Excel文件</p>
-                <el-upload
-                    class="upload-excel"
-                    action="#"
-                    :auto-upload="false"
-                    :show-file-list="true"
-                    accept=".xlsx, .xls"
-                    :limit="1"
-                    :on-change="handleFileChange">
-                    <el-button type="primary">选择文件</el-button>
-                </el-upload>
+        <el-dialog 
+            title="审批人更新" 
+            :close-on-click-modal="false" 
+            v-model="updateApproverDialogVisible" 
+            width="500px"
+            class="update-approver-dialog"
+            destroy-on-close>
+            <div class="approver-update-container" v-loading="uploadLoading">
+                <div class="update-header">
+                    <div class="header-title">
+                        <span>审批人信息更新</span>
+                    </div>
+                    <div class="header-description">请上传包含审批人信息的Excel文件</div>
+                </div>
+                
+                <div class="update-content">
+                    <el-upload
+                        class="upload-excel"
+                        action="#"
+                        :auto-upload="false"
+                        :show-file-list="true"
+                        accept=".xlsx, .xls"
+                        :limit="1"
+                        :on-change="handleFileChange">
+                        <el-button type="primary" class="upload-button">
+                            <i class="el-icon-upload"></i>
+                            选择Excel文件
+                        </el-button>
+                        <template #tip>
+                            <div class="el-upload__tip">请上传.xlsx或.xls格式的文件</div>
+                        </template>
+                    </el-upload>
+                </div>
             </div>
             <template #footer>
                 <div class="dialog-footer">
@@ -948,15 +968,236 @@ const deleteRole = () => {
     }
 }
 
+/* 审批人更新对话框样式 */
 .update-approver-dialog {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
+    :deep(.el-dialog__header) {
+        padding: 0;
+    }
+
+    :deep(.el-dialog__body) {
+        padding: 0;
+    }
+
+    :deep(.el-dialog__headerbtn) {
+        z-index: 10;
+        top: 10px;
+        right: 10px;
+    }
+
+    :deep(.el-dialog__headerbtn .el-dialog__close) {
+        color: #fff;
+        font-size: 18px;
+        transition: transform 0.3s ease;
+    }
+    
+    :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
+        transform: rotate(90deg);
+    }
+    
+    /* Dialog animation */
+    :deep(.el-dialog) {
+        transform: translateY(0);
+        opacity: 1;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    :deep(.el-dialog__wrapper) {
+        &:not(.is-visible) {
+            .el-dialog {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+        }
+    }
+
+    :deep(.el-dialog__footer) {
+        background-color: #f8fafc;
+        padding: 16px 20px;
+        border-top: 1px solid rgba(37, 128, 191, 0.1);
+    }
+}
+
+.approver-update-container {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.update-header {
+    background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+    color: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    
+    /* Add shimmer animation */
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 150%;
+        height: 100%;
+        background: linear-gradient(to right, 
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        transform: skewX(-25deg);
+        animation: shimmer 5s infinite;
+    }
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    /* Add subtle text shadow for better readability */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    /* Add subtle animation on load */
+    animation: fadeInLeft 0.5s ease-out;
+}
+
+.header-description {
+    font-size: 14px;
+    opacity: 0.9;
+    animation: fadeInUp 0.5s ease-out 0.1s both;
+}
+
+.update-content {
+    padding: 25px;
+    background-color: #f8f9fa;
+    animation: fadeIn 0.5s ease-out 0.1s both;
 }
 
 .upload-excel {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    :deep(.el-upload) {
+        width: 100%;
+        text-align: center;
+    }
+    
+    :deep(.el-upload-list) {
+        margin-top: 15px;
+        width: 100%;
+        text-align: left;
+    }
+}
+
+.upload-button {
+    width: 80%;
+    height: 45px;
+    background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+    border: none;
+    color: white;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(32, 178, 170, 0.3);
+    }
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: buttonShimmer 2s infinite;
+    }
+}
+
+:deep(.el-upload__tip) {
+    text-align: center;
+    color: #909399;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.dialog-footer {
+    text-align: right;
+    
+    .el-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .el-button--primary {
+        background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+        border: none;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(32, 178, 170, 0.3);
+        }
+    }
+}
+
+@keyframes buttonShimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        left: -150%;
+    }
+    50% {
+        left: 150%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 
 </style>

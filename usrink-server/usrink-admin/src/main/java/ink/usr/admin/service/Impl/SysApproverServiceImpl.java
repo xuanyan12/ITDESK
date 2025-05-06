@@ -70,4 +70,10 @@ public class SysApproverServiceImpl implements SysApproverService {
         
         return result;
     }
+
+    @Override
+    public List<String> getCostCenterList() {
+        List<String> costCenterList = sysApproverMapper.getCostCenterList();
+        return costCenterList;
+    }
 }

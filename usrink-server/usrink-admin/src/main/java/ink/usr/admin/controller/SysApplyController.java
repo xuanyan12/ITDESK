@@ -420,4 +420,16 @@ public class SysApplyController {
                 .set("list", approverList);
         return Res.success(result);
     }
+
+    /**
+     * 获取当前审批人表中包含的所有成本中心列表
+     * @return
+     */
+    @RequestMapping("/getCostCenterList")
+    public Res getCostCenterList(){
+        List<String> costCenterList = sysApproverService.getCostCenterList();
+        Dict result = Dict.create()
+                .set("list", costCenterList);
+        return Res.success(result);
+    }
 }

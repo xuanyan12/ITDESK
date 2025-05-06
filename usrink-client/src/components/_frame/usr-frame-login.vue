@@ -58,8 +58,8 @@ const submitLogin = () => {
         <div class="login-card">
             <!-- 左侧品牌区域 -->
             <div class="brand-section">
-                <div class="logo-container">
-                    <img src="/SEG-logo.png" alt="SEG Logo" class="seg-logo">
+            <div class="logo-container">
+                <img src="/SEG-logo.png" alt="SEG Logo" class="seg-logo">
                 </div>
                 <h2 class="brand-title">SEG IT Management</h2>
                 <p class="brand-slogan">智能、高效、安全的IT管理平台</p>
@@ -67,50 +67,50 @@ const submitLogin = () => {
             
             <!-- 右侧登录表单区域 -->
             <div class="login-form-section">
-                <el-form
-                    :model="loginForm"
-                    class="tech-form"
-                    @submit.native.prevent @keyup.enter="submitLogin">
-                    <h3 class="tech-title">
-                        <span class="gradient-text">系统登录</span>
-                    </h3>
-                    <div class="title-decoration"></div>
-                    
-                    <el-form-item>
-                        <el-input
-                            v-model="loginForm.userName"
-                            placeholder="用户名"
-                            size="large"
-                            prefix-icon="UserFilled"
-                            clearable
-                            class="tech-input"/>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-input
-                            v-model="loginForm.password"
-                            placeholder="密码"
-                            type="password"
-                            size="large"
-                            prefix-icon="Lock"
-                            show-password
-                            class="tech-input"/>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button
-                            type="primary"
-                            :loading="loading"
-                            @click="submitLogin"
-                            size="large"
-                            class="tech-button">
-                            登录
-                        </el-button>
-                    </el-form-item>
+            <el-form
+                :model="loginForm"
+                class="tech-form"
+                @submit.native.prevent @keyup.enter="submitLogin">
+                <h3 class="tech-title">
+                    <span class="gradient-text">系统登录</span>
+                </h3>
+                <div class="title-decoration"></div>
+                
+                <el-form-item>
+                    <el-input
+                        v-model="loginForm.userName"
+                        placeholder="用户名"
+                        size="large"
+                        prefix-icon="UserFilled"
+                        clearable
+                        class="tech-input"/>
+                </el-form-item>
+                <el-form-item>
+                    <el-input
+                        v-model="loginForm.password"
+                        placeholder="密码"
+                        type="password"
+                        size="large"
+                        prefix-icon="Lock"
+                        show-password
+                        class="tech-input"/>
+                </el-form-item>
+                <el-form-item>
+                    <el-button
+                        type="primary"
+                        :loading="loading"
+                        @click="submitLogin"
+                        size="large"
+                        class="tech-button">
+                        登录
+                    </el-button>
+                </el-form-item>
                 </el-form>
             </div>
-        </div>
-        
-        <div class="tech-footer">
-            <span>© 2025 SEG IT 部门. 保留所有权利</span>
+                    </div>
+            
+            <div class="tech-footer">
+                <span>© 2025 SEG IT 部门. 保留所有权利</span>
         </div>
     </section>
 </template>

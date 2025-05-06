@@ -70,4 +70,7 @@ public interface SysApproverMapper {
 
     @Select("select * from sys_approver where approverId = #{approverId}")
     SysApproverModel getApproverInfoByApproverId(Long approverId);
+
+    @Select("select distinct costCenter from sys_approver")
+    List<String> getCostCenterList();
 }

@@ -31,13 +31,6 @@ const collapseClick = () => {
 }
 
 /**
- * 个人中心
- */
-const userInfoClick = () => {
-    router.push("/profile/info")
-}
-
-/**
  * 全屏
  */
 const screenFull = () => {
@@ -76,37 +69,16 @@ const logout = () => {
             </div>
         </div>
         <div class="usr_container_header_menu_right">
-            <div class="usr_header_item usr_container_header_menu_right_nick">
-                <el-dropdown class="el_dropdown_override">
-                    <span>
-                        <el-badge
-                            class="el_badge_override">
-                            <el-avatar
-                                class="el_avatar_override"
-                                :size="30"
-                                :src="BASE_URL + userInfoStore.userInfo.avatar"
-                                style="border: 1px solid #409EFFFF">
-                                <template #default>
-                                    <el-icon :size="24">
-                                        <ElementPlus/>
-                                    </el-icon>
-                                </template>
-                            </el-avatar>
-                        </el-badge>
+            <div class="usr_header_item usr_container_header_menu_right_nick no-hover-effect">
+                <el-dropdown class="el_dropdown_override" trigger="click">
+                    <span class="user-name-wrapper">
                         <span>{{ userInfoStore.userInfo.userNick }}<el-text
                             type="info">({{ userInfoStore.roleInfo.roleName }})</el-text></span>
                     </span>
                     <template #dropdown>
                         <el-dropdown-menu class="el_dropdown_menu_override">
-                            <el-dropdown-item @click="userInfoClick">
-                                <el-icon :size="18">
-                                    <User/>
-                                </el-icon>
-                                个人中心
-                            </el-dropdown-item>
                             <el-dropdown-item
-                                @click="logout"
-                                divided>
+                                @click="logout">
                                 <el-icon :size="18">
                                     <SwitchButton/>
                                 </el-icon>
@@ -183,5 +155,33 @@ const logout = () => {
     display: flex;
     align-items: center;
     margin-left: 5px;
+}
+
+/* 添加用户名称相关样式，去掉黑框 */
+.usr_container_header_menu_right_nick.no-hover-effect {
+    cursor: pointer;
+}
+
+.usr_container_header_menu_right_nick .el_dropdown_override {
+    display: block;
+}
+
+.usr_container_header_menu_right_nick .user-name-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+/* 移除下拉菜单的边框和背景变化 */
+:deep(.el-dropdown-link:hover),
+:deep(.el-dropdown-link:focus),
+:deep(.el-dropdown-link:active) {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    background-color: transparent !important;
+}
+
+:deep(.el-dropdown-selfdefine:focus-visible) {
+    outline: none !important;
 }
 </style>

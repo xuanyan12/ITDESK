@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from "vue";
 import httpUtil from "@/utils/HttpUtil";
 import { Warning, Download, UploadFilled, InfoFilled, Check } from "@element-plus/icons-vue";
 import { ElTooltip, ElMessage } from 'element-plus';
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 
 
 
@@ -91,6 +93,11 @@ const deletePartTips = ref('')
 const uploadFileDialogVisible = ref(false);
 const uploadLoading = ref(false);
 const uploadFile = ref(null);
+
+// 添加导出对话框相关的状态变量
+const exportDialogVisible = ref(false);
+const exportOption = ref('current'); // 'current'表示导出当前页，'all'表示导出所有数据
+const exportLoading = ref(false);
 
 onMounted(() => {
     // 查询配件列表
@@ -335,6 +342,181 @@ const downloadTemplate = () => {
     document.body.removeChild(link);
 }
 
+/**
+ * 打开导出选项对话框
+ */
+const openExportDialog = () => {
+  exportOption.value = 'current'; // 默认选择当前页
+  exportDialogVisible.value = true;
+};
+
+/**
+ * 导出表格数据到Excel
+ */
+const exportTableData = async () => {
+  // 关闭对话框
+  exportDialogVisible.value = false;
+  
+  // 显示加载中提示
+  exportLoading.value = true;
+  loading.value = true;
+  ElMessage.info('正在准备导出数据，请稍候...');
+  
+  let dataToExport = [];
+  
+  // 根据用户选择获取要导出的数据
+  if (exportOption.value === 'current') {
+    // 导出当前页数据
+    dataToExport = formatDataForExport(partList.value);
+  } else if (exportOption.value === 'all') {
+    // 导出所有数据（需要发送请求获取所有数据）
+    try {
+      // 克隆当前查询条件，但移除分页限制
+      const exportQueryParams = { ...queryForm.value };
+      exportQueryParams.pageSize = 10000; // 设置一个较大的值以获取所有数据
+      exportQueryParams.pageNum = 1;
+      
+      const response = await httpUtil.post("/sysControl/selectSysControlList", exportQueryParams, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data && response.data.sysControlModelLists) {
+        dataToExport = formatDataForExport(response.data.sysControlModelLists);
+        ElMessage.success(`成功获取${dataToExport.length}条数据，正在导出...`);
+      } else {
+        ElMessage.warning('未获取到数据');
+        exportLoading.value = false;
+        loading.value = false;
+        return;
+      }
+    } catch (error) {
+      console.error('获取所有数据失败:', error);
+      ElMessage.error('获取所有数据失败，请重试');
+      exportLoading.value = false;
+      loading.value = false;
+      return;
+    }
+  }
+  
+  // 创建一个工作簿对象
+  const wb = XLSX.utils.book_new();
+  
+  // 将数据转换为工作表
+  const ws = XLSX.utils.json_to_sheet(dataToExport);
+  
+  // 设置列宽
+  const wscols = [
+    { wch: 15 }, // 电脑状态
+    { wch: 15 }, // 电脑名
+    { wch: 15 }, // 设备类型
+    { wch: 20 }, // 电脑序列号
+    { wch: 15 }, // 制造商
+    { wch: 20 }, // 电脑型号
+    { wch: 15 }, // NT账号
+    { wch: 20 }, // 电脑归属情况
+    { wch: 30 }, // 备注
+    { wch: 10 }, // 姓
+    { wch: 10 }, // 名
+    { wch: 25 }, // 邮箱地址
+    { wch: 15 }, // 电话号码
+    { wch: 20 }, // 所属部门
+    { wch: 15 }, // 成本中心
+    { wch: 15 }, // 出厂时间
+    { wch: 10 }, // 使用年限
+    { wch: 20 }, // CPU
+    { wch: 10 }, // 内存
+    { wch: 15 }, // 硬盘
+    { wch: 15 }, // 显卡
+    { wch: 15 }, // 硬件状态
+    { wch: 15 }, // 下单号
+    { wch: 15 }, // 订单号
+    { wch: 20 }, // 供应商公司
+    { wch: 15 }, // 公司
+    { wch: 15 }, // WBS号
+    { wch: 10 }, // 临时分配
+    { wch: 10 }  // 价格
+  ];
+  ws['!cols'] = wscols;
+  
+  // 将工作表添加到工作簿
+  XLSX.utils.book_append_sheet(wb, ws, '电脑信息');
+  
+  // 生成Excel文件并下载
+  // 获取当前日期作为文件名的一部分
+  const date = new Date();
+  const dateStr = date.getFullYear() + 
+                 ('0' + (date.getMonth() + 1)).slice(-2) + 
+                 ('0' + date.getDate()).slice(-2);
+  const timeStr = ('0' + date.getHours()).slice(-2) + 
+                 ('0' + date.getMinutes()).slice(-2);
+  const fileName = `电脑信息_${dateStr}_${timeStr}.xlsx`;
+  
+  // 导出文件
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+  
+  // 将二进制数据转换为Blob对象
+  function s2ab(s) {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < s.length; i++) {
+      view[i] = s.charCodeAt(i) & 0xFF;
+    }
+    return buf;
+  }
+  
+  // 使用file-saver保存文件
+  saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), fileName);
+  
+  // 隐藏加载提示
+  exportLoading.value = false;
+  loading.value = false;
+  
+  // 显示成功消息
+  ElMessage.success(`已成功导出${dataToExport.length}条数据`);
+};
+
+/**
+ * 格式化数据用于导出
+ */
+const formatDataForExport = (data) => {
+  return data.map(item => {
+    // 创建一个新对象，只包含我们需要导出的字段
+    return {
+      '电脑状态': item.pcStatus || '',
+      '电脑名': item.ciName || '',
+      '设备类型': item.deviceClass || '',
+      '电脑序列号': item.serialNumber || '',
+      '制造商': item.manufacture || '',
+      '电脑型号': item.modelOrVersion || '',
+      'NT账号': item.ntAccount || '',
+      '电脑归属情况': item.pcClass || '',
+      '备注': item.comment || '',
+      '姓': item.lastName || '',
+      '名': item.firstName || '',
+      '邮箱地址': item.emailAddress || '',
+      '电话号码': item.telephone || '',
+      '所属部门': item.department || '',
+      '成本中心': item.costCenter || '',
+      '出厂时间': formatDate(item.lifeCycleStart) || '',
+      '使用年限': calculateYearsToToday(item.lifeCycleStart) + ' 年',
+      'CPU': item.cpu || '',
+      '内存': item.memory || '',
+      '硬盘': item.disk || '',
+      '显卡': item.graphic || '',
+      '硬件状态': item.hardwareStatus || '',
+      '下单号': item.pr || '',
+      '订单号': item.po || '',
+      '供应商公司': item.vendor || '',
+      '公司': item.company || '',
+      'WBS号': item.wbsNum || '',
+      '临时分配': item.temp === 1 ? '是' : '否',
+      '价格': item.price || ''
+    };
+  });
+};
+
 </script>
 
 
@@ -374,6 +556,10 @@ const downloadTemplate = () => {
                 <el-form-item class="form-item">
                     <el-button type="primary" @click="selectPartListData">查询</el-button>
                     <el-button type="primary" @click="openUploadFileDialog" class="update-btn">电脑更新</el-button>
+                    <el-button type="primary" @click="openExportDialog" class="update-btn" :loading="exportLoading">
+                        <el-icon><Download /></el-icon>
+                        导出数据
+                    </el-button>
                 </el-form-item>
             </el-form>
         </el-card>
@@ -684,187 +870,225 @@ const downloadTemplate = () => {
 
 
             <!-- 编辑设备弹窗 -->
-            <el-dialog v-model="editPartDialogVisible" title="编辑设备" width="80%">
-                <el-form :model="editPartForm" ref="editPartFormRef" label-width="100px">
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="电脑名称" prop="ciName">
-                                <el-input v-model="editPartForm.ciName"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="电脑状态" prop="pcStatus" :rules="[{ required: true, message: '请选择状态', trigger: 'blur' }]">
-                                <el-select v-model="editPartForm.pcStatus" style="width: 100%">
-                                    <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
-                                    <el-option label="IN USE" value="IN USE"></el-option>
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="NT账号" prop="ntAccount" :rules="[{ required: true, message: '请输入NT账号', trigger: 'blur' }]">
-                                <el-input v-model="editPartForm.ntAccount"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
+            <el-dialog 
+                v-model="editPartDialogVisible" 
+                title="" 
+                width="80%" 
+                class="tech-edit-dialog"
+                :close-on-click-modal="false"
+                destroy-on-close>
+                <div class="edit-dialog-container" v-loading="loading">
+                    <div class="edit-header">
+                        <div class="edit-title">
+                            <span>编辑电脑信息</span>
+                            <el-tag class="edit-tag" type="success">
+                                {{ editPartForm.ciName || '未命名电脑' }}
+                            </el-tag>
+                        </div>
+                        <div class="edit-subtitle">请修改需要更新的电脑信息</div>
+                    </div>
+                    
+                    <div class="edit-content">
+                        <el-form :model="editPartForm" ref="editPartFormRef" label-width="100px" class="tech-form">
+                            <el-tabs type="border-card" class="tech-tabs">
+                                <el-tab-pane label="基础信息">
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="电脑名称" prop="ciName">
+                                                <el-input v-model="editPartForm.ciName"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="电脑状态" prop="pcStatus" :rules="[{ required: true, message: '请选择状态', trigger: 'blur' }]">
+                                                <el-select v-model="editPartForm.pcStatus" style="width: 100%">
+                                                    <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
+                                                    <el-option label="IN USE" value="IN USE"></el-option>
+                                                    <el-option label="ShareNoteBook" value="ShareNoteBook"></el-option>
+                                                    <el-option label="Scrapped" value="Scrapped"></el-option>
+                                                    <el-option label="To be scrapped" value="To be scrapped"></el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="NT账号" prop="ntAccount" :rules="[{ required: true, message: '请输入NT账号', trigger: 'blur' }]">
+                                                <el-input v-model="editPartForm.ntAccount"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
-                                <el-input v-model="editPartForm.pcClass"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="设备类型" prop="deviceClass">
-                                <el-input v-model="editPartForm.deviceClass"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="电脑序列号" prop="serialNumber">
-                                <el-input v-model="editPartForm.serialNumber"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
+                                                <el-input v-model="editPartForm.pcClass"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="设备类型" prop="deviceClass">
+                                                <el-input v-model="editPartForm.deviceClass"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="电脑序列号" prop="serialNumber">
+                                                <el-input v-model="editPartForm.serialNumber"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="制造商" prop="manufacture">
-                                <el-input v-model="editPartForm.manufacture"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="电脑型号" prop="modelOrVersion">
-                                <el-input v-model="editPartForm.modelOrVersion"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="备注" prop="comment">
-                                <el-input v-model="editPartForm.comment"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="制造商" prop="manufacture">
+                                                <el-input v-model="editPartForm.manufacture"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="电脑型号" prop="modelOrVersion">
+                                                <el-input v-model="editPartForm.modelOrVersion"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="出厂时间" prop="lifeCycleStart">
+                                                <el-input v-model="editPartForm.lifeCycleStart"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                </el-tab-pane>
+                                
+                                <el-tab-pane label="用户信息">
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="姓" prop="lastName">
+                                                <el-input v-model="editPartForm.lastName"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="名" prop="firstName">
+                                                <el-input v-model="editPartForm.firstName"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="邮箱地址" prop="emailAddress">
+                                                <el-input v-model="editPartForm.emailAddress"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="姓" prop="lastName">
-                                <el-input v-model="editPartForm.lastName"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="名" prop="firstName">
-                                <el-input v-model="editPartForm.firstName"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="邮箱地址" prop="emailAddress">
-                                <el-input v-model="editPartForm.emailAddress"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="电话号码" prop="telephone">
+                                                <el-input v-model="editPartForm.telephone"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="所属部门" prop="department">
+                                                <el-input v-model="editPartForm.department"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="成本中心" prop="costCenter">
+                                                <el-input v-model="editPartForm.costCenter"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="电话号码" prop="telephone">
-                                <el-input v-model="editPartForm.telephone"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="所属部门" prop="department">
-                                <el-input v-model="editPartForm.department"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="成本中心" prop="costCenter">
-                                <el-input v-model="editPartForm.costCenter"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
+                                    <el-row :gutter="20">
+                                        <el-col :span="24">
+                                            <el-form-item label="备注" prop="comment">
+                                                <el-input v-model="editPartForm.comment" type="textarea" :rows="2"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                </el-tab-pane>
+                                
+                                <el-tab-pane label="硬件信息">
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="CPU" prop="cpu">
+                                                <el-input v-model="editPartForm.cpu"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="内存" prop="memory">
+                                                <el-input v-model="editPartForm.memory"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="硬盘" prop="disk">
+                                                <el-input v-model="editPartForm.disk"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="出厂时间" prop="lifeCycleStart">
-                                <el-input v-model="editPartForm.lifeCycleStart"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="CPU" prop="cpu">
-                                <el-input v-model="editPartForm.cpu"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="内存" prop="memory">
-                                <el-input v-model="editPartForm.memory"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="显卡" prop="graphic">
+                                                <el-input v-model="editPartForm.graphic"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="硬件状态" prop="hardwareStatus">
+                                                <el-input v-model="editPartForm.hardwareStatus"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="临时分配" prop="temp">
+                                                <el-select v-model="editPartForm.temp" style="width: 100%">
+                                                    <el-option label="否" :value="0"></el-option>
+                                                    <el-option label="是" :value="1"></el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                </el-tab-pane>
+                                
+                                <el-tab-pane label="订单信息">
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="下单号" prop="pr">
+                                                <el-input v-model="editPartForm.pr"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="订单号" prop="po">
+                                                <el-input v-model="editPartForm.po"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="供应商公司" prop="vendor">
+                                                <el-input v-model="editPartForm.vendor"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
 
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="硬盘" prop="disk">
-                                <el-input v-model="editPartForm.disk"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="显卡" prop="graphic">
-                                <el-input v-model="editPartForm.graphic"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="硬件状态" prop="hardwareStatus">
-                                <el-input v-model="editPartForm.hardwareStatus"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="下单号" prop="pr">
-                                <el-input v-model="editPartForm.pr"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="订单号" prop="po">
-                                <el-input v-model="editPartForm.po"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="供应商公司" prop="vendor">
-                                <el-input v-model="editPartForm.vendor"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="公司" prop="company">
-                                <el-input v-model="editPartForm.company"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="wbs号" prop="wbsNum">
-                                <el-input v-model="editPartForm.wbsNum"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="临时分配" prop="temp">
-                                <el-select v-model="editPartForm.temp" style="width: 100%">
-                                    <el-option label="否" :value="0"></el-option>
-                                    <el-option label="是" :value="1"></el-option>
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="价格" prop="price">
-                                <el-input v-model="editPartForm.price"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                </el-form>
+                                    <el-row :gutter="20">
+                                        <el-col :span="8">
+                                            <el-form-item label="公司" prop="company">
+                                                <el-input v-model="editPartForm.company"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="wbs号" prop="wbsNum">
+                                                <el-input v-model="editPartForm.wbsNum"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="8">
+                                            <el-form-item label="价格" prop="price">
+                                                <el-input v-model="editPartForm.price"></el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                </el-tab-pane>
+                            </el-tabs>
+                        </el-form>
+                    </div>
+                </div>
                 <template #footer>
-                    <el-button @click="editPartDialogVisible = false">取 消</el-button>
-                    <el-button type="primary" @click="editPart">确 定</el-button>
+                    <div class="tech-dialog-footer">
+                        <el-button @click="editPartDialogVisible = false" class="tech-cancel-btn">取 消</el-button>
+                        <el-button type="primary" @click="editPart" class="tech-confirm-btn">
+                            <span class="tech-btn-text">保存修改</span>
+                            <span class="tech-btn-icon"><i class="el-icon-check"></i></span>
+                        </el-button>
+                    </div>
                 </template>
             </el-dialog>
 
@@ -936,6 +1160,57 @@ const downloadTemplate = () => {
                         <el-button type="primary" @click="importComputerByExcel" :loading="uploadLoading" class="confirm-btn">
                             <el-icon v-if="!uploadLoading"><Check /></el-icon>
                             <span>{{ uploadLoading ? '处理中...' : '确认导入' }}</span>
+                        </el-button>
+                    </div>
+                </template>
+            </el-dialog>
+
+            <!-- 修改导出选项对话框 -->
+            <el-dialog v-model="exportDialogVisible" title="数据导出" width="480px" :close-on-click-modal="false" custom-class="tech-dialog" :show-close="true">
+                <div class="tech-dialog-content">
+                    <div class="tech-header">
+                        <div class="tech-icon-container">
+                            <el-icon class="tech-icon"><Download /></el-icon>
+                        </div>
+                        <div class="tech-title-container">
+                            <h3 class="tech-title">导出电脑列表数据</h3>
+                            <p class="tech-subtitle">请选择要导出的数据范围</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-options">
+                        <div class="tech-option" :class="{ 'tech-option-active': exportOption === 'current' }" @click="exportOption = 'current'">
+                            <div class="tech-option-radio">
+                                <div class="tech-option-radio-inner" v-if="exportOption === 'current'"></div>
+                            </div>
+                            <div class="tech-option-content">
+                                <div class="tech-option-title">导出当前页数据</div>
+                                <div class="tech-option-details">仅导出当前页面显示的 {{ partList.length }} 条记录</div>
+                            </div>
+                        </div>
+                        
+                        <div class="tech-option" :class="{ 'tech-option-active': exportOption === 'all' }" @click="exportOption = 'all'">
+                            <div class="tech-option-radio">
+                                <div class="tech-option-radio-inner" v-if="exportOption === 'all'"></div>
+                            </div>
+                            <div class="tech-option-content">
+                                <div class="tech-option-title">导出全部符合条件的数据</div>
+                                <div class="tech-option-details">导出符合当前筛选条件的全部 {{ total }} 条记录</div>
+                            </div>
+                        </div>
+                        
+                        <div class="tech-warning" v-if="exportOption === 'all' && total > 1000">
+                            <el-icon><Warning /></el-icon>
+                            <span>数据量较大，导出可能需要较长时间</span>
+                        </div>
+                    </div>
+                </div>
+                <template #footer>
+                    <div class="tech-dialog-footer">
+                        <el-button @click="exportDialogVisible = false" class="tech-cancel-btn">取消</el-button>
+                        <el-button type="primary" @click="exportTableData" :loading="exportLoading" class="tech-confirm-btn">
+                            <span class="tech-btn-text">确认导出</span>
+                            <span class="tech-btn-icon"><i class="el-icon-right"></i></span>
                         </el-button>
                     </div>
                 </template>
@@ -1072,12 +1347,402 @@ const downloadTemplate = () => {
     color: white !important;
 }
 
+/* 科技风格对话框 */
+:deep(.tech-dialog) {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 
+                0 5px 15px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #f9fcff, #edf7ff);
+}
+
+:deep(.tech-dialog .el-dialog__header) {
+    padding: 0;
+    margin: 0;
+    height: 0;
+}
+
+:deep(.tech-dialog .el-dialog__title) {
+    display: none;
+}
+
+:deep(.tech-dialog .el-dialog__headerbtn) {
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+}
+
+:deep(.tech-dialog .el-dialog__headerbtn .el-dialog__close) {
+    color: #0abab5;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+:deep(.tech-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
+    color: #08d5cf;
+    transform: rotate(90deg);
+}
+
+:deep(.tech-dialog .el-dialog__body) {
+    padding: 0;
+    margin: 0;
+}
+
+:deep(.tech-dialog .el-dialog__footer) {
+    padding: 0;
+    margin: 0;
+}
+
+.tech-dialog-content {
+    padding: 0;
+}
+
+.tech-header {
+    background: linear-gradient(135deg, #08d5cf, #0886d5);
+    padding: 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(8, 213, 207, 0.3);
+}
+
+.tech-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+    animation: pulse 15s infinite linear;
+}
+
+.tech-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0) 100%);
+    animation: slide 3s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate(0, 0) rotate(360deg);
+    }
+}
+
+@keyframes slide {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+.tech-icon-container {
+    background: rgba(255, 255, 255, 0.2);
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.tech-icon {
+    font-size: 32px;
+    color: #fff;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.tech-title-container {
+    position: relative;
+    z-index: 2;
+}
+
+.tech-title {
+    margin: 0;
+    padding: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 0.6s ease;
+}
+
+.tech-subtitle {
+    margin: 6px 0 0 0;
+    padding: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.3px;
+    animation: fadeInUp 0.8s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tech-options {
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.tech-option {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0.9;
+    transform: translateY(5px);
+    border: 1px solid rgba(8, 213, 207, 0.1);
+}
+
+.tech-option:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.tech-option:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tech-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #08d5cf;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.tech-option:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(8, 213, 207, 0.1);
+    transform: translateY(-2px);
+}
+
+.tech-option:hover::before {
+    opacity: 0.6;
+}
+
+.tech-option-active {
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 5px 15px rgba(8, 213, 207, 0.15) !important;
+    border: 1px solid rgba(8, 213, 207, 0.3);
+}
+
+.tech-option-active::before {
+    opacity: 1 !important;
+}
+
+.tech-option-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #08d5cf;
+    margin-right: 15px;
+    margin-top: 3px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.tech-option-radio-inner {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #08d5cf;
+    animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+.tech-option-content {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.tech-option-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.tech-option-details {
+    font-size: 13px;
+    color: #666;
+}
+
+.tech-warning {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+    margin-left: 4px;
+    padding: 12px 15px;
+    background: rgba(230, 162, 60, 0.08);
+    border-radius: 8px;
+    border-left: 3px solid #E6A23C;
+    animation: fadeIn 0.5s ease 0.3s forwards;
+    opacity: 0;
+}
+
+.tech-warning .el-icon {
+    color: #E6A23C;
+    font-size: 18px;
+}
+
+.tech-warning span {
+    color: #E6A23C;
+    font-size: 13px;
+}
+
+.tech-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 30px;
+    background: rgba(240, 246, 252, 0.5);
+    border-top: 1px solid rgba(8, 213, 207, 0.1);
+    gap: 15px;
+}
+
+.tech-cancel-btn {
+    border: 1px solid #d9ecff;
+    background-color: white;
+    color: #606266;
+    transition: all 0.3s ease;
+}
+
+.tech-cancel-btn:hover {
+    color: #08d5cf;
+    border-color: rgba(8, 213, 207, 0.3);
+    background-color: rgba(8, 213, 207, 0.03);
+}
+
+.tech-confirm-btn {
+    background: linear-gradient(135deg, #08d5cf, #0886d5) !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(8, 213, 207, 0.3) !important;
+    padding: 10px 20px !important;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tech-confirm-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0) 100%);
+    transition: all 0.6s ease;
+}
+
+.tech-confirm-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(8, 213, 207, 0.4) !important;
+}
+
+.tech-confirm-btn:hover::before {
+    left: 100%;
+}
+
+.tech-btn-text {
+    position: relative;
+    z-index: 2;
+}
+
+.tech-btn-icon {
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: all 0.3s ease;
+}
+
+.tech-confirm-btn:hover .tech-btn-icon {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 恢复文件上传对话框新布局样式，并更新为蓝绿色主题 */
 /* 圆角对话框样式 */
 :deep(.rounded-dialog) {
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 
-                0 1px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px rgba(8, 213, 207, 0.15), 
+                0 1px 8px rgba(8, 213, 207, 0.1);
 }
 
 :deep(.rounded-dialog .el-dialog__header) {
@@ -1085,7 +1750,7 @@ const downloadTemplate = () => {
     text-align: right;
     border-bottom: none;
     margin-right: 0;
-    background: linear-gradient(to right, #f8fafc, #f0f4ff);
+    background: linear-gradient(to right, #edfcfb, #e0f5fa);
 }
 
 :deep(.rounded-dialog .el-dialog__title) {
@@ -1097,15 +1762,25 @@ const downloadTemplate = () => {
     right: 15px;
 }
 
+:deep(.rounded-dialog .el-dialog__headerbtn .el-dialog__close) {
+    color: #08d5cf;
+    transition: all 0.3s ease;
+}
+
+:deep(.rounded-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
+    transform: rotate(90deg);
+    color: #0886d5;
+}
+
 :deep(.rounded-dialog .el-dialog__body) {
     padding: 20px;
-    background: linear-gradient(145deg, #ffffff, #fafcff);
+    background: linear-gradient(145deg, #ffffff, #f6fdfc);
 }
 
 :deep(.rounded-dialog .el-dialog__footer) {
-    border-top: 1px solid #f0f2f5;
+    border-top: 1px solid rgba(8, 213, 207, 0.1);
     padding: 14px 20px;
-    background: linear-gradient(to right, #f8fafc, #f0f4ff);
+    background: linear-gradient(to right, #edfcfb, #e0f5fa);
 }
 
 .dialog-footer {
@@ -1116,7 +1791,7 @@ const downloadTemplate = () => {
 }
 
 .dialog-footer .cancel-btn {
-    border-color: #dcdfe6;
+    border-color: #d9ecff;
     color: #606266;
     background: #fff;
     transition: all 0.3s;
@@ -1124,9 +1799,9 @@ const downloadTemplate = () => {
 }
 
 .dialog-footer .cancel-btn:hover {
-    color: #409EFF;
-    border-color: #c6e2ff;
-    background-color: #f0f7ff;
+    color: #08d5cf;
+    border-color: rgba(8, 213, 207, 0.3);
+    background-color: rgba(8, 213, 207, 0.03);
 }
 
 .dialog-footer .confirm-btn {
@@ -1134,9 +1809,9 @@ const downloadTemplate = () => {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: linear-gradient(135deg, #4db8ff, #1890ff);
+    background: linear-gradient(135deg, #08d5cf, #0886d5);
     border: none;
-    box-shadow: 0 4px 10px rgba(64, 158, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(8, 213, 207, 0.3);
     transition: all 0.3s ease;
     min-width: 100px;
     padding: 10px 16px;
@@ -1148,21 +1823,21 @@ const downloadTemplate = () => {
 
 .dialog-footer .confirm-btn:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #66c2ff, #3aa0ff);
-    box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
+    background: linear-gradient(135deg, #20e2dc, #1a98e7);
+    box-shadow: 0 6px 15px rgba(8, 213, 207, 0.4);
 }
 
 .dialog-footer .confirm-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(64, 158, 255, 0.3);
+    box-shadow: 0 2px 5px rgba(8, 213, 207, 0.3);
 }
 
 @keyframes glow {
     from {
-        filter: drop-shadow(0 0 2px rgba(64, 158, 255, 0.6));
+        filter: drop-shadow(0 0 2px rgba(8, 213, 207, 0.6));
     }
     to {
-        filter: drop-shadow(0 0 8px rgba(64, 158, 255, 0.8));
+        filter: drop-shadow(0 0 8px rgba(8, 213, 207, 0.8));
     }
 }
 
@@ -1185,10 +1860,10 @@ const downloadTemplate = () => {
 .upload-dialog-divider {
     width: 1px;
     background: linear-gradient(to bottom, 
-        rgba(235, 238, 245, 0), 
-        rgba(235, 238, 245, 1) 15%, 
-        rgba(235, 238, 245, 1) 85%, 
-        rgba(235, 238, 245, 0));
+        rgba(8, 213, 207, 0), 
+        rgba(8, 213, 207, 0.2) 15%, 
+        rgba(8, 213, 207, 0.2) 85%, 
+        rgba(8, 213, 207, 0));
     margin: 20px 0;
 }
 
@@ -1210,19 +1885,29 @@ const downloadTemplate = () => {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f0f4ff, #e6f0ff);
+    background: linear-gradient(135deg, #e0f7f6, #d4f0fa);
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(64, 158, 255, 0.2),
+    box-shadow: 0 4px 15px rgba(8, 213, 207, 0.2),
                 inset 0 -2px 5px rgba(255, 255, 255, 0.8),
-                inset 0 2px 5px rgba(64, 158, 255, 0.1);
+                inset 0 2px 5px rgba(8, 213, 207, 0.1);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
 }
 
 .upload-icon-svg {
     font-size: 36px;
-    color: #409EFF;
-    filter: drop-shadow(0 2px 4px rgba(64, 158, 255, 0.3));
+    color: #08d5cf;
+    filter: drop-shadow(0 2px 4px rgba(8, 213, 207, 0.3));
 }
 
 .upload-title {
@@ -1245,7 +1930,7 @@ const downloadTemplate = () => {
 .upload-container {
     width: 100%;
     border-radius: 12px;
-    background: linear-gradient(145deg, #f8fafc, #f0f4ff);
+    background: linear-gradient(145deg, #f8fafc, #f0f8f8);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05),
                 inset 0 1px 1px rgba(255, 255, 255, 0.8);
     overflow: hidden;
@@ -1255,7 +1940,7 @@ const downloadTemplate = () => {
 
 .upload-container:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08),
+    box-shadow: 0 8px 20px rgba(8, 213, 207, 0.1),
                 inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
@@ -1270,23 +1955,23 @@ const downloadTemplate = () => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(145deg, #ffffff, #f6f9fc);
-    border: 1px dashed #c0d3ff;
+    background: linear-gradient(145deg, #ffffff, #f6fdfc);
+    border: 1px dashed rgba(8, 213, 207, 0.4);
     border-radius: 10px;
     transition: all 0.3s;
 }
 
 .upload-excel :deep(.el-upload-dragger:hover) {
-    border-color: #409EFF;
-    background: linear-gradient(145deg, #fafcff, #f0f7ff);
-    box-shadow: inset 0 2px 8px rgba(64, 158, 255, 0.08);
+    border-color: #08d5cf;
+    background: linear-gradient(145deg, #fafcff, #f0f8f8);
+    box-shadow: inset 0 2px 8px rgba(8, 213, 207, 0.08);
 }
 
 .upload-excel :deep(.el-upload-dragger .el-icon--upload) {
     font-size: 38px;
-    color: #409EFF;
+    color: #08d5cf;
     margin-bottom: 12px;
-    filter: drop-shadow(0 2px 4px rgba(64, 158, 255, 0.2));
+    filter: drop-shadow(0 2px 4px rgba(8, 213, 207, 0.2));
 }
 
 .upload-excel :deep(.el-upload__text) {
@@ -1296,7 +1981,7 @@ const downloadTemplate = () => {
 }
 
 .upload-excel :deep(.el-upload__text em) {
-    color: #409EFF;
+    color: #08d5cf;
     font-style: normal;
     font-weight: 600;
 }
@@ -1317,13 +2002,13 @@ const downloadTemplate = () => {
     margin-top: auto;
     margin-bottom: 18px;
     padding: 10px 12px;
-    background-color: rgba(255, 236, 204, 0.2);
-    border-left: 3px solid #E6A23C;
+    background-color: rgba(8, 213, 207, 0.05);
+    border-left: 3px solid #08d5cf;
     border-radius: 4px;
 }
 
 .upload-tips .el-icon {
-    color: #E6A23C;
+    color: #08d5cf;
     font-size: 16px;
     flex-shrink: 0;
 }
@@ -1333,10 +2018,10 @@ const downloadTemplate = () => {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: linear-gradient(135deg, #4db8ff, #1890ff);
+    background: linear-gradient(135deg, #08d5cf, #0886d5);
     border: none;
     border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(64, 158, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(8, 213, 207, 0.3);
     transition: all 0.3s ease;
     margin-top: 0;
     padding: 10px 16px;
@@ -1347,12 +2032,353 @@ const downloadTemplate = () => {
 
 .template-download-btn:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #66c2ff, #3aa0ff);
-    box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
+    background: linear-gradient(135deg, #20e2dc, #1a98e7);
+    box-shadow: 0 6px 15px rgba(8, 213, 207, 0.4);
 }
 
 .template-download-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(64, 158, 255, 0.3);
+    box-shadow: 0 2px 5px rgba(8, 213, 207, 0.3);
+}
+
+/* 编辑弹窗样式 */
+:deep(.tech-edit-dialog) {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 
+                0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+:deep(.tech-edit-dialog .el-dialog__header) {
+    padding: 0;
+    margin: 0;
+    height: 0;
+}
+
+:deep(.tech-edit-dialog .el-dialog__title) {
+    display: none;
+}
+
+:deep(.tech-edit-dialog .el-dialog__headerbtn) {
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+}
+
+:deep(.tech-edit-dialog .el-dialog__headerbtn .el-dialog__close) {
+    color: #fff;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+:deep(.tech-edit-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+:deep(.tech-edit-dialog .el-dialog__body) {
+    padding: 0;
+    margin: 0;
+}
+
+:deep(.tech-edit-dialog .el-dialog__footer) {
+    padding: 0;
+    margin: 0;
+}
+
+.edit-dialog-container {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.edit-header {
+    background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+    color: #fff;
+    padding: 25px 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    
+    /* Add shimmer animation */
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 150%;
+        height: 100%;
+        background: linear-gradient(to right, 
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        transform: skewX(-25deg);
+        animation: shimmer 5s infinite;
+    }
+}
+
+.edit-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.edit-title span {
+    font-size: 22px;
+    font-weight: 600;
+    /* Add subtle text shadow for better readability */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    /* Add subtle animation on load */
+    animation: fadeInLeft 0.5s ease-out;
+}
+
+.edit-tag {
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    transform-origin: right;
+    animation: scaleIn 0.4s ease-out 0.2s both;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    padding: 4px 10px;
+}
+
+.edit-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    animation: fadeInUp 0.5s ease-out 0.1s both;
+}
+
+.edit-content {
+    padding: 0;
+    background-color: #f8f9fa;
+    animation: fadeIn 0.5s ease-out 0.1s both;
+}
+
+/* Tabs 样式覆盖 */
+.tech-tabs {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+}
+
+:deep(.tech-tabs .el-tabs__header) {
+    background: linear-gradient(to right, #f0f7f7, #e8f6fa);
+    border-bottom: 1px solid rgba(32, 178, 170, 0.1) !important;
+    padding: 10px 20px 0;
+    margin: 0;
+}
+
+:deep(.tech-tabs .el-tabs__nav) {
+    border: none !important;
+}
+
+:deep(.tech-tabs .el-tabs__item) {
+    height: 40px;
+    line-height: 40px;
+    color: #606266;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent !important;
+    border-bottom: none !important;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 0 20px;
+    margin-right: 5px;
+}
+
+:deep(.tech-tabs .el-tabs__item:hover) {
+    color: #20b2aa;
+}
+
+:deep(.tech-tabs .el-tabs__item.is-active) {
+    color: #2580bf;
+    background: #fff;
+    border-color: rgba(32, 178, 170, 0.1) !important;
+}
+
+:deep(.tech-tabs .el-tabs__item.is-active::after) {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #fff;
+}
+
+:deep(.tech-tabs .el-tabs__content) {
+    padding: 25px 20px;
+    background-color: #fff;
+}
+
+:deep(.tech-tabs .el-tabs__nav-wrap::after) {
+    display: none;
+}
+
+/* Form styles */
+.tech-form {
+    padding: 0;
+}
+
+.tech-form :deep(.el-form-item__label) {
+    color: #606266;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.tech-form :deep(.el-input__inner) {
+    border-color: #dcdfe6;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.tech-form :deep(.el-input__inner:hover) {
+    border-color: #c0c4cc;
+}
+
+.tech-form :deep(.el-input__inner:focus) {
+    border-color: #20b2aa;
+    box-shadow: 0 0 0 2px rgba(32, 178, 170, 0.1);
+}
+
+.tech-form :deep(.el-select .el-input.is-focus .el-input__inner) {
+    border-color: #20b2aa;
+}
+
+/* Dialog footer */
+.tech-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 30px;
+    background: rgba(240, 246, 252, 0.5);
+    border-top: 1px solid rgba(8, 213, 207, 0.1);
+    gap: 15px;
+}
+
+.tech-cancel-btn {
+    border: 1px solid #d9ecff;
+    background-color: white;
+    color: #606266;
+    transition: all 0.3s ease;
+}
+
+.tech-cancel-btn:hover {
+    color: #08d5cf;
+    border-color: rgba(8, 213, 207, 0.3);
+    background-color: rgba(8, 213, 207, 0.03);
+}
+
+.tech-confirm-btn {
+    background: linear-gradient(135deg, #08d5cf, #0886d5) !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(8, 213, 207, 0.3) !important;
+    padding: 10px 20px !important;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tech-confirm-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0) 100%);
+    transition: all 0.6s ease;
+}
+
+.tech-confirm-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(8, 213, 207, 0.4) !important;
+}
+
+.tech-confirm-btn:hover::before {
+    left: 100%;
+}
+
+.tech-btn-text {
+    position: relative;
+    z-index: 2;
+}
+
+.tech-btn-icon {
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: all 0.3s ease;
+}
+
+.tech-confirm-btn:hover .tech-btn-icon {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        left: -150%;
+    }
+    50% {
+        left: 150%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 </style>

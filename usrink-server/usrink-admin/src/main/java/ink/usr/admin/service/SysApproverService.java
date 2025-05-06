@@ -19,4 +19,7 @@ public interface SysApproverService {
      * @return 包含审批人ID和成本中心名称的列表
      */
     List<Map<String, Object>> getApproverListWithCostCenter(Long userId);
+
+    List<String> getCostCenterList();
+
 }

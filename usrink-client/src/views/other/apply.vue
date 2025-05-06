@@ -27,7 +27,7 @@
           <el-descriptions-item label="电脑使用状态" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
           <el-descriptions-item label="电脑归属情况" v-if="myComputer.pcClass" width="300">{{ myComputer.pcClass }}</el-descriptions-item>
           <el-descriptions-item label="电脑情况备注" width="300">{{ myComputer.comment }}</el-descriptions-item>
-          <el-descriptions-item label="出厂时间" width="300">{{ myComputer.lifeCycleStart }}</el-descriptions-item>
+          <el-descriptions-item label="出厂时间" width="300">{{ formatDate(myComputer.lifeCycleStart) }}</el-descriptions-item>
           <el-descriptions-item label="manufacturer" v-if="myComputer.manufacturer" width="300">{{ myComputer.manufacturer }}</el-descriptions-item>
           <el-descriptions-item label="model" v-if="myComputer.model" width="300">{{ myComputer.model }}</el-descriptions-item>
           <el-descriptions-item label="assetTag" v-if="myComputer.assetTag" width="300">{{ myComputer.assetTag }}</el-descriptions-item>
@@ -109,10 +109,13 @@
           <el-col :span="12">
             <el-form-item label="申请类别" prop="applicationType">
               <el-select v-model="applicationForm.applicationType" placeholder="请选择申请类别" style="width: 100%" @change="handleApplicationTypeChange">
-                <el-option label="办公电脑换新" value="officePcRenewal"></el-option>
-                <el-option label="新正式员工电脑" value="newEmployeePc"></el-option>
-                <el-option label="新实习生/外服电脑" value="internPc"></el-option>
-                <el-option label="其他用途电脑" value="otherPurpose"></el-option>
+                <el-option label="办公电脑超六年换新" value="pcRenewalOverSixYears"></el-option>
+                <el-option label="办公电脑未超六年换新" value="pcRenewalUnderSixYears"></el-option>
+                <el-option label="办公电脑未超六年换旧" value="pcRenewalUnderSixYearsOld"></el-option>
+                <el-option label="秘书代申请新岗位员工电脑" value="secretaryNewEmployee"></el-option>
+                <el-option label="秘书代申请替代岗位员工电脑" value="secretaryReplacement"></el-option>
+                <el-option label="秘书代申请新实习生/外服电脑" value="secretaryIntern"></el-option>
+                <el-option label="特殊用途电脑申请" value="specialPurpose"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -148,17 +151,14 @@
 
           <el-col :span="24">
             <el-form-item label="申请理由" prop="reason">
-              <el-select 
-                v-model="applicationForm.reason" 
-                placeholder="请选择或输入申请理由" 
-                style="width: 100%" 
-                clearable 
-                allow-create 
-                filterable>
-                <el-option label="超年限换新" value="超年限换新"></el-option>
-                <el-option label="新岗位新电脑" value="新岗位新电脑"></el-option>
-                <el-option label="替代岗位库存电脑" value="替代岗位库存电脑"></el-option>
-              </el-select>
+              <el-input
+                v-model="applicationForm.reason"
+                placeholder="请输入申请理由"
+                type="textarea"
+                :rows="3"
+                :disabled="isReasonDisabled"
+                style="width: 100%">
+              </el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -376,7 +376,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue';
 import httpUtil from "@/utils/HttpUtil";
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useUserInfoStore } from "@/stores/_frame/userInfoStore";
@@ -440,6 +440,18 @@ export default {
     const pageSize = ref(10);
     const totalItems = ref(0);
     const paginatedList = ref([]);
+
+    // 在setup函数内添加格式化日期的函数
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      
+      // 如果日期字符串包含T，则截取T之前的部分
+      if (dateString.includes('T')) {
+        return dateString.split('T')[0];
+      }
+      
+      return dateString;
+    };
 
     // 获取用户信息（成本中心、所属公司、责任人）
     const fetchUserInfo = (userName) => {
@@ -944,6 +956,14 @@ export default {
     // 获取申请类型名称
     const getApplicationTypeName = (type) => {
       const types = {
+        'pcRenewalOverSixYears': '办公电脑超六年换新',
+        'pcRenewalUnderSixYears': '办公电脑未超六年换新',
+        'pcRenewalUnderSixYearsOld': '办公电脑未超六年换旧',
+        'secretaryNewEmployee': '秘书代申请新岗位员工电脑',
+        'secretaryReplacement': '秘书代申请替代岗位员工电脑',
+        'secretaryIntern': '秘书代申请新实习生/外服电脑',
+        'specialPurpose': '特殊用途电脑申请',
+        // 保留旧映射以兼容已有数据
         'officePcRenewal': '办公电脑换新',
         'newEmployeePc': '新正式员工电脑',
         'internPc': '新实习生/外服电脑',
@@ -1045,15 +1065,144 @@ export default {
 
     // 处理申请类别变化
     const handleApplicationTypeChange = () => {
-      if (applicationForm.applicationType === 'officePcRenewal') {
-        // 只有当有电脑信息时才进行判断
-        if (myComputer.value && myComputer.value.lifeCycleStart) {
-          checkComputerLifespan();
-        } else {
+      // 获取当前选中的申请类别
+      const selectedType = applicationForm.applicationType;
+      
+      // 如果没有选择申请类别，直接返回
+      if (!selectedType) return;
+      
+      // 判断是否有电脑信息
+      if (!myComputer.value || !myComputer.value.lifeCycleStart) {
+        if (selectedType === 'pcRenewalOverSixYears' || selectedType === 'pcRenewalUnderSixYears' || 
+            selectedType === 'pcRenewalUnderSixYearsOld') {
           ElMessage({
             type: 'warning',
-            message: '未找到当前用户的电脑信息，无法判断使用年限'
+            message: '未找到当前电脑的出厂时间信息，无法判断使用年限'
           });
+          applicationForm.applicationType = ''; // 重置申请类别
+          return;
+        }
+      }
+      
+      // 如果选择了与年限相关的选项，检查电脑使用年限
+      if (selectedType === 'pcRenewalOverSixYears' || selectedType === 'pcRenewalUnderSixYears' || 
+          selectedType === 'pcRenewalUnderSixYearsOld') {
+        // 获取电脑生命周期开始日期
+        const lifeCycleStartStr = myComputer.value.lifeCycleStart;
+        
+        // 尝试解析日期，支持多种可能的格式
+        let lifeCycleStartDate;
+        try {
+          // 尝试解析YYYY-MM-DD格式
+          if (lifeCycleStartStr.includes('-')) {
+            lifeCycleStartDate = new Date(lifeCycleStartStr);
+          } 
+          // 尝试解析MM/DD/YYYY格式
+          else if (lifeCycleStartStr.includes('/')) {
+            const parts = lifeCycleStartStr.split('/');
+            if (parts.length === 3) {
+              // 假设格式为MM/DD/YYYY
+              lifeCycleStartDate = new Date(parts[2], parts[0] - 1, parts[1]);
+            }
+          }
+          // 其他可能的格式...
+        } catch (error) {
+          console.error('日期解析错误:', error);
+          ElMessage({
+            type: 'error',
+            message: '无法解析电脑生命周期开始日期'
+          });
+          applicationForm.applicationType = ''; // 重置申请类别
+          return;
+        }
+        
+        // 如果无法解析日期
+        if (!lifeCycleStartDate || isNaN(lifeCycleStartDate.getTime())) {
+          ElMessage({
+            type: 'warning',
+            message: '无法确定电脑使用年限，请联系IT部门'
+          });
+          applicationForm.applicationType = ''; // 重置申请类别
+          return;
+        }
+        
+        // 获取当前日期
+        const currentDate = new Date();
+        
+        // 计算年限差异
+        const yearsDiff = currentDate.getFullYear() - lifeCycleStartDate.getFullYear();
+        
+        // 处理不同选项的年限检查
+        if (selectedType === 'pcRenewalOverSixYears') {
+          // 超六年检查
+          if (yearsDiff < 6) {
+            ElMessage({
+              type: 'warning',
+              message: `当前电脑使用年限为${yearsDiff}年，未超过六年，不能选择"办公电脑超六年换新"`
+            });
+            applicationForm.applicationType = ''; // 重置申请类别
+            return;
+          } else {
+            // 满足条件，设置对应的表单字段
+            applicationForm.costCenter = '69F105';
+            applicationForm.computerCondition = '新电脑';
+            applicationForm.reason = '办公电脑超六年换新';
+          }
+        } else if (selectedType === 'pcRenewalUnderSixYears' || selectedType === 'pcRenewalUnderSixYearsOld') {
+          // 未超六年检查
+          if (yearsDiff >= 6) {
+            ElMessage({
+              type: 'warning',
+              message: `当前电脑使用年限为${yearsDiff}年，已超过六年，不能选择"办公电脑未超六年换新/换旧"`
+            });
+            applicationForm.applicationType = ''; // 重置申请类别
+            return;
+          } else {
+            // 满足条件，设置对应的表单字段
+            if (selectedType === 'pcRenewalUnderSixYears') {
+              // 未超六年换新
+              applicationForm.costCenter = applicationForm.costCenter || myComputer.value.department; // 使用用户自己的成本中心
+              applicationForm.computerCondition = '新电脑';
+              applicationForm.reason = '办公电脑未超六年换新';
+            } else {
+              // 未超六年换旧
+              applicationForm.costCenter = '69F105';
+              applicationForm.computerCondition = '库存旧电脑';
+              applicationForm.reason = '办公电脑未超六年换旧';
+            }
+          }
+        }
+      } else {
+        // 处理其他申请类型的逻辑
+        switch (selectedType) {
+          case 'secretaryNewEmployee':
+            applicationForm.costCenter = '69F105';
+            applicationForm.computerCondition = '新电脑';
+            applicationForm.reason = '秘书代申请新岗位员工电脑';
+            break;
+            
+          case 'secretaryReplacement':
+            applicationForm.costCenter = '69F105';
+            applicationForm.computerCondition = '库存旧电脑';
+            applicationForm.reason = '秘书代申请替代岗位员工电脑';
+            break;
+            
+          case 'secretaryIntern':
+            applicationForm.costCenter = '69F105';
+            applicationForm.computerCondition = '库存旧电脑';
+            applicationForm.reason = '秘书代申请新实习生/外服电脑';
+            break;
+            
+          case 'specialPurpose':
+            // 特殊用途电脑申请时，从后端获取成本中心列表
+            // 清空当前成本中心
+            applicationForm.costCenter = '';
+            // 获取成本中心列表
+            fetchCostCenterList();
+            break;
+            
+          default:
+            break;
         }
       }
     };
@@ -1368,6 +1517,45 @@ export default {
       });
     };
 
+    // 获取成本中心列表
+    const fetchCostCenterList = () => {
+      httpUtil({
+        method: 'get',
+        url: '/sysApply/getCostCenterList'
+      }).then(response => {
+        if (response.data && response.data.list && Array.isArray(response.data.list)) {
+          // 更新成本中心列表
+          costCenters.value = response.data.list;
+          
+          // 删除成功消息提示
+          // ElMessage({
+          //   type: 'success',
+          //   message: '成本中心列表获取成功'
+          // });
+        } else {
+          ElMessage({
+            type: 'warning',
+            message: '成本中心列表为空'
+          });
+          // 如果列表为空，至少保证当前列表中有默认值
+          if (!costCenters.value.includes('IT')) {
+            costCenters.value = ['IT'];
+          }
+        }
+      }).catch(error => {
+        console.error('获取成本中心列表失败:', error);
+        ElMessage({
+          type: 'error',
+          message: '获取成本中心列表失败'
+        });
+        
+        // 出错时也确保列表中有默认值
+        if (!costCenters.value.includes('IT')) {
+          costCenters.value = ['IT'];
+        }
+      });
+    };
+
     onMounted(() => {
       // 重新检查用户信息
       if (!currentUser.value && userInfoStore.userInfo?.userName) {
@@ -1401,6 +1589,13 @@ export default {
     onBeforeUnmount(() => {
       // 移除全局点击事件监听
       document.removeEventListener('click', handleDocumentClick);
+    });
+
+    // 在setup函数中添加计算属性
+    const isReasonDisabled = computed(() => {
+      const appType = applicationForm.applicationType;
+      return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYears', 'pcRenewalUnderSixYearsOld', 
+              'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern'].includes(appType);
     });
 
     return {
@@ -1453,7 +1648,9 @@ export default {
       getStepStatus,
       getStatusClass,
       getStatusIcon,
-      getProcessStatus
+      getProcessStatus,
+      isReasonDisabled,
+      formatDate
     };
   }
 };
