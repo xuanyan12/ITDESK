@@ -22,8 +22,8 @@
           <el-descriptions-item label="电脑名称" width="300">{{ myComputer.ciName }}</el-descriptions-item>
           <el-descriptions-item label="NT账号" width="300">{{ myComputer.ntAccount }}</el-descriptions-item>
           <el-descriptions-item label="部门号" width="300">{{ myComputer.department }}</el-descriptions-item>
-          <el-descriptions-item label="名" width="300">{{ myComputer.lastName }}</el-descriptions-item>
-          <el-descriptions-item label="姓" width="300">{{ myComputer.firstName }}</el-descriptions-item>
+          <el-descriptions-item label="姓" width="300">{{ myComputer.lastName }}</el-descriptions-item>
+          <el-descriptions-item label="名" width="300">{{ myComputer.firstName }}</el-descriptions-item>
           <el-descriptions-item label="电脑使用状态" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
           <el-descriptions-item label="电脑归属情况" v-if="myComputer.pcClass" width="300">{{ myComputer.pcClass }}</el-descriptions-item>
           <el-descriptions-item label="电脑情况备注" width="300">{{ myComputer.comment }}</el-descriptions-item>
@@ -81,7 +81,7 @@
 
           <el-col :span="12">
             <el-form-item label="成本中心" prop="costCenter">
-              <el-select v-model="applicationForm.costCenter" placeholder="请选择成本中心" style="width: 100%">
+              <el-select v-model="applicationForm.costCenter" placeholder="请选择成本中心" style="width: 100%" :disabled="isCostCenterDisabled">
                 <el-option v-for="item in costCenters" :key="item" :label="item" :value="item"></el-option>
               </el-select>
             </el-form-item>
@@ -1161,7 +1161,7 @@ export default {
             // 满足条件，设置对应的表单字段
             if (selectedType === 'pcRenewalUnderSixYears') {
               // 未超六年换新
-              applicationForm.costCenter = applicationForm.costCenter || myComputer.value.department; // 使用用户自己的成本中心
+              applicationForm.costCenter = myComputer.value.costCenter || ''; // 使用用户自己的成本中心
               applicationForm.computerCondition = '新电脑';
               applicationForm.reason = '办公电脑未超六年换新';
             } else {
@@ -1524,8 +1524,8 @@ export default {
         url: '/sysApply/getCostCenterList'
       }).then(response => {
         if (response.data && response.data.list && Array.isArray(response.data.list)) {
-          // 更新成本中心列表
-          costCenters.value = response.data.list;
+          // 更新成本中心列表，并移除IT选项
+          costCenters.value = response.data.list.filter(center => center !== 'IT');
           
           // 删除成功消息提示
           // ElMessage({
@@ -1537,10 +1537,8 @@ export default {
             type: 'warning',
             message: '成本中心列表为空'
           });
-          // 如果列表为空，至少保证当前列表中有默认值
-          if (!costCenters.value.includes('IT')) {
-            costCenters.value = ['IT'];
-          }
+          // 确保列表不包含IT
+          costCenters.value = [];
         }
       }).catch(error => {
         console.error('获取成本中心列表失败:', error);
@@ -1549,10 +1547,8 @@ export default {
           message: '获取成本中心列表失败'
         });
         
-        // 出错时也确保列表中有默认值
-        if (!costCenters.value.includes('IT')) {
-          costCenters.value = ['IT'];
-        }
+        // 出错时也确保列表不包含IT
+        costCenters.value = [];
       });
     };
 
@@ -1580,6 +1576,9 @@ export default {
         });
       }
       
+      // 初始化获取成本中心列表，确保IT被过滤掉
+      fetchCostCenterList();
+      
       // 获取申请列表
       getApplyList();
       // 添加全局点击事件监听
@@ -1596,6 +1595,11 @@ export default {
       const appType = applicationForm.applicationType;
       return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYears', 'pcRenewalUnderSixYearsOld', 
               'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern'].includes(appType);
+    });
+
+    // 添加成本中心是否禁用的计算属性
+    const isCostCenterDisabled = computed(() => {
+      return applicationForm.applicationType !== 'specialPurpose' && applicationForm.applicationType !== '';
     });
 
     return {
@@ -1650,6 +1654,7 @@ export default {
       getStatusIcon,
       getProcessStatus,
       isReasonDisabled,
+      isCostCenterDisabled,
       formatDate
     };
   }

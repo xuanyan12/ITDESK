@@ -289,5 +289,4 @@ public class SysUserController {
         }
         return Res.success();
     }
-
 }

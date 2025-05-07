@@ -51,9 +51,6 @@
             <if test="assignStatus != null and assignStatus != ''">
                 and a.assignStatus = #{assignStatus}
             </if>
-<!--            <if test="ntAccount != null and ntAccount != ''">-->
-<!--                and a.lastLeastUserNtAccount = #{ntAccount}-->
-<!--            </if>-->
         </where>
         order by a.id desc
     </select>
