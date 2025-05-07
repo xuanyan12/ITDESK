@@ -192,4 +192,42 @@
             <if test="temp != null">#{temp},</if>
         </trim>
     </insert>
+
+    <select id="getComputerByInfo" resultType="ink.usr.common.model.mysql.SysControlModel" parameterType="ink.usr.admin.dao.DTO.SysControlAssignDTO">
+        SELECT *
+        FROM sys_control
+        <where>
+            <!-- 1. ciName 非空时匹配 -->
+            <if test="ciName != null and ciName != ''">
+                AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+            </if>
+
+            <!-- 2. deviceClass/deviceType 非空时匹配 -->
+            <if test="deviceType != null and deviceType != ''">
+                AND deviceClass = #{deviceType}
+            </if>
+
+            <!-- 3. ntAccount 非空时匹配 -->
+            <if test="ntAccount != null and ntAccount != ''">
+                AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')
+            </if>
+
+            <!-- 4. deviceSituation 处理 -->
+            <if test="deviceSituation == '新电脑'">
+                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') >= DATE_SUB(CURDATE(), INTERVAL 6 YEAR) ]]>
+            </if>
+            <if test="deviceSituation == '库存旧电脑'">
+                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') < DATE_SUB(CURDATE(), INTERVAL 6 YEAR) ]]>
+            </if>
+
+            <!-- 5. company 非空时匹配 -->
+            <if test="company != null and company != ''">
+                AND LOWER(company) LIKE CONCAT('%', LOWER(#{company}), '%')
+            </if>
+
+            <!-- 6. 固定条件：只查询状态为 "To be assigned" 的电脑 -->
+            AND pcStatus = 'To be assigned'
+        </where>
+    </select>
+
 </mapper>

@@ -1,5 +1,7 @@
 package ink.usr.admin.mapper;
 
+import ink.usr.admin.dao.DTO.SysControlAssignDTO;
+import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
@@ -34,4 +36,6 @@ public interface SysControlMapper {
     List<SysControlModel> selectNonScrappedComputersByCiName(String ciName);
 
     boolean insertSysControl(SysControlModel sysControlModel);
+
+    List<SysControlModel> getComputerByInfo(SysControlAssignDTO sysControlAssignModel);
 }

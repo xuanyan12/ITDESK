@@ -1,7 +1,9 @@
 package ink.usr.admin.service.Impl;
 
+import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.service.SysControlService;
+import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,5 +69,11 @@ public class SysControlServiceImpl implements SysControlService {
     @Override
     public boolean insertSysControl(SysControlModel sysControlModel) {
         return sysControlMapper.insertSysControl(sysControlModel);
+    }
+
+    @Override
+    public List<SysControlModel> getComputerByInfo(SysControlAssignDTO sysControlAssignModel) {
+        List<SysControlModel> sysControlModel = sysControlMapper.getComputerByInfo(sysControlAssignModel);
+        return sysControlModel;
     }
 }

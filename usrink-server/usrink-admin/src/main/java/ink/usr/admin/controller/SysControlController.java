@@ -1,11 +1,16 @@
 package ink.usr.admin.controller;
 
+import com.github.pagehelper.Page;
+import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.dao.DTO.SysControlDTO;
+import ink.usr.admin.dao.VO.SysControlAssignVO;
 import ink.usr.admin.dao.VO.SysControlVO;
 import ink.usr.admin.service.SysControlService;
 import ink.usr.admin.service.SysUserService;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.domain.Res;
+import ink.usr.common.core.utils.PageUtil;
+import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import ink.usr.common.model.mysql.SysUserModel;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +43,7 @@ public class SysControlController {
 
     @Autowired
     private SysUserService sysUserService;
+
 
     /**
      * 获取电脑设备列表
@@ -541,5 +547,15 @@ public class SysControlController {
         } catch (Exception e) {
             log.error("设置属性{}时出错: {}", propertyName, e.getMessage());
         }
+    }
+
+    @RequestMapping("/getComputerByInfo")
+    public Res getComputerByInfo(@RequestBody SysControlAssignDTO sysControlAssignModel){
+        Page<Object> pages = PageUtil.startPage();
+        List<SysControlModel> sysControlModel = sysControlService.getComputerByInfo(sysControlAssignModel);
+        Dict result = Dict.create()
+                .set("list", sysControlModel)
+                .set("total", pages.getTotal());
+        return Res.success(result);
     }
 }

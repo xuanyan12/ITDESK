@@ -1,5 +1,7 @@
 package ink.usr.admin.service;
 
+import ink.usr.admin.dao.DTO.SysControlAssignDTO;
+import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 
 import java.util.List;
@@ -32,4 +34,6 @@ public interface SysControlService {
      * @return 插入是否成功
      */
     boolean insertSysControl(SysControlModel sysControlModel);
+
+    List<SysControlModel> getComputerByInfo(SysControlAssignDTO sysControlAssignModel);
 }

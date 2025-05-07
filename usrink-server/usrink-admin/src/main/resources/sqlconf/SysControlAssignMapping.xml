@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysControlAssignMapper">
+
+    <!-- 新增分配信息 -->
+    <insert id="addAssignInfo" parameterType="ink.usr.common.model.mysql.SysControlAssignModel" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_control_assign
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="ciName != null and ciName != ''">ciName,</if>
+            <if test="deviceType != null and deviceType != ''">deviceType,</if>
+            <if test="deviceSituation != null and deviceSituation != ''">deviceSituation,</if>
+            <if test="approvalId != null">approvalId,</if>
+            <if test="company != null and company != ''">company,</if>
+            <if test="applicant != null">applicant,</if>
+            <if test="lastLeastUserNtAccount != null and lastLeastUserNtAccount != ''">lastLeastUserNtAccount,</if>
+            <if test="assignor != null and assignor != ''">assignor,</if>
+            <if test="assignTime != null and assignTime != ''">assignTime,</if>
+            <if test="assignStatus != null and assignStatus != ''">assignStatus,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="ciName != null and ciName != ''">#{ciName},</if>
+            <if test="deviceType != null and deviceType != ''">#{deviceType},</if>
+            <if test="deviceSituation != null and deviceSituation != ''">#{deviceSituation},</if>
+            <if test="approvalId != null">#{approvalId},</if>
+            <if test="company != null and company != ''">#{company},</if>
+            <if test="applicant != null">#{applicant},</if>
+            <if test="lastLeastUserNtAccount != null and lastLeastUserNtAccount != ''">#{lastLeastUserNtAccount},</if>
+            <if test="assignor != null and assignor != ''">#{assignor},</if>
+            <if test="assignTime != null and assignTime != ''">#{assignTime},</if>
+            <if test="assignStatus != null and assignStatus != ''">#{assignStatus},</if>
+        </trim>
+    </insert>
+
+    <!-- 条件查询分配信息 -->
+    <select id="getControlAssignListWithConditions" parameterType="ink.usr.common.model.mysql.SysControlAssignModel" resultType="ink.usr.common.model.mysql.SysControlAssignModel">
+        select a.* from sys_control_assign a
+        <where>
+            <if test="ciName != null and ciName != ''">
+                and a.ciName like concat('%', #{ciName}, '%')
+            </if>
+            <if test="deviceType != null and deviceType != ''">
+                and a.deviceType = #{deviceType}
+            </if>
+            <if test="deviceSituation != null and deviceSituation != ''">
+                and a.deviceSituation = #{deviceSituation}
+            </if>
+            <if test="company != null and company != ''">
+                and a.company = #{company}
+            </if>
+            <if test="assignStatus != null and assignStatus != ''">
+                and a.assignStatus = #{assignStatus}
+            </if>
+<!--            <if test="ntAccount != null and ntAccount != ''">-->
+<!--                and a.lastLeastUserNtAccount = #{ntAccount}-->
+<!--            </if>-->
+        </where>
+        order by a.id desc
+    </select>
+</mapper>

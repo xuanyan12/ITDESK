@@ -2,15 +2,13 @@ package ink.usr.admin.service.Impl;
 
 import ink.usr.admin.dao.VO.SysApprovalFlowVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
-import ink.usr.admin.mapper.SysApplyMapper;
-import ink.usr.admin.mapper.SysApprovalFlowMapper;
-import ink.usr.admin.mapper.SysApproverMapper;
-import ink.usr.admin.mapper.SysTokenMapper;
+import ink.usr.admin.mapper.*;
 import ink.usr.admin.service.SysApplyService;
 import ink.usr.admin.service.SysApprovalFlowService;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysApprovalTokenModel;
+import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +36,9 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
 
     @Autowired
     private SysApproverMapper sysApproverMapper;
+
+    @Autowired
+    private SysControlAssignMapper sysControlAssignMapper;
 
     // TODO 该方法需要修改，
     @Override
@@ -207,6 +208,19 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                 requestModel.setUpdatedAt(approveTime);
                 result = sysApprovalFlowMapper.updateApprovalStatus(requestModel);
 
+                if("审批通过".equals(status)){
+                    // 获取订单数据
+                    SysApprovalRequestModel approvalRequestModel = applyMapper.getByApprovalId(requestId);
+                    // 构造分配数据
+                    SysControlAssignModel sysControlAssignModel = new SysControlAssignModel();
+                    sysControlAssignModel.setDeviceType(approvalRequestModel.getDeviceType());
+                    sysControlAssignModel.setDeviceSituation(approvalRequestModel.getDeviceSituation());
+                    sysControlAssignModel.setApprovalId(requestId);
+                    sysControlAssignModel.setCompany(approvalRequestModel.getCompany());
+                    sysControlAssignModel.setApplicant(approvalRequestModel.getApplicant());
+                    sysControlAssignModel.setAssignStatus("分配中");
+                    sysControlAssignMapper.addAssignInfo(sysControlAssignModel);
+                }
 
                 return result > 0 && flowResult > 0 && tokenResult>0;
             }
