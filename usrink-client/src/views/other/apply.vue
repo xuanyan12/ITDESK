@@ -108,13 +108,18 @@
 
           <el-col :span="12">
             <el-form-item label="申请类别" prop="applicationType">
-              <el-select v-model="applicationForm.applicationType" placeholder="请选择申请类别" style="width: 100%" @change="handleApplicationTypeChange">
-                <el-option label="办公电脑超六年换新" value="pcRenewalOverSixYears"></el-option>
-                <el-option label="办公电脑未超六年换新" value="pcRenewalUnderSixYears"></el-option>
-                <el-option label="办公电脑未超六年换旧" value="pcRenewalUnderSixYearsOld"></el-option>
-                <el-option label="秘书代申请新岗位员工电脑" value="secretaryNewEmployee"></el-option>
-                <el-option label="秘书代申请替代岗位员工电脑" value="secretaryReplacement"></el-option>
-                <el-option label="秘书代申请新实习生/外服电脑" value="secretaryIntern"></el-option>
+              <el-select 
+                v-model="applicationForm.applicationType" 
+                placeholder="请选择申请类别" 
+                style="width: 100%" 
+                @change="handleApplicationTypeChange"
+                :disabled="isApplicationTypeDisabled">
+                <el-option label="办公电脑超六年换新" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑未超六年换新" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑未超六年换旧" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="秘书代申请新岗位员工电脑" value="secretaryNewEmployee" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="秘书代申请替代岗位员工电脑" value="secretaryReplacement" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="秘书代申请新实习生/外服电脑" value="secretaryIntern" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="特殊用途电脑申请" value="specialPurpose"></el-option>
               </el-select>
             </el-form-item>
@@ -153,7 +158,7 @@
             <el-form-item label="申请理由" prop="reason">
               <el-input
                 v-model="applicationForm.reason"
-                placeholder="请输入申请理由"
+                :placeholder="reasonPlaceholder"
                 type="textarea"
                 :rows="3"
                 :disabled="isReasonDisabled"
@@ -537,42 +542,65 @@ export default {
       }, 200);
     };
     
-    // 确认用户变更 - 当用户按下回车键或者手动触发时
+    // 确认用户变更
     const confirmUserChange = () => {
-      // 只有当用户名不为空且与当前用户不同时才发送请求
-      const newUserName = applicationForm.user;
-      if (newUserName && newUserName.trim() !== '' && newUserName !== currentUser.value) {
-        // 先清空电脑信息，避免显示旧信息
+      const newUserName = applicationForm.user.trim();
+      
+      // 如果用户名为空，不进行操作
+      if (!newUserName) {
+        ElMessage.warning('用户名不能为空');
+        return;
+      }
+      
+      // 如果用户名没有变化，不进行操作
+      if (newUserName === currentUser.value) {
+        return;
+      }
+      
+      // 如果用户名发生变化，重置表单并获取新用户的数据
+      if (newUserName !== currentUser.value) {
+        // 清空当前电脑信息
         myComputer.value = null;
-        // 清空电脑列表和选择的电脑
         computerList.value = [];
         selectedComputer.value = '';
         applicationForm.ciName = '申请新电脑'; // 重置为默认值
         
-        // 获取新用户的信息
-        Promise.all([
-          fetchUserInfo(newUserName),
-          fetchMyComputer(newUserName),
-          fetchComputerList(newUserName)
-        ]).then(() => {
-          // 获取数据成功后重置表单（保留网络请求获取的字段）
-          resetFormExceptNetworkFields();
-          // 重置申请类别
-          applicationForm.applicationType = '';
-          // 更新当前用户
-          currentUser.value = newUserName;
-          
-          ElMessage({
-            type: 'success',
-            message: '已切换到用户: ' + newUserName
+        // 同步获取用户信息和电脑信息
+        fetchMyComputer(newUserName)
+          .then(() => {
+            // 获取用户名下所有电脑
+            return fetchComputerList(newUserName);
+          })
+          .then(() => {
+            // 确保下拉选择框中的选择与当前显示的电脑匹配
+            if (myComputer.value && myComputer.value.ciName) {
+              // 确保已加载的电脑在下拉列表中
+              if (!computerList.value.includes(myComputer.value.ciName)) {
+                computerList.value.push(myComputer.value.ciName);
+              }
+              // 设置下拉框选中值为当前电脑
+              selectedComputer.value = myComputer.value.ciName;
+            }
+            // 获取用户信息，同时重置表单（除了网络请求获取的字段）
+            return fetchUserInfo(newUserName).then(() => {
+              // 获取数据成功后重置表单（保留网络请求获取的字段）
+              resetFormExceptNetworkFields();
+              // 更新当前用户
+              currentUser.value = newUserName;
+              
+              ElMessage({
+                type: 'success',
+                message: '已切换到用户: ' + newUserName
+              });
+            });
+          })
+          .catch(error => {
+            console.error('获取用户数据失败:', error);
+            ElMessage({
+              type: 'error',
+              message: '获取用户数据失败'
+            });
           });
-        }).catch(error => {
-          console.error('获取用户数据失败:', error);
-          ElMessage({
-            type: 'error',
-            message: '获取用户数据失败，请检查用户名是否正确'
-          });
-        });
       }
     };
     
@@ -1006,6 +1034,12 @@ export default {
           if (response.data.ciName) {
             selectedComputer.value = response.data.ciName;
             applicationForm.ciName = response.data.ciName; // 设置申请表单的电脑名称
+            
+            // 确保computerList中包含当前电脑名称
+            if (!computerList.value.includes(response.data.ciName)) {
+              // 如果当前电脑不在列表中，添加到列表
+              computerList.value.push(response.data.ciName);
+            }
           }
           
           // 自动填充电脑类型
@@ -1045,6 +1079,40 @@ export default {
           // 如果当前申请类别是办公电脑换新，则检查年限
           if (applicationForm.applicationType === 'officePcRenewal') {
             checkComputerLifespan();
+          }
+          
+          // 重置申请类别
+          applicationForm.applicationType = '';
+          
+          // 检查是否为Public Use电脑
+          if (response.data.pcClass && response.data.pcClass.includes('Public Use')) {
+            // 如果是Public Use电脑，强制设置为特殊用途申请
+            applicationForm.applicationType = 'specialPurpose';
+            ElMessage({
+              type: 'info',
+              message: '当前电脑归属情况为Public Use，已自动设置为特殊用途电脑申请且无法修改'
+            });
+          }
+          
+          // 如果电脑信息中包含用户信息，重新获取用户信息以更新成本中心等数据
+          if (response.data.ntAccount) {
+            fetchUserInfo(response.data.ntAccount).then(() => {
+              ElMessage({
+                type: 'success',
+                message: '已更新用户信息和电脑: ' + response.data.ciName
+              });
+            }).catch(error => {
+              console.error('获取用户信息失败:', error);
+              ElMessage({
+                type: 'success',
+                message: '已切换到电脑: ' + response.data.ciName + '，但用户信息更新失败'
+              });
+            });
+          } else {
+            ElMessage({
+              type: 'success',
+              message: '已切换到电脑: ' + response.data.ciName
+            });
           }
         } else {
           // 如果没有获取到电脑信息，清空相关数据
@@ -1197,6 +1265,8 @@ export default {
             // 特殊用途电脑申请时，从后端获取成本中心列表
             // 清空当前成本中心
             applicationForm.costCenter = '';
+            // 清空申请理由
+            applicationForm.reason = '';
             // 获取成本中心列表
             fetchCostCenterList();
             break;
@@ -1439,6 +1509,7 @@ export default {
       
       // 设置选中的电脑名称
       applicationForm.ciName = ciName;
+      selectedComputer.value = ciName; // 确保下拉框选择与当前选择匹配
       
       httpUtil({
         method: 'get',
@@ -1487,24 +1558,34 @@ export default {
           // 重置申请类别
           applicationForm.applicationType = '';
           
+          // 检查是否为Public Use电脑
+          if (response.data.pcClass && response.data.pcClass.includes('Public Use')) {
+            // 如果是Public Use电脑，强制设置为特殊用途申请
+            applicationForm.applicationType = 'specialPurpose';
+            ElMessage({
+              type: 'info',
+              message: '当前电脑归属情况为Public Use，已自动设置为特殊用途电脑申请且无法修改'
+            });
+          }
+          
           // 如果电脑信息中包含用户信息，重新获取用户信息以更新成本中心等数据
           if (response.data.ntAccount) {
             fetchUserInfo(response.data.ntAccount).then(() => {
               ElMessage({
                 type: 'success',
-                message: '已更新用户信息和电脑: ' + ciName
+                message: '已更新用户信息和电脑: ' + response.data.ciName
               });
             }).catch(error => {
               console.error('获取用户信息失败:', error);
               ElMessage({
                 type: 'success',
-                message: '已切换到电脑: ' + ciName + '，但用户信息更新失败'
+                message: '已切换到电脑: ' + response.data.ciName + '，但用户信息更新失败'
               });
             });
           } else {
             ElMessage({
               type: 'success',
-              message: '已切换到电脑: ' + ciName
+              message: '已切换到电脑: ' + response.data.ciName
             });
           }
         }
@@ -1561,14 +1642,28 @@ export default {
       
       // 确保首先使用当前登录用户的userName发送请求获取数据
       if (currentUser.value) {
-        // 同时获取用户信息、电脑信息和电脑列表
-        Promise.all([
-          fetchUserInfo(currentUser.value),
-          fetchMyComputer(currentUser.value),
-          fetchComputerList(currentUser.value)
-        ]).catch(error => {
-          console.error('初始化获取数据失败:', error);
-        });
+        // 获取电脑信息和电脑列表，确保电脑信息加载后再加载电脑列表
+        fetchMyComputer(currentUser.value)
+          .then(() => {
+            // 获取用户名下所有电脑
+            return fetchComputerList(currentUser.value);
+          })
+          .then(() => {
+            // 确保下拉选择框中的选择与当前显示的电脑匹配
+            if (myComputer.value && myComputer.value.ciName) {
+              // 确保已加载的电脑在下拉列表中
+              if (!computerList.value.includes(myComputer.value.ciName)) {
+                computerList.value.push(myComputer.value.ciName);
+              }
+              // 设置下拉框选中值为当前电脑
+              selectedComputer.value = myComputer.value.ciName;
+            }
+            // 获取用户信息
+            return fetchUserInfo(currentUser.value);
+          })
+          .catch(error => {
+            console.error('初始化获取数据失败:', error);
+          });
       } else {
         ElMessage({
           type: 'warning',
@@ -1600,6 +1695,21 @@ export default {
     // 添加成本中心是否禁用的计算属性
     const isCostCenterDisabled = computed(() => {
       return applicationForm.applicationType !== 'specialPurpose' && applicationForm.applicationType !== '';
+    });
+
+    // 添加申请类别是否禁用的计算属性
+    const isApplicationTypeDisabled = computed(() => {
+      return myComputer.value?.pcClass?.includes('Public Use') && applicationForm.applicationType === 'specialPurpose';
+    });
+
+    // 添加是否为公共使用电脑的计算属性
+    const isPublicUseComputer = computed(() => {
+      return myComputer.value?.pcClass === 'Public Use';
+    });
+
+    // 添加申请理由的占位符文本
+    const reasonPlaceholder = computed(() => {
+      return applicationForm.applicationType === 'specialPurpose' ? '请输入特殊用途电脑申请理由' : '请输入申请理由';
     });
 
     return {
@@ -1655,6 +1765,9 @@ export default {
       getProcessStatus,
       isReasonDisabled,
       isCostCenterDisabled,
+      isApplicationTypeDisabled,
+      isPublicUseComputer,
+      reasonPlaceholder,
       formatDate
     };
   }
