@@ -432,4 +432,26 @@ public class SysApplyController {
                 .set("list", costCenterList);
         return Res.success(result);
     }
+
+    /**
+     * 通过用户名或姓名模糊查询用户信息
+     * @param query 查询条件（可以是姓名或NT账号的部分）
+     * @return 用户列表
+     */
+    @RequestMapping("/searchUsers")
+    public Res searchUsers(@RequestParam("query") String query) {
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                return Res.error("查询条件不能为空");
+            }
+            
+            List<SysUserModel> userList = sysUserService.searchUsersByNameOrNick(query);
+            
+            Dict result = Dict.create().set("list", userList);
+            return Res.success(result);
+        } catch (Exception e) {
+            log.error("查询用户信息失败", e);
+            return Res.error("查询用户信息失败: " + e.getMessage());
+        }
+    }
 }

@@ -68,7 +68,7 @@
                       :key="index" 
                       class="user-result-item"
                       @click="selectUser(user)">
-                      {{ user.userName }}
+                      {{ user.userName }} {{ user.userNick ? `(${user.userNick})` : '' }}
                     </div>
                   </div>
                   <div v-else class="no-results">
@@ -114,9 +114,9 @@
                 style="width: 100%" 
                 @change="handleApplicationTypeChange"
                 :disabled="isApplicationTypeDisabled">
-                <el-option label="办公电脑超六年换新" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="办公电脑未超六年换新" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="办公电脑未超六年换旧" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑超一年换新" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑未超一年换新" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑未超一年换旧" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="秘书代申请新岗位员工电脑" value="secretaryNewEmployee" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="秘书代申请替代岗位员工电脑" value="secretaryReplacement" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="秘书代申请新实习生/外服电脑" value="secretaryIntern" :disabled="isPublicUseComputer"></el-option>
@@ -186,16 +186,17 @@
       <el-table 
         :data="paginatedList" 
         :loading="loading" 
-        style="width: 100%;"
+        style="width: 100%; overflow-x: auto;"
         border
         stripe
         row-key="approvalId"
         highlight-current-row
+        :table-layout="'fixed'"
         class="application-table">
-        <el-table-column label="申请时间" prop="createdAt" width="140"></el-table-column>
-        <el-table-column label="使用人" prop="userName" width="85"></el-table-column>
-        <el-table-column label="责任人" prop="responsibilityName" width="85"></el-table-column>
-        <el-table-column label="电脑类型" prop="deviceType" width="150">
+        <el-table-column label="申请时间" prop="createdAt" width="160" fixed="left"></el-table-column>
+        <el-table-column label="使用人" prop="userName" width="250"></el-table-column>
+        <el-table-column label="责任人" prop="responsibilityName" width="150"></el-table-column>
+        <el-table-column label="电脑类型" prop="deviceType" width="180">
           <template #default="{ row }">
             {{ getDeviceTypeName(row.deviceType) }}
           </template>
@@ -205,25 +206,34 @@
             {{ row.ciName || '申请新电脑' }}
           </template>
         </el-table-column>
-        <el-table-column label="申请类别" prop="deviceCategory" width="150">
+        <el-table-column label="申请类别" prop="deviceCategory" width="220">
           <template #default="{ row }">
             {{ getApplicationTypeName(row.deviceCategory) }}
           </template>
         </el-table-column>
-        <el-table-column label="申请理由" prop="reason" show-overflow-tooltip></el-table-column>
-        <el-table-column label="更新时间" prop="updatedAt" width="140"></el-table-column>
-        <el-table-column label="状态" prop="status" width="130" align="center">
+        <el-table-column label="申请理由" prop="reason" min-width="250" show-overflow-tooltip></el-table-column>
+        <el-table-column label="更新时间" prop="updatedAt" width="160" fixed="right"></el-table-column>
+        <el-table-column label="状态" prop="status" width="130" align="center" fixed="right">
           <template #default="{ row }">
             <div style="text-align: center;">
               <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
                 {{ row.status }}
+              </el-tag>
+              <!-- 如果状态为审批通过，显示分配状态 -->
+              <el-tag 
+                v-if="row.status === '审批通过' || row.status === '已通过'" 
+                :type="getAssignStatusTagType(row.assignStatus)"
+                style="margin-top: 5px; cursor: pointer;"
+                @click="viewAssignProgress(row)"
+              >
+                {{ row.assignStatus || '分配中' }}
               </el-tag>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="{ row }">
-            <div style="text-align: center;">
+            <div style="text-align: center; display: flex; justify-content: center;">
               <el-button type="primary" text @click="viewApplicationDetails(row)">查看详情</el-button>
             </div>
           </template>
@@ -296,6 +306,43 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button type="primary" @click="approvalProgressDialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+    
+    <!-- 分配进度弹窗 -->
+    <el-dialog v-model="assignProgressDialogVisible" title="分配进度" width="700px">
+      <div v-if="currentApplication" class="approval-progress-container custom-steps">
+        <el-steps :active="assignProgressStep" :process-status="getAssignProcessStatus()" align-center>
+          <el-step 
+            v-for="(step, index) in assignProgress" 
+            :key="index" 
+            :title="step.title" 
+            :status="getAssignStepStatus(index)"
+            :class="{'final-step': index === assignProgress.length - 1}">
+            <template #description>
+              <div class="step-description">
+                <div>{{ step.description }}</div>
+              </div>
+            </template>
+          </el-step>
+        </el-steps>
+        
+        <!-- 状态详情 -->
+        <div class="approval-status-detail" v-if="currentApplication">
+          <div class="status-box" :class="getAssignStatusClass(currentApplication.assignStatus)">
+            <div class="status-icon">
+              <i :class="getAssignStatusIcon(currentApplication.assignStatus)"></i>
+            </div>
+            <div class="status-text">
+              当前状态: <span class="status-value">{{ currentApplication.assignStatus || '分配中' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="assignProgressDialogVisible = false">关闭</el-button>
         </span>
       </template>
     </el-dialog>
@@ -373,6 +420,12 @@
           <el-button type="info" @click="viewApprovalProgress(currentApplication)">
             查看审批进度
           </el-button>
+          <el-button 
+            v-if="currentApplication.status === '审批通过' || currentApplication.status === '已通过'" 
+            type="success" 
+            @click="viewAssignProgress(currentApplication)">
+            查看分配进度
+          </el-button>
         </div>
       </div>
     </el-dialog>
@@ -424,6 +477,11 @@ export default {
     const approvalProgressDialogVisible = ref(false);
     const approvalProgress = ref([]);
     const approvalProgressStep = ref(0);
+    
+    // 分配进度相关
+    const assignProgressDialogVisible = ref(false);
+    const assignProgress = ref([]);
+    const assignProgressStep = ref(0);
 
     // 动态数据
     const costCenters = ref(['IT']); // 成本中心
@@ -984,9 +1042,9 @@ export default {
     // 获取申请类型名称
     const getApplicationTypeName = (type) => {
       const types = {
-        'pcRenewalOverSixYears': '办公电脑超六年换新',
-        'pcRenewalUnderSixYears': '办公电脑未超六年换新',
-        'pcRenewalUnderSixYearsOld': '办公电脑未超六年换旧',
+        'pcRenewalOverSixYears': '办公电脑超一年换新',
+        'pcRenewalUnderSixYears': '办公电脑未超一年换新',
+        'pcRenewalUnderSixYearsOld': '办公电脑未超一年换旧',
         'secretaryNewEmployee': '秘书代申请新岗位员工电脑',
         'secretaryReplacement': '秘书代申请替代岗位员工电脑',
         'secretaryIntern': '秘书代申请新实习生/外服电脑',
@@ -1202,11 +1260,11 @@ export default {
         
         // 处理不同选项的年限检查
         if (selectedType === 'pcRenewalOverSixYears') {
-          // 超六年检查
-          if (yearsDiff < 6) {
+          // 超一年检查
+          if (yearsDiff < 1) {
             ElMessage({
               type: 'warning',
-              message: `当前电脑使用年限为${yearsDiff}年，未超过六年，不能选择"办公电脑超六年换新"`
+              message: `当前电脑使用年限为${yearsDiff}年，未超过一年，不能选择"办公电脑超一年换新"`
             });
             applicationForm.applicationType = ''; // 重置申请类别
             return;
@@ -1214,29 +1272,29 @@ export default {
             // 满足条件，设置对应的表单字段
             applicationForm.costCenter = '69F105';
             applicationForm.computerCondition = '新电脑';
-            applicationForm.reason = '办公电脑超六年换新';
+            applicationForm.reason = '办公电脑超一年换新';
           }
         } else if (selectedType === 'pcRenewalUnderSixYears' || selectedType === 'pcRenewalUnderSixYearsOld') {
-          // 未超六年检查
-          if (yearsDiff >= 6) {
+          // 未超一年检查
+          if (yearsDiff >= 1) {
             ElMessage({
               type: 'warning',
-              message: `当前电脑使用年限为${yearsDiff}年，已超过六年，不能选择"办公电脑未超六年换新/换旧"`
+              message: `当前电脑使用年限为${yearsDiff}年，已超过一年，不能选择"办公电脑未超一年换新/换旧"`
             });
             applicationForm.applicationType = ''; // 重置申请类别
             return;
           } else {
             // 满足条件，设置对应的表单字段
             if (selectedType === 'pcRenewalUnderSixYears') {
-              // 未超六年换新
+              // 未超一年换新
               applicationForm.costCenter = myComputer.value.costCenter || ''; // 使用用户自己的成本中心
               applicationForm.computerCondition = '新电脑';
-              applicationForm.reason = '办公电脑未超六年换新';
+              applicationForm.reason = '办公电脑未超一年换新';
             } else {
-              // 未超六年换旧
+              // 未超一年换旧
               applicationForm.costCenter = '69F105';
               applicationForm.computerCondition = '库存旧电脑';
-              applicationForm.reason = '办公电脑未超六年换旧';
+              applicationForm.reason = '办公电脑未超一年换旧';
             }
           }
         }
@@ -1322,8 +1380,8 @@ export default {
       // 计算年限差异
       const yearsDiff = currentDate.getFullYear() - lifeCycleStartDate.getFullYear();
       
-      // 如果超过6年
-      if (yearsDiff >= 6) {
+      // 如果超过1年
+      if (yearsDiff >= 1) {
         // 将成本中心修改为IT
         applicationForm.costCenter = 'IT';
         ElMessage({
@@ -1333,7 +1391,7 @@ export default {
       } else {
         // 弹出确认窗口
         ElMessageBox.confirm(
-          `当前电脑使用年限为${yearsDiff}年，未超六年，年限内换新是否本部门承担新电脑费用（包括换成其他类型的新电脑）？`,
+          `当前电脑使用年限为${yearsDiff}年，未超一年，年限内换新是否本部门承担新电脑费用（包括换成其他类型的新电脑）？`,
           '提示',
           {
             confirmButtonText: '确认',
@@ -1347,20 +1405,20 @@ export default {
       }
     };
 
-    // 搜索用户 - 只搜索用户名，不发送获取详细信息请求
+    // 搜索用户 - 实现模糊搜索支持姓名查询
     const searchUser = () => {
-      const userName = applicationForm.user;
-      if (!userName || userName.trim() === '') {
+      const searchTerm = applicationForm.user;
+      if (!searchTerm || searchTerm.trim() === '') {
         showUserResults.value = false;
         return;
       }
       
-      httpUtil.get("/sysApply/getUserInfoByUserName", {
-        params: { userName }
+      httpUtil.get("/sysApply/searchUsers", {
+        params: { query: searchTerm }
       }).then(res => {
-        if (res.data) {
+        if (res.data && Array.isArray(res.data.list) && res.data.list.length > 0) {
           // 将查询结果添加到结果列表
-          userSearchResults.value = [res.data];
+          userSearchResults.value = res.data.list;
           showUserResults.value = true;
         } else {
           userSearchResults.value = [];
@@ -1712,6 +1770,114 @@ export default {
       return applicationForm.applicationType === 'specialPurpose' ? '请输入特殊用途电脑申请理由' : '请输入申请理由';
     });
 
+    // 获取分配状态标签类型
+    const getAssignStatusTagType = (status) => {
+      switch (status) {
+        case '分配完成': return 'success';
+        case '暂分配': return 'info';
+        case '分配中': return 'warning';
+        default: return 'warning';
+      }
+    };
+    
+    // 查看分配进度
+    const viewAssignProgress = (row) => {
+      currentApplication.value = row;
+      
+      // 确定分配状态的步骤
+      let steps = [];
+      let activeStep = 0;
+      
+      // 默认两个节点：分配中和分配完成
+      steps = [
+        { 
+          title: '分配中',
+          description: '设备正在分配中',
+        },
+        { 
+          title: '分配完成', 
+          description: '设备已完成分配',
+        }
+      ];
+      
+      // 如果状态是暂分配，则在中间插入暂分配节点
+      if (row.assignStatus === '暂分配') {
+        steps.splice(1, 0, {
+          title: '暂分配',
+          description: '设备暂时分配',
+        });
+        activeStep = 1; // 当前在暂分配阶段
+      } else if (row.assignStatus === '分配完成') {
+        // 如果是分配完成状态
+        activeStep = steps.length - 1;
+      } else {
+        // 分配中状态
+        activeStep = 0;
+      }
+      
+      assignProgress.value = steps;
+      assignProgressStep.value = activeStep;
+      assignProgressDialogVisible.value = true;
+    };
+    
+    // 获取分配进度状态
+    const getAssignProcessStatus = () => {
+      const status = currentApplication.value?.assignStatus || '';
+      
+      if (status === '分配完成') {
+        return 'success';
+      } else if (status === '暂分配') {
+        return 'warning';
+      } else {
+        return 'process';
+      }
+    };
+    
+    // 获取分配步骤状态
+    const getAssignStepStatus = (index) => {
+      const status = currentApplication.value?.assignStatus || '分配中';
+      const currentStep = assignProgressStep.value;
+      
+      // 已完成的步骤
+      if (index < currentStep) {
+        return 'success';
+      }
+      // 当前步骤
+      else if (index === currentStep) {
+        return 'process';
+      }
+      // 未完成的步骤
+      else {
+        return 'wait';
+      }
+    };
+    
+    // 获取分配状态对应的CSS类名
+    const getAssignStatusClass = (status) => {
+      switch (status) {
+        case '分配完成':
+          return 'status-success';
+        case '暂分配':
+          return 'status-process';
+        case '分配中':
+        default:
+          return 'status-info';
+      }
+    };
+    
+    // 获取分配状态对应的图标
+    const getAssignStatusIcon = (status) => {
+      switch (status) {
+        case '分配完成':
+          return 'el-icon-check-circle';
+        case '暂分配':
+          return 'el-icon-warning';
+        case '分配中':
+        default:
+          return 'el-icon-loading';
+      }
+    };
+
     return {
       applicationForm,
       applicationFormRef,
@@ -1732,6 +1898,7 @@ export default {
       confirmUserChange,
       viewApplicationDetails,
       viewApprovalProgress,
+      viewAssignProgress,
       statusTagType,
       getApplicationTypeName,
       getDeviceTypeName,
@@ -1763,12 +1930,22 @@ export default {
       getStatusClass,
       getStatusIcon,
       getProcessStatus,
+      // 分配进度相关
+      assignProgressDialogVisible,
+      assignProgress,
+      assignProgressStep,
+      // UI状态
       isReasonDisabled,
       isCostCenterDisabled,
       isApplicationTypeDisabled,
       isPublicUseComputer,
       reasonPlaceholder,
-      formatDate
+      formatDate,
+      getAssignStatusTagType,
+      getAssignProcessStatus,
+      getAssignStepStatus,
+      getAssignStatusClass,
+      getAssignStatusIcon
     };
   }
 };
@@ -2148,6 +2325,17 @@ export default {
   margin-bottom: 0;
   border-radius: 4px;
   overflow: hidden;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.application-table:deep(.el-table__body) {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.application-table:deep(.el-scrollbar__wrap) {
+  overflow-x: auto;
 }
 
 .application-table:deep(.el-table__row) {

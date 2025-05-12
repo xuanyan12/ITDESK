@@ -214,10 +214,10 @@
 
             <!-- 4. deviceSituation 处理 -->
             <if test="deviceSituation == '新电脑'">
-                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') >= DATE_SUB(CURDATE(), INTERVAL 6 YEAR) ]]>
+                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ]]>
             </if>
             <if test="deviceSituation == '库存旧电脑'">
-                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') < DATE_SUB(CURDATE(), INTERVAL 6 YEAR) ]]>
+                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') < DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ]]>
             </if>
 
             <!-- 5. company 非空时匹配 -->

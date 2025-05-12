@@ -4,6 +4,7 @@ import ink.usr.admin.dao.DTO.SysApplyRequestDTO;
 import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.mapper.SysApproverMapper;
+import ink.usr.admin.mapper.SysControlAssignMapper;
 import ink.usr.admin.service.SysApplyService;
 import ink.usr.admin.service.SysUserService;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
@@ -35,6 +36,9 @@ public class SysApplyServiceImpl implements SysApplyService {
     @Autowired
     private SysApproverMapper sysApproverMapper;
 
+    @Autowired
+    private SysControlAssignMapper sysControlAssignMapper;
+
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -49,7 +53,21 @@ public class SysApplyServiceImpl implements SysApplyService {
             String responsibilityName = sysUserService.getUserNickNameByUserId(singleList.getResponsibility());
             object.setUserName(userName);
             object.setResponsibilityName(responsibilityName);
-            BeanUtils.copyProperties(singleList,object);
+            BeanUtils.copyProperties(singleList, object);
+            
+            // 获取分配状态信息
+            if (singleList.getStatus() != null && 
+                (singleList.getStatus().equals("审批通过") || singleList.getStatus().equals("已通过"))) {
+                // 从sys_control_assign表获取分配状态
+                ink.usr.common.model.mysql.SysControlAssignModel assignInfo = 
+                    sysControlAssignMapper.getControlAssign(singleList.getApprovalId());
+                if (assignInfo != null && assignInfo.getAssignStatus() != null) {
+                    object.setAssignStatus(assignInfo.getAssignStatus());
+                } else {
+                    object.setAssignStatus("分配中");
+                }
+            }
+            
             sysApplyListVOList.add(object);
         }
         return sysApplyListVOList;

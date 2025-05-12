@@ -188,4 +188,13 @@ public class SysUserService implements ISysUserService {
     public Long getUserIdByUserName(String responsibilityName) {
         return sysUserMapper.getUserIdByUserName(responsibilityName);
     }
+
+    /**
+     * 根据用户名或用户昵称进行模糊查询
+     * @param query 查询条件（可以是姓名或NT账号的部分）
+     * @return 匹配的用户列表
+     */
+    public List<SysUserModel> searchUsersByNameOrNick(String query) {
+        return sysUserMapper.searchUsersByNameOrNick(query);
+    }
 }
