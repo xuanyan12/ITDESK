@@ -32,5 +32,7 @@ public class SysControlAssignModel {
     private String assignTime;
     // 分配状态
     private String assignStatus;
+    // 订单创建时间
+    private String startTime;
 
 }

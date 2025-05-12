@@ -17,6 +17,7 @@
             <if test="assignor != null and assignor != ''">assignor,</if>
             <if test="assignTime != null and assignTime != ''">assignTime,</if>
             <if test="assignStatus != null and assignStatus != ''">assignStatus,</if>
+            <if test="startTime != null and startTime != ''">startTime,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="ciName != null and ciName != ''">#{ciName},</if>
@@ -29,8 +30,29 @@
             <if test="assignor != null and assignor != ''">#{assignor},</if>
             <if test="assignTime != null and assignTime != ''">#{assignTime},</if>
             <if test="assignStatus != null and assignStatus != ''">#{assignStatus},</if>
+            <if test="startTime != null and startTime != ''">#{startTime},</if>
         </trim>
     </insert>
+
+    <!-- 更新分配信息 -->
+    <update id="updateControlAssign" parameterType="ink.usr.common.model.mysql.SysControlAssignModel">
+        update sys_control_assign
+        <set>
+            <if test="ciName != null and ciName != ''">ciName = #{ciName},</if>
+            <if test="deviceType != null and deviceType != ''">deviceType = #{deviceType},</if>
+            <if test="deviceSituation != null and deviceSituation != ''">deviceSituation = #{deviceSituation},</if>
+            <if test="approvalId != null">approvalId = #{approvalId},</if>
+            <if test="company != null and company != ''">company = #{company},</if>
+            <if test="applicant != null">applicant = #{applicant},</if>
+            <if test="lastLeastUserNtAccount != null">lastLeastUserNtAccount = #{lastLeastUserNtAccount},</if>
+            <if test="lastLeastUserNtAccount == null">lastLeastUserNtAccount = null,</if>
+            <if test="assignor != null and assignor != ''">assignor = #{assignor},</if>
+            <if test="assignTime != null and assignTime != ''">assignTime = #{assignTime},</if>
+            <if test="assignStatus != null and assignStatus != ''">assignStatus = #{assignStatus},</if>
+            <if test="startTime != null and startTime != ''">startTime = #{startTime},</if>
+        </set>
+        where approvalId = #{approvalId}
+    </update>
 
     <!-- 条件查询分配信息 -->
     <select id="getControlAssignListWithConditions" parameterType="ink.usr.common.model.mysql.SysControlAssignModel" resultType="ink.usr.common.model.mysql.SysControlAssignModel">

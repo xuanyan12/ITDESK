@@ -1,5 +1,6 @@
 package ink.usr.admin.service;
 
+import ink.usr.admin.dao.DTO.SysAllocateDeviceDTO;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 
 import java.util.List;
@@ -13,4 +14,6 @@ public interface SysControlAssignService {
      * @return 符合条件的分配记录列表
      */
     List<SysControlAssignModel> getControlAssignList(SysControlAssignModel queryModel);
+
+    boolean allocateDevice(SysAllocateDeviceDTO sysAllocateDeviceDTO);
 }

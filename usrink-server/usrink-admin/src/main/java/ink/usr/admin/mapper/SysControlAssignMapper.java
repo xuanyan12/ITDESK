@@ -20,4 +20,9 @@ public interface SysControlAssignMapper {
      * @return 符合条件的分配记录列表
      */
     List<SysControlAssignModel> getControlAssignListWithConditions(SysControlAssignModel queryModel);
+
+    @Select("select * from sys_control_assign where approvalId = #{approvalId}")
+    SysControlAssignModel getControlAssign(Long approvalId);
+
+    boolean updateControlAssign(SysControlAssignModel sysControlAssignModel);
 }

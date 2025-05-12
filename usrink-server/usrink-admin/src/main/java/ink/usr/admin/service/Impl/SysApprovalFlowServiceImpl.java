@@ -40,7 +40,6 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     @Autowired
     private SysControlAssignMapper sysControlAssignMapper;
 
-    // TODO 该方法需要修改，
     @Override
     public List<SysApprovalFlowVO> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
         List<SysApprovalFlowModel> FlowList = null;
@@ -219,6 +218,8 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                     sysControlAssignModel.setCompany(approvalRequestModel.getCompany());
                     sysControlAssignModel.setApplicant(approvalRequestModel.getApplicant());
                     sysControlAssignModel.setAssignStatus("分配中");
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    sysControlAssignModel.setStartTime(df.format(LocalDateTime.now()));
                     sysControlAssignMapper.addAssignInfo(sysControlAssignModel);
                 }
 

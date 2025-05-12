@@ -291,8 +291,15 @@ public class SysControlController {
                                 if (userNick.startsWith("FIXED-TERM ")) {
                                     userNick = userNick.substring("FIXED-TERM ".length()).trim();
                                 }
+                                // 处理EXTERNAL前缀，格式如: "EXTERNAL Chen, Zhanjun (XXXX)"
+                                else if (userNick.startsWith("EXTERNAL ")) {
+                                    userNick = userNick.substring("EXTERNAL ".length()).trim();
+                                }
+                                // 处理[Blue color]前缀，格式如: "[Blue color] CHENG Xiaoyu (SES-MFO-STG3)"
+                                else if (userNick.startsWith("[Blue color] ")) {
+                                    userNick = userNick.substring("[Blue color] ".length()).trim();
+                                }
                                 
-                                // 假设格式是"YI, Dile (SES-TEF2)"
                                 // 先分离出括号部分
                                 int bracketIndex = userNick.indexOf(" (");
                                 if (bracketIndex > 0) {
@@ -300,15 +307,30 @@ public class SysControlController {
                                 }
                                 
                                 // 分离姓和名
-                                String[] nameParts = userNick.split(", ");
-                                if (nameParts.length == 2) {
-                                    // 姓氏是第一部分
-                                    computerModel.setLastName(nameParts[0]);
-                                    // 名字是第二部分
-                                    computerModel.setFirstName(nameParts[1]);
+                                if (userInfo.getUserNick().startsWith("[Blue color] ")) {
+                                    // [Blue color] 格式使用空格分隔，FirstName LastName形式
+                                    String[] nameParts = userNick.split(" ", 2);
+                                    if (nameParts.length == 2) {
+                                        // 姓氏是第二部分
+                                        computerModel.setLastName(nameParts[1]);
+                                        // 名字是第一部分
+                                        computerModel.setFirstName(nameParts[0]);
+                                    } else {
+                                        // 如果不符合预期格式，使用整个userNick作为lastName
+                                        computerModel.setLastName(userNick);
+                                    }
                                 } else {
-                                    // 如果不符合预期格式，使用整个userNick作为lastName
-                                    computerModel.setLastName(userNick);
+                                    // 普通格式使用逗号分隔，LastName, FirstName形式
+                                    String[] nameParts = userNick.split(", ");
+                                    if (nameParts.length == 2) {
+                                        // 姓氏是第一部分
+                                        computerModel.setLastName(nameParts[0]);
+                                        // 名字是第二部分
+                                        computerModel.setFirstName(nameParts[1]);
+                                    } else {
+                                        // 如果不符合预期格式，使用整个userNick作为lastName
+                                        computerModel.setLastName(userNick);
+                                    }
                                 }
                                 
                                 log.info("解析用户 {} 姓名: 姓={}, 名={}", userInfo.getUserName(), 
