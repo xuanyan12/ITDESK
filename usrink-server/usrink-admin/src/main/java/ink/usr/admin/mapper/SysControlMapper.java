@@ -1,6 +1,8 @@
 package ink.usr.admin.mapper;
 
 import ink.usr.admin.dao.DTO.SysControlAssignDTO;
+import ink.usr.admin.dao.DTO.SysControlRecordDTO;
+import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import org.apache.ibatis.annotations.Delete;
@@ -38,4 +40,12 @@ public interface SysControlMapper {
     boolean insertSysControl(SysControlModel sysControlModel);
 
     List<SysControlModel> getComputerByInfo(SysControlAssignDTO sysControlAssignModel);
+
+    void updateSysControlRecord(SysControlRecordDTO sysControlRecordDTO);
+    
+    // 获取电脑修改记录列表
+    List<SysControlRecordDTO> getControlRecordList(SysControlRecordQueryDTO queryDTO);
+    
+    // 获取电脑修改记录总数
+    int getControlRecordCount(SysControlRecordQueryDTO queryDTO);
 }

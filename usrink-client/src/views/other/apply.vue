@@ -114,13 +114,13 @@
                 style="width: 100%" 
                 @change="handleApplicationTypeChange"
                 :disabled="isApplicationTypeDisabled">
-                <el-option label="办公电脑超一年换新" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="办公电脑未超一年换新" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="办公电脑未超一年换旧" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑超六年换新" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑未超六年换新" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option label="办公电脑未超六年换旧" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="秘书代申请新岗位员工电脑" value="secretaryNewEmployee" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="秘书代申请替代岗位员工电脑" value="secretaryReplacement" :disabled="isPublicUseComputer"></el-option>
                 <el-option label="秘书代申请新实习生/外服电脑" value="secretaryIntern" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="特殊用途电脑申请" value="specialPurpose"></el-option>
+                <el-option label="其他用途电脑申请" value="specialPurpose"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -138,7 +138,7 @@
 
           <el-col :span="12">
             <el-form-item label="电脑情形" prop="computerCondition">
-              <el-radio-group v-model="applicationForm.computerCondition">
+              <el-radio-group v-model="applicationForm.computerCondition" :disabled="isComputerConditionDisabled">
                 <el-radio label="新电脑">新电脑</el-radio>
                 <el-radio label="库存旧电脑">库存旧电脑</el-radio>
               </el-radio-group>
@@ -193,7 +193,7 @@
         highlight-current-row
         :table-layout="'fixed'"
         class="application-table">
-        <el-table-column label="申请时间" prop="createdAt" width="160" fixed="left"></el-table-column>
+        <el-table-column label="申请时间" prop="createdAt" width="160"></el-table-column>
         <el-table-column label="使用人" prop="userName" width="250"></el-table-column>
         <el-table-column label="责任人" prop="responsibilityName" width="150"></el-table-column>
         <el-table-column label="电脑类型" prop="deviceType" width="180">
@@ -212,7 +212,7 @@
           </template>
         </el-table-column>
         <el-table-column label="申请理由" prop="reason" min-width="250" show-overflow-tooltip></el-table-column>
-        <el-table-column label="更新时间" prop="updatedAt" width="160" fixed="right"></el-table-column>
+        <el-table-column label="更新时间" prop="updatedAt" width="160"></el-table-column>
         <el-table-column label="状态" prop="status" width="130" align="center" fixed="right">
           <template #default="{ row }">
             <div style="text-align: center;">
@@ -466,7 +466,7 @@ export default {
       deviceType: [{ required: true, message: '请选择电脑类型', trigger: 'change' }],
       costCenter: [{ required: true, message: '请选择成本中心', trigger: 'change' }],
       company: [{ required: true, message: '请选择所属公司', trigger: 'change' }],
-      user: [{ required: true, message: '请输入使用人', trigger: 'blur' }],
+      user: [{ required: true, message: '请输入使用人的NT账号或姓名', trigger: 'blur' }],
       responsible: [{ required: true, message: '请选择责任人', trigger: 'change' }],
       reason: [{ required: true, message: '请选择或输入申请理由', trigger: 'change' }]
     };
@@ -617,6 +617,10 @@ export default {
       
       // 如果用户名发生变化，重置表单并获取新用户的数据
       if (newUserName !== currentUser.value) {
+        // 在重置表单前，先手动重置重要字段以确保它们被清除
+        applicationForm.applicationType = '';
+        applicationForm.reason = '';
+        
         // 清空当前电脑信息
         myComputer.value = null;
         computerList.value = [];
@@ -673,6 +677,10 @@ export default {
       
       // 只有当选择了不同的用户时才发送请求
       if (newUserName !== currentUser.value) {
+        // 在重置表单前，先手动重置重要字段以确保它们被清除
+        applicationForm.applicationType = '';
+        applicationForm.reason = '';
+        
         // 先清空电脑信息，避免显示旧信息
         myComputer.value = null;
         // 清空电脑列表和选择的电脑
@@ -835,7 +843,7 @@ export default {
       
       // 创建初始状态的表单
       const initialForm = {
-        applicationType: '', // 申请类别
+        applicationType: '', // 申请类别 - 总是重置
         deviceType: currentDeviceType, // 电脑类型 - 保留自动填充的值
         costCenter: currentCostCenter, // 成本中心 - 保留
         company: currentCompany, // 所属公司 - 保留
@@ -843,7 +851,7 @@ export default {
         responsible: currentResponsible, // 责任人 - 保留
         computerCondition: '新电脑', // 电脑情形，默认新电脑
         companySys: '是（公司系统）', // 公司系统，默认是
-        reason: '', // 申请理由
+        reason: '', // 申请理由 - 总是重置
         ciName: '申请新电脑', // 电脑名称，默认为"申请新电脑"
       };
       
@@ -1030,7 +1038,7 @@ export default {
     // 获取状态标签类型
     const statusTagType = (status) => {
       switch (status) {
-        case '审批中': return 'warning';
+        case '审批中': return 'primary';
         case '审批通过': return 'success';
         case '审批不通过': return 'danger';
         case '已通过': return 'success'; // 兼容旧数据
@@ -1042,13 +1050,14 @@ export default {
     // 获取申请类型名称
     const getApplicationTypeName = (type) => {
       const types = {
-        'pcRenewalOverSixYears': '办公电脑超一年换新',
-        'pcRenewalUnderSixYears': '办公电脑未超一年换新',
-        'pcRenewalUnderSixYearsOld': '办公电脑未超一年换旧',
+        'pcRenewalOverSixYears': '办公电脑超六年换新',
+        'pcRenewalUnderSixYears': '办公电脑未超六年换新',
+        'pcRenewalUnderSixYearsOld': '办公电脑未超六年换旧',
         'secretaryNewEmployee': '秘书代申请新岗位员工电脑',
         'secretaryReplacement': '秘书代申请替代岗位员工电脑',
         'secretaryIntern': '秘书代申请新实习生/外服电脑',
-        'specialPurpose': '特殊用途电脑申请',
+        'publicComputer': '申请公共电脑',
+        'specialPurpose': '其他用途电脑申请',
         // 保留旧映射以兼容已有数据
         'officePcRenewal': '办公电脑换新',
         'newEmployeePc': '新正式员工电脑',
@@ -1144,15 +1153,18 @@ export default {
           
           // 检查是否为Public Use电脑
           if (response.data.pcClass && response.data.pcClass.includes('Public Use')) {
-            // 如果是Public Use电脑，强制设置为特殊用途申请
+            // 如果是Public Use电脑，强制设置为其他用途电脑申请
             applicationForm.applicationType = 'specialPurpose';
+            applicationForm.reason = '';
             ElMessage({
               type: 'info',
-              message: '当前电脑归属情况为Public Use，已自动设置为特殊用途电脑申请且无法修改'
+              message: '当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改'
             });
+            // 获取成本中心列表
+            fetchCostCenterList();
           }
           
-          // 如果电脑信息中包含用户信息，重新获取用户信息以更新成本中心等数据
+          // 重新获取用户信息以更新成本中心等数据
           if (response.data.ntAccount) {
             fetchUserInfo(response.data.ntAccount).then(() => {
               ElMessage({
@@ -1260,41 +1272,67 @@ export default {
         
         // 处理不同选项的年限检查
         if (selectedType === 'pcRenewalOverSixYears') {
-          // 超一年检查
-          if (yearsDiff < 1) {
-            ElMessage({
-              type: 'warning',
-              message: `当前电脑使用年限为${yearsDiff}年，未超过一年，不能选择"办公电脑超一年换新"`
+          // 超六年检查
+          if (yearsDiff < 6) {
+            ElMessageBox.alert(
+              `当前电脑使用年限为${yearsDiff}年，未超过六年，不能选择"办公电脑超六年换新"`,
+              '年限不符合要求',
+              {
+                confirmButtonText: '确定',
+                type: 'warning'
+              }
+            ).then(() => {
+              applicationForm.applicationType = ''; // 重置申请类别
+            }).catch(() => {
+              applicationForm.applicationType = ''; // 重置申请类别
             });
-            applicationForm.applicationType = ''; // 重置申请类别
             return;
           } else {
             // 满足条件，设置对应的表单字段
             applicationForm.costCenter = '69F105';
             applicationForm.computerCondition = '新电脑';
-            applicationForm.reason = '办公电脑超一年换新';
+            applicationForm.reason = '办公电脑超六年换新';
           }
         } else if (selectedType === 'pcRenewalUnderSixYears' || selectedType === 'pcRenewalUnderSixYearsOld') {
-          // 未超一年检查
-          if (yearsDiff >= 1) {
-            ElMessage({
-              type: 'warning',
-              message: `当前电脑使用年限为${yearsDiff}年，已超过一年，不能选择"办公电脑未超一年换新/换旧"`
+          // 未超六年检查
+          if (yearsDiff >= 6) {
+            ElMessageBox.alert(
+              `当前电脑使用年限为${yearsDiff}年，已超过六年，不能选择"办公电脑未超六年换新/换旧"`,
+              '年限不符合要求',
+              {
+                confirmButtonText: '确定',
+                type: 'warning'
+              }
+            ).then(() => {
+              applicationForm.applicationType = ''; // 重置申请类别
+            }).catch(() => {
+              applicationForm.applicationType = ''; // 重置申请类别
             });
-            applicationForm.applicationType = ''; // 重置申请类别
             return;
           } else {
             // 满足条件，设置对应的表单字段
             if (selectedType === 'pcRenewalUnderSixYears') {
-              // 未超一年换新
-              applicationForm.costCenter = myComputer.value.costCenter || ''; // 使用用户自己的成本中心
-              applicationForm.computerCondition = '新电脑';
-              applicationForm.reason = '办公电脑未超一年换新';
+              // 未超六年换新 - 显示费用计入部门提示
+              ElMessageBox.alert(
+                '需要更换的电脑未超过6年，该电脑更换费用将计入电脑使用人所属部门的成本中心',
+                '费用提示',
+                {
+                  confirmButtonText: '确定',
+                  type: 'warning',
+                }
+              ).then(() => {
+                // 用户确认后，设置表单字段
+                applicationForm.costCenter = myComputer.value.costCenter || ''; // 使用用户自己的成本中心
+                applicationForm.computerCondition = '新电脑';
+                applicationForm.reason = '办公电脑未超六年换新';
+              }).catch(() => {
+                // 用户取消，不改变任何设置
+              });
             } else {
-              // 未超一年换旧
+              // 未超六年换旧
               applicationForm.costCenter = '69F105';
               applicationForm.computerCondition = '库存旧电脑';
-              applicationForm.reason = '办公电脑未超一年换旧';
+              applicationForm.reason = '办公电脑未超六年换旧';
             }
           }
         }
@@ -1320,7 +1358,7 @@ export default {
             break;
             
           case 'specialPurpose':
-            // 特殊用途电脑申请时，从后端获取成本中心列表
+            // 其他用途电脑申请时，从后端获取成本中心列表
             // 清空当前成本中心
             applicationForm.costCenter = '';
             // 清空申请理由
@@ -1380,8 +1418,8 @@ export default {
       // 计算年限差异
       const yearsDiff = currentDate.getFullYear() - lifeCycleStartDate.getFullYear();
       
-      // 如果超过1年
-      if (yearsDiff >= 1) {
+      // 如果超过6年
+      if (yearsDiff >= 6) {
         // 将成本中心修改为IT
         applicationForm.costCenter = 'IT';
         ElMessage({
@@ -1391,7 +1429,7 @@ export default {
       } else {
         // 弹出确认窗口
         ElMessageBox.confirm(
-          `当前电脑使用年限为${yearsDiff}年，未超一年，年限内换新是否本部门承担新电脑费用（包括换成其他类型的新电脑）？`,
+          `当前电脑使用年限为${yearsDiff}年，未超六年，年限内换新是否本部门承担新电脑费用（包括换成其他类型的新电脑）？`,
           '提示',
           {
             confirmButtonText: '确认',
@@ -1618,12 +1656,15 @@ export default {
           
           // 检查是否为Public Use电脑
           if (response.data.pcClass && response.data.pcClass.includes('Public Use')) {
-            // 如果是Public Use电脑，强制设置为特殊用途申请
+            // 如果是Public Use电脑，强制设置为其他用途电脑申请
             applicationForm.applicationType = 'specialPurpose';
+            applicationForm.reason = '';
             ElMessage({
               type: 'info',
-              message: '当前电脑归属情况为Public Use，已自动设置为特殊用途电脑申请且无法修改'
+              message: '当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改'
             });
+            // 获取成本中心列表
+            fetchCostCenterList();
           }
           
           // 如果电脑信息中包含用户信息，重新获取用户信息以更新成本中心等数据
@@ -1747,7 +1788,7 @@ export default {
     const isReasonDisabled = computed(() => {
       const appType = applicationForm.applicationType;
       return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYears', 'pcRenewalUnderSixYearsOld', 
-              'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern'].includes(appType);
+              'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern', 'publicComputer'].includes(appType);
     });
 
     // 添加成本中心是否禁用的计算属性
@@ -1762,21 +1803,31 @@ export default {
 
     // 添加是否为公共使用电脑的计算属性
     const isPublicUseComputer = computed(() => {
-      return myComputer.value?.pcClass === 'Public Use';
+      return myComputer.value?.pcClass?.includes('Public Use');
+    });
+
+    // 添加电脑情形是否禁用的计算属性
+    const isComputerConditionDisabled = computed(() => {
+      // 当申请类型不是其他用途电脑申请，且已经选择了申请类型时，电脑情形禁用
+      return applicationForm.applicationType !== '' && applicationForm.applicationType !== 'specialPurpose';
     });
 
     // 添加申请理由的占位符文本
     const reasonPlaceholder = computed(() => {
-      return applicationForm.applicationType === 'specialPurpose' ? '请输入特殊用途电脑申请理由' : '请输入申请理由';
+      if (applicationForm.applicationType === 'specialPurpose' || 
+          (myComputer.value?.pcClass?.includes('Public Use') && applicationForm.applicationType === 'specialPurpose')) {
+        return '请输入其他用途电脑申请理由';
+      }
+      return '请输入申请理由';
     });
 
     // 获取分配状态标签类型
     const getAssignStatusTagType = (status) => {
       switch (status) {
         case '分配完成': return 'success';
-        case '暂分配': return 'info';
-        case '分配中': return 'warning';
-        default: return 'warning';
+        case '暂分配': return 'warning';
+        case '分配中': return 'primary';
+        default: return 'primary';
       }
     };
     
@@ -1945,7 +1996,8 @@ export default {
       getAssignProcessStatus,
       getAssignStepStatus,
       getAssignStatusClass,
-      getAssignStatusIcon
+      getAssignStatusIcon,
+      isComputerConditionDisabled
     };
   }
 };

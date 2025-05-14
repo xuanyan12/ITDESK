@@ -3,8 +3,10 @@ package ink.usr.admin.controller;
 import com.github.pagehelper.Page;
 import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.dao.DTO.SysControlDTO;
+import ink.usr.admin.dao.DTO.SysControlRecordDTO;
 import ink.usr.admin.dao.VO.SysControlAssignVO;
 import ink.usr.admin.dao.VO.SysControlVO;
+import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.service.SysControlService;
 import ink.usr.admin.service.SysUserService;
 import ink.usr.common.core.domain.Dict;
@@ -23,8 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
 
 import java.awt.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
@@ -32,6 +36,9 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @Slf4j
@@ -43,6 +50,9 @@ public class SysControlController {
 
     @Autowired
     private SysUserService sysUserService;
+
+    @Autowired
+    private SysControlMapper sysControlMapper;
 
 
     /**
@@ -579,5 +589,125 @@ public class SysControlController {
                 .set("list", sysControlModel)
                 .set("total", pages.getTotal());
         return Res.success(result);
+    }
+
+    /**
+     * 获取电脑修改记录列表
+     * @param queryDTO 查询参数
+     * @return 记录列表和分页信息
+     */
+    @PostMapping("/getControlRecordList")
+    public Res getControlRecordList(@RequestBody SysControlRecordQueryDTO queryDTO) {
+        log.info("获取电脑修改记录列表 参数: {}", queryDTO);
+        try {
+            Dict result = sysControlService.getControlRecordList(queryDTO);
+            return Res.success(result);
+        } catch (Exception e) {
+            log.error("获取电脑修改记录列表失败", e);
+            return Res.error("获取电脑修改记录列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 归还电脑
+     * @param sysControlModel 电脑信息
+     * @return 归还结果
+     */
+    @RequestMapping("/returnComputer")
+    @RequiresPermissions("sys:device:control:update")
+    public Res returnComputer(@RequestBody SysControlModel sysControlModel) {
+        try {
+            log.info("归还电脑，电脑信息: {}", sysControlModel);
+            
+            // 获取原始电脑信息，保存用于记录日志
+            SysControlModel originalComputer = sysControlService.getComputerInfoByCiName(sysControlModel.getCiName());
+            if (originalComputer == null) {
+                return Res.error("未找到该电脑信息");
+            }
+
+            // 保存初始电脑记录
+            LocalDateTime now = LocalDateTime.now();
+            // 格式化为字符串：yyyy-MM-dd HH:mm:ss
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedTime = now.format(formatter);
+            SysControlRecordDTO sysControlRecordDTO = new SysControlRecordDTO();
+            BeanUtils.copyProperties(originalComputer, sysControlRecordDTO);
+            sysControlRecordDTO.setUpdateTime(formattedTime);
+            sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
+            
+            // 计算电脑使用年限
+            double yearsToDay = 0;
+            if (originalComputer.getLifeCycleStart() != null && !originalComputer.getLifeCycleStart().isEmpty()) {
+                String lifeCycleStart = originalComputer.getLifeCycleStart();
+                
+                // 解析日期，支持多种格式
+                LocalDate manufactureDate = null;
+                try {
+                    // 尝试解析ISO格式的日期（带T的格式）
+                    if (lifeCycleStart.contains("T")) {
+                        manufactureDate = LocalDate.parse(lifeCycleStart.split("T")[0]);
+                    } else {
+                        // 尝试解析yyyy-MM-dd格式
+                        manufactureDate = LocalDate.parse(lifeCycleStart, DateTimeFormatter.ISO_LOCAL_DATE);
+                    }
+                } catch (Exception e) {
+                    try {
+                        // 尝试解析自定义格式，如yyyy/MM/dd
+                        manufactureDate = LocalDate.parse(lifeCycleStart, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+                    } catch (Exception ex) {
+                        log.error("无法解析出厂日期: {}", lifeCycleStart);
+                    }
+                }
+                
+                if (manufactureDate != null) {
+                    // 计算年限
+                    LocalDate today = LocalDate.now();
+                    Period period = Period.between(manufactureDate, today);
+                    yearsToDay = period.getYears() + (period.getMonths() / 12.0) + (period.getDays() / 365.25);
+                    log.info("电脑 {} 使用年限: {} 年", sysControlModel.getCiName(), yearsToDay);
+                }
+            }
+            
+            // 更新电脑状态
+            SysControlModel updatedComputer = new SysControlModel();
+            updatedComputer.setId(originalComputer.getId());
+            
+            // 根据使用年限判断状态
+            if (yearsToDay > 6) {
+                // 超过6年，状态改为To be scrapped
+                updatedComputer.setPcStatus("To be scrapped");
+                updatedComputer.setPcClass("To be scrapped");
+            } else {
+                // 未超过6年，状态改为To be assigned
+                updatedComputer.setPcStatus("To be assigned");
+                updatedComputer.setPcClass("To be assigned");
+            }
+            
+            // 清空用户相关信息
+            updatedComputer.setNtAccount("");
+            updatedComputer.setLastName("");
+            updatedComputer.setFirstName("");
+            updatedComputer.setEmailAddress("");
+            updatedComputer.setTelephone("");
+            updatedComputer.setDepartment("");
+            updatedComputer.setCostCenter("");
+            updatedComputer.setTemp(0); // 重置临时分配标志
+
+            // 更新电脑信息
+            boolean updateResult = sysControlService.updateSysControl(updatedComputer);
+            
+            if (updateResult) {
+                log.info("电脑 {} 归还成功, 更新后状态: {}", sysControlModel.getCiName(), 
+                        yearsToDay > 6 ? "To be scrapped" : "To be assigned");
+                return Res.success("电脑归还成功");
+            } else {
+                log.error("电脑 {} 归还失败", sysControlModel.getCiName());
+                return Res.error("电脑归还失败");
+            }
+            
+        } catch (Exception e) {
+            log.error("归还电脑失败", e);
+            return Res.error("归还电脑失败: " + e.getMessage());
+        }
     }
 }

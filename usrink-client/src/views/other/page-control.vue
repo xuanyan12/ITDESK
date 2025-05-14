@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, nextTick } from "vue";
 import httpUtil from "@/utils/HttpUtil";
 import { Warning, Download, UploadFilled, InfoFilled, Check } from "@element-plus/icons-vue";
 import { ElTooltip, ElMessage } from 'element-plus';
@@ -99,33 +99,134 @@ const exportDialogVisible = ref(false);
 const exportOption = ref('current'); // 'current'表示导出当前页，'all'表示导出所有数据
 const exportLoading = ref(false);
 
+// 追溯对话框相关变量
+const traceDialogVisible = ref(false);
+const traceLoading = ref(false);
+const traceRecordList = ref([]);
+const traceRecordTotal = ref(0);
+const currentComputer = ref({});
+
+// 追溯查询表单
+const traceQueryForm = ref({
+    ciName: '',
+    pageNum: 1,
+    pageSize: 10
+});
+
+// 归还电脑相关变量
+const returnComputerDialogVisible = ref(false);
+const currentReturnComputer = ref(null);
+const returnComputerLoading = ref(false);
+const selectedReturnStatus = ref(''); // Add selected status variable
+
+// 添加用户搜索相关的变量
+const userSearchResults = ref([]); // 用户查询结果
+const showUserResults = ref(false); // 是否显示用户查询结果
+const searchTimeout = ref(null); // 搜索防抖定时器
+
+// 定义输入框引用
+const userInputRef = ref(null);
+
 onMounted(() => {
     // 查询配件列表
     selectPartListData()
 
-    // // 嵌入式 AIBOT 组件
-    // const script = document.createElement('script');
-    // script.src = 'http://10.219.184.36:3101/embed/anythingllm-chat-widget.min.js';
-    // script.setAttribute('data-embed-id', '42f40229-230d-43a6-814b-8aa72018a0b3');
-    // script.setAttribute('data-base-api-url', 'http://10.219.184.36:3101/api/embed');
-    // script.async = true;
-    // document.body.appendChild(script);
-
-    // // 自定义属性
-    // script.setAttribute('data-username', 'embed-AIBOT');  // 设置聊天框名字
-    // script.setAttribute('data-chat-icon', 'chatBubble');  // 修改聊天图标
-    // script.setAttribute('data-brand-image-url', '/img/SEGIMAGE.jpg');  // 设置品牌图标URL
-    // script.setAttribute('data-greeting', 'Hi!我是SEG的AIBOT，欢迎向我提问！');  // 设置欢迎信息
-    // script.setAttribute('data-no-sponsor', 'true');  // 隐藏赞助商
-    // // script.setAttribute('data-sponsor-link', 'https://seg.org/');  // 修改赞助商链接
-    // // script.setAttribute('data-sponsor-text', 'Powered by SEG');  // 修改赞助商文本
-    // script.setAttribute('data-assistant-name', 'SEG-AIBOT');  // 修改助手名称
-    // script.setAttribute('data-assistant-icon', '/img/SEGIMAGE.jpg');  // 设置助手图标
-    // script.setAttribute('data-window-height', '450px');  // 设置聊天窗口高度
-    // script.setAttribute('data-window-width', '400px');  // 设置聊天窗口宽度
-
-    
+    // 添加全局点击事件监听，用于关闭用户搜索下拉框
+    document.addEventListener('click', handleDocumentClick);
 })
+
+// 组件卸载前移除全局事件监听
+const handleDocumentClick = (event) => {
+    // 检查点击是否在用户输入框或下拉框之外
+    const userInputContainer = document.querySelector('.user-input-container');
+    if (userInputContainer && !userInputContainer.contains(event.target)) {
+        showUserResults.value = false;
+    }
+};
+
+// 在组件销毁前移除事件监听
+const onBeforeUnmount = () => {
+    document.removeEventListener('click', handleDocumentClick);
+};
+
+// 用户输入事件处理
+const handleUserInput = (value) => {
+    // 清除之前的定时器
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+    
+    // 设置新的定时器，用户停止输入500ms后执行搜索
+    searchTimeout.value = setTimeout(() => {
+        if (value && value.trim() !== '') {
+            searchUser();
+        } else {
+            showUserResults.value = false;
+        }
+    }, 500);
+};
+
+// 处理用户输入框失焦
+const handleUserBlur = () => {
+    // 延迟关闭下拉框，以便用户能够点击下拉框中的选项
+    setTimeout(() => {
+        showUserResults.value = false;
+    }, 300); // 增加延迟时间，确保能点击选项
+};
+
+// 确认用户变更
+const confirmUserChange = () => {
+    // 如果输入框为空，则清空NT账号
+    if (!queryForm.value.lastName || queryForm.value.lastName.trim() === '') {
+        queryForm.value.ntAccount = '';
+    }
+    selectPartListData();
+};
+
+// 搜索用户 - 实现模糊搜索支持姓名查询
+const searchUser = () => {
+    const searchTerm = queryForm.value.lastName;
+    if (!searchTerm || searchTerm.trim() === '') {
+        showUserResults.value = false;
+        return;
+    }
+    
+    httpUtil.get("/sysApply/searchUsers", {
+        params: { query: searchTerm }
+    }).then(res => {
+        if (res.data && Array.isArray(res.data.list) && res.data.list.length > 0) {
+            // 将查询结果添加到结果列表
+            userSearchResults.value = res.data.list;
+            
+            // 确保在更新DOM之前显示结果
+            nextTick(() => {
+                showUserResults.value = true;
+            });
+        } else {
+            userSearchResults.value = [];
+            nextTick(() => {
+                showUserResults.value = true;
+            });
+        }
+    }).catch(err => {
+        console.error("搜索用户失败:", err);
+        userSearchResults.value = [];
+        nextTick(() => {
+            showUserResults.value = true;
+        });
+    });
+};
+
+// 选择用户
+const selectUser = (user) => {
+    // 设置NT账号和员工姓名
+    queryForm.value.ntAccount = user.userName;
+    queryForm.value.lastName = user.userNick || user.userName;
+    showUserResults.value = false;
+    
+    // 注释掉自动查询功能
+    // selectPartListData();
+};
 
 /**
  * 查询配件列表
@@ -517,6 +618,244 @@ const formatDataForExport = (data) => {
   });
 };
 
+/**
+ * 显示追溯对话框
+ * @param row 当前行数据
+ */
+const showTraceDialog = (row) => {
+    currentComputer.value = { ...row };
+    console.log('当前电脑信息:', currentComputer.value);
+    
+    // 重置查询表单
+    traceQueryForm.value = {
+        ciName: row.ciName,
+        pageNum: 1,
+        pageSize: 10
+    };
+    
+    console.log('查询电脑历史记录，参数:', traceQueryForm.value);
+    traceDialogVisible.value = true;
+    
+    // 打开对话框后立即获取数据
+    fetchTraceRecords();
+};
+
+/**
+ * 获取追溯记录
+ */
+const fetchTraceRecords = () => {
+    traceLoading.value = true;
+    traceRecordList.value = [];
+    
+    httpUtil.post("/sysControl/getControlRecordList", { ...traceQueryForm.value }, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => {
+        console.log('获取追溯记录响应:', res);
+        // 修改这里，后端返回的成功码是200
+        if (res.code === 200) {
+            // 确保正确解析后端返回的数据结构
+            if (res.data && Array.isArray(res.data.list)) {
+                traceRecordList.value = res.data.list;
+                traceRecordTotal.value = res.data.total || 0;
+                console.log('解析后的追溯记录列表:', traceRecordList.value);
+                
+                if(traceRecordList.value.length === 0) {
+                    ElMessage.info('未找到该电脑的历史记录');
+                }
+            } else {
+                console.error('返回的数据结构不符合预期:', res.data);
+                ElMessage.warning('返回的数据结构不符合预期');
+            }
+        } else {
+            ElMessage.error(res.msg || '获取追溯记录失败');
+        }
+    }).catch(err => {
+        console.error('获取追溯记录失败:', err);
+        ElMessage.error('获取追溯记录失败: ' + (err.message || '未知错误'));
+    }).finally(() => {
+        traceLoading.value = false;
+    });
+};
+
+/**
+ * 处理追溯分页大小变化
+ * @param val 每页条数
+ */
+const handleTracePageSizeChange = (val) => {
+    traceQueryForm.value.pageSize = val;
+    // 改变页大小时重置为第一页
+    traceQueryForm.value.pageNum = 1;
+    fetchTraceRecords();
+};
+
+/**
+ * 处理追溯页码变化
+ * @param val 当前页码
+ */
+const handleTracePageChange = (val) => {
+    traceQueryForm.value.pageNum = val;
+    fetchTraceRecords();
+};
+
+/**
+ * 获取状态标签类型
+ * @param status 状态值
+ * @returns 标签类型
+ */
+const getStatusTagType = (status) => {
+    if (!status) return '';
+    
+    const statusLower = String(status).toLowerCase();
+    
+    // 进行中的状态使用蓝色
+    if (statusLower.includes('审批中') || 
+        statusLower.includes('分配中') || 
+        statusLower === 'to be assigned') {
+        return 'primary';
+    } 
+    // 临时状态使用黄色
+    else if (statusLower.includes('暂分配') || 
+             statusLower === 'waiting for return') {
+        return 'warning';
+    }
+    // 完成状态使用绿色
+    else if (statusLower.includes('分配完成') || 
+             statusLower.includes('审批通过') || 
+             statusLower === 'in use') {
+        return 'success';
+    } 
+    // 拒绝状态使用红色
+    else if (statusLower.includes('拒绝') || 
+             statusLower === 'scrapped' || 
+             statusLower === 'to be scrapped') {
+        return 'danger';
+    }
+    
+    return 'info';
+};
+
+/**
+ * 获取记录详细信息
+ * @param record 记录对象
+ * @returns 格式化后的详情对象
+ */
+const getRecordDetails = (record) => {
+    const details = {};
+    
+    // 添加关键字段到详情中
+    if (record.lifeCycleStart) details['出厂时间'] = record.lifeCycleStart;
+    if (record.modelOrVersion) details['电脑型号'] = record.modelOrVersion;
+    if (record.serialNumber) details['序列号'] = record.serialNumber;
+    if (record.lastName || record.firstName) {
+        details['用户'] = `${record.lastName || ''} ${record.firstName || ''}`.trim();
+    }
+    if (record.department) details['部门'] = record.department;
+    if (record.costCenter) details['成本中心'] = record.costCenter;
+    if (record.emailAddress) details['邮箱'] = record.emailAddress;
+    if (record.telephone) details['电话'] = record.telephone;
+    if (record.comment) details['备注'] = record.comment;
+    
+    return details;
+};
+
+// 新增：获取当前电脑属性
+const getCurrentDetails = () => {
+    const details = {};
+    
+    // 添加关键字段到详情中
+    if (currentComputer.value.pcStatus) details['电脑状态'] = currentComputer.value.pcStatus;
+    if (currentComputer.value.ntAccount) details['NT账号'] = currentComputer.value.ntAccount;
+    if (currentComputer.value.pcClass) details['电脑归属情况'] = currentComputer.value.pcClass;
+    if (currentComputer.value.company) details['公司'] = currentComputer.value.company;
+    
+    // 添加其他详细信息
+    if (currentComputer.value.lifeCycleStart) details['出厂时间'] = currentComputer.value.lifeCycleStart;
+    if (currentComputer.value.modelOrVersion) details['电脑型号'] = currentComputer.value.modelOrVersion;
+    if (currentComputer.value.serialNumber) details['序列号'] = currentComputer.value.serialNumber;
+    if (currentComputer.value.lastName || currentComputer.value.firstName) {
+        details['用户'] = `${currentComputer.value.lastName || ''} ${currentComputer.value.firstName || ''}`.trim();
+    }
+    if (currentComputer.value.department) details['部门'] = currentComputer.value.department;
+    if (currentComputer.value.costCenter) details['成本中心'] = currentComputer.value.costCenter;
+    if (currentComputer.value.emailAddress) details['邮箱'] = currentComputer.value.emailAddress;
+    if (currentComputer.value.telephone) details['电话'] = currentComputer.value.telephone;
+    if (currentComputer.value.comment) details['备注'] = currentComputer.value.comment;
+    
+    return details;
+};
+
+/**
+ * 显示归还电脑对话框
+ * @param row 当前行数据
+ */
+const returnComputerDialog = (row) => {
+    currentReturnComputer.value = { ...row };
+    // 根据使用年限自动选择初始状态
+    const years = calculateYearsToToday(row.lifeCycleStart);
+    if (parseFloat(years) > 8) {
+        selectedReturnStatus.value = 'To be scrapped';
+    } else {
+        selectedReturnStatus.value = 'To be assigned';
+    }
+    returnComputerDialogVisible.value = true;
+};
+
+/**
+ * 确认归还电脑
+ */
+const confirmReturnComputer = () => {
+    if (!currentReturnComputer.value) {
+        ElMessage.error('电脑数据不完整，无法归还');
+        return;
+    }
+    
+    returnComputerLoading.value = true;
+    
+    // 使用用户选择的状态
+    const computerData = { 
+        ...currentReturnComputer.value,
+        returnStatus: selectedReturnStatus.value // 添加用户选择的状态
+    };
+    
+    // 调用专门的归还接口，让后端处理所有逻辑
+    httpUtil.post("/sysControl/returnComputer", computerData, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => {
+        ElMessage.success('电脑归还成功');
+        // 刷新电脑列表
+        selectPartListData();
+    }).catch(err => {
+        console.error('电脑归还失败:', err);
+        ElMessage.error('电脑归还失败: ' + (err.message || '未知错误'));
+    }).finally(() => {
+        returnComputerLoading.value = false;
+        returnComputerDialogVisible.value = false;
+    });
+};
+
+// 获取下拉框位置
+const getUserDropdownPosition = () => {
+    if (!userInputRef.value) return {};
+    
+    // 获取输入框元素位置
+    const inputEl = userInputRef.value.$el;
+    if (!inputEl) return {};
+    
+    const rect = inputEl.getBoundingClientRect();
+    
+    return {
+        position: 'fixed',
+        top: `${rect.bottom + window.scrollY}px`,
+        left: `${rect.left + window.scrollX}px`,
+        width: `${Math.max(rect.width * 2, 350)}px`, // 增加宽度为输入框的2倍，最小350px
+        maxHeight: '400px'
+    };
+};
+
 </script>
 
 
@@ -526,16 +865,52 @@ const formatDataForExport = (data) => {
         <el-card shadow="never" class="usr_card_override top">
             <el-form :model="queryForm" inline class="query-form">
                 <el-form-item label="电脑名称" class="form-item">
-                    <el-input v-model="queryForm.ciName" placeholder="请输入电脑名称" class="input-field"></el-input>
+                    <el-input v-model="queryForm.ciName" placeholder="请输入电脑名称" class="input-field" @keyup.enter="selectPartListData"></el-input>
                 </el-form-item>
-                <el-form-item label="请输入姓" class="form-item">
-                    <el-input v-model="queryForm.lastName" placeholder="请输入姓" class="input-field"></el-input>
+                <el-form-item label="员工姓名" class="form-item">
+                    <div class="user-input-container">
+                        <el-input 
+                            ref="userInputRef"
+                            v-model="queryForm.lastName" 
+                            placeholder="请输入员工姓名" 
+                            class="input-field"
+                            clearable
+                            @input="handleUserInput"
+                            @blur="handleUserBlur"
+                            @keyup.enter="selectPartListData">
+                        </el-input>
+                        <!-- 用户查询结果下拉框，使用teleport传送到body下 -->
+                        <teleport to="body">
+                            <div v-if="showUserResults" class="user-results-dropdown" :style="getUserDropdownPosition()">
+                                <div v-if="userSearchResults.length > 0">
+                                    <div 
+                                        v-for="(user, index) in userSearchResults" 
+                                        :key="index" 
+                                        class="user-result-item"
+                                        @click="selectUser(user)">
+                                        {{ user.userName }} {{ user.userNick ? `(${user.userNick})` : '' }}
+                                    </div>
+                                </div>
+                                <div v-else class="no-results">
+                                    未找到相关用户
+                                </div>
+                            </div>
+                        </teleport>
+                    </div>
                 </el-form-item>
-                <el-form-item label="请输入名" class="form-item">
-                    <el-input v-model="queryForm.firstName" placeholder="请输入名" class="input-field"></el-input>
-                </el-form-item>
-                <el-form-item label="NT账号" class="form-item">
-                    <el-input v-model="queryForm.ntAccount" placeholder="请输入NT账号" class="input-field"></el-input>
+                <el-form-item label="电脑归属" class="form-item">
+                    <el-select v-model="queryForm.pcClass" placeholder="请选择电脑归属" class="input-field">
+                        <el-option label="全部" value=""></el-option>
+                        <el-option label="External User" value="External User"></el-option>
+                        <el-option label="Fixed-Term User" value="Fixed-Term User"></el-option>
+                        <el-option label="Internal User" value="Internal User"></el-option>
+                        <el-option label="Non-Standard Use" value="Non-Standard Use"></el-option>
+                        <el-option label="Public Use" value="Public Use(public/test/connect device)"></el-option>
+                        <el-option label="ShareNotebook" value="ShareNotebook"></el-option>
+                        <el-option label="To be scrapped" value="To be scrapped"></el-option>
+                        <el-option label="To be assigned" value="To be assigned"></el-option>
+                        <el-option label="Waiting for Return" value="Waiting for Return"></el-option>
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="所属部门" class="form-item">
                     <el-input v-model="queryForm.department" placeholder="请输入所属部门" class="input-field"></el-input>
@@ -551,7 +926,19 @@ const formatDataForExport = (data) => {
                     </el-select>
                 </el-form-item>
                 <el-form-item label="出厂时间" class="form-item">
-                    <el-input v-model="queryForm.lifeCycleStart" placeholder="请输入出厂时间" class="input-field"></el-input>
+                    <el-date-picker
+                        v-model="queryForm.lifeCycleStart"
+                        type="date"
+                        placeholder="选择出厂时间"
+                        format="YYYY-MM-DD"
+                        value-format="YYYY-MM-DD"
+                        class="input-field"
+                        :clearable="true"
+                        @change="confirmUserChange">
+                    </el-date-picker>
+                </el-form-item>
+                <el-form-item label="成本中心" class="form-item">
+                    <el-input v-model="queryForm.costCenter" placeholder="请输入成本中心" class="input-field"></el-input>
                 </el-form-item>
                 <el-form-item class="form-item">
                     <el-button type="primary" @click="selectPartListData">查询</el-button>
@@ -825,10 +1212,15 @@ const formatDataForExport = (data) => {
                 </el-table-column>
 
                 <!-- 操作列：编辑与删除 -->
-                <el-table-column label="操作" :width="150" fixed="right">
+                <el-table-column label="操作" :width="200" fixed="right">
                     <template #default="{ row }">
                         <el-button type="text" @click="editPartDialog(row)">编辑</el-button>
                         <el-button type="text" @click="deletePartDialog(row)">删除</el-button>
+                        <el-button type="text" @click="showTraceDialog(row)">追溯</el-button>
+                        <el-button 
+                            v-if="row.pcStatus === 'In Use'" 
+                            type="text" 
+                            @click="returnComputerDialog(row)">归还</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -947,7 +1339,15 @@ const formatDataForExport = (data) => {
                                         </el-col>
                                         <el-col :span="8">
                                             <el-form-item label="出厂时间" prop="lifeCycleStart">
-                                                <el-input v-model="editPartForm.lifeCycleStart"></el-input>
+                                                <el-date-picker
+                                                    v-model="editPartForm.lifeCycleStart"
+                                                    type="date"
+                                                    placeholder="选择出厂时间"
+                                                    format="YYYY-MM-DD"
+                                                    value-format="YYYY-MM-DD"
+                                                    style="width: 100%"
+                                                    :clearable="true">
+                                                </el-date-picker>
                                             </el-form-item>
                                         </el-col>
                                     </el-row>
@@ -1215,6 +1615,224 @@ const formatDataForExport = (data) => {
                     </div>
                 </template>
             </el-dialog>
+
+            <!-- 追溯记录弹窗 -->
+            <el-dialog 
+                v-model="traceDialogVisible" 
+                title="" 
+                width="80%" 
+                :close-on-click-modal="false"
+                destroy-on-close>
+                <div class="trace-dialog-container">
+                    <div class="trace-header">
+                        <div class="trace-title">
+                            <span>电脑历史记录</span>
+                            <el-tag class="trace-tag" type="info">
+                                {{ currentComputer.ciName || '未命名电脑' }}
+                            </el-tag>
+                        </div>
+                        <div class="trace-subtitle">按时间线追溯电脑历史状态变更</div>
+                    </div>
+                    
+                    <!-- 新增：当前电脑属性 -->
+                    <div class="current-properties">
+                        <div class="property-header">
+                            <span>当前属性</span>
+                        </div>
+                        <div class="property-content">
+                            <div class="property-row">
+                                <div class="property-item">
+                                    <div class="property-label">电脑状态:</div>
+                                    <div class="property-value">
+                                        <el-tag :type="getStatusTagType(currentComputer.pcStatus)">
+                                            {{ currentComputer.pcStatus || '未知' }}
+                                        </el-tag>
+                                    </div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">NT账号:</div>
+                                    <div class="property-value">{{ currentComputer.ntAccount || '无' }}</div>
+                                </div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-item">
+                                    <div class="property-label">电脑归属情况:</div>
+                                    <div class="property-value">{{ currentComputer.pcClass || '无' }}</div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">公司:</div>
+                                    <div class="property-value">{{ currentComputer.company || '无' }}</div>
+                                </div>
+                            </div>
+                            <div class="property-row">
+                                <div class="property-item">
+                                    <div class="property-label">当前用户:</div>
+                                    <div class="property-value">
+                                        {{ currentComputer.lastName && currentComputer.firstName ? 
+                                           `${currentComputer.lastName} ${currentComputer.firstName}` : 
+                                           (currentComputer.ntAccount || '无') }}
+                                    </div>
+                                </div>
+                                <div class="property-item">
+                                    <div class="property-label">部门:</div>
+                                    <div class="property-value">{{ currentComputer.department || '无' }}</div>
+                                </div>
+                            </div>
+                            <div class="property-actions">
+                                <el-popover
+                                    placement="right"
+                                    :width="400"
+                                    trigger="click">
+                                    <template #reference>
+                                        <el-button type="primary" size="small" class="more-details-btn">更多详情</el-button>
+                                    </template>
+                                    <div class="record-details">
+                                        <div class="record-detail-row" v-for="(value, key) in getCurrentDetails()" :key="key">
+                                            <span class="record-detail-label">{{ key }}:</span>
+                                            <span class="record-detail-value">{{ value }}</span>
+                                        </div>
+                                    </div>
+                                </el-popover>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="trace-content">
+                        <div class="trace-history-header">历史记录</div>
+                        <div v-if="traceLoading" class="trace-loading">
+                            <el-skeleton :rows="5" animated />
+                        </div>
+                        <template v-else>
+                            <el-table 
+                                v-if="traceRecordList && traceRecordList.length > 0"
+                                :data="traceRecordList" 
+                                border 
+                                stripe
+                                style="width: 100%">
+                                <!-- 表格内容保持不变 -->
+                                <el-table-column type="index" label="序号" width="80" />
+                                <el-table-column prop="updateTime" label="更新时间" width="180" sortable />
+                                <el-table-column prop="pcStatus" label="电脑状态" width="150">
+                                    <template #default="{ row }">
+                                        <el-tag :type="getStatusTagType(row.pcStatus)">
+                                            {{ row.pcStatus }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="ntAccount" label="NT账号" width="150" />
+                                <el-table-column label="用户" width="180">
+                                    <template #default="{ row }">
+                                        {{ row.lastName && row.firstName ? 
+                                           `${row.lastName} ${row.firstName}` : 
+                                           (row.ntAccount || '无') }}
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="pcClass" label="电脑归属情况" width="300" />
+                                <el-table-column prop="company" label="公司" width="150" />
+                                <el-table-column label="更多信息" width="100">
+                                    <template #default="{ row }">
+                                        <el-popover
+                                            placement="right"
+                                            :width="400"
+                                            trigger="click">
+                                            <template #reference>
+                                                <el-button type="text">查看详情</el-button>
+                                            </template>
+                                            <div class="record-details">
+                                                <div class="record-detail-row" v-for="(value, key) in getRecordDetails(row)" :key="key">
+                                                    <span class="record-detail-label">{{ key }}:</span>
+                                                    <span class="record-detail-value">{{ value }}</span>
+                                                </div>
+                                            </div>
+                                        </el-popover>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            
+                            <!-- 表格为空时显示的内容 -->
+                            <el-empty v-else description="暂无历史记录数据"></el-empty>
+                            
+                            <!-- 分页 -->
+                            <div class="trace-pagination" v-if="traceRecordList && traceRecordList.length > 0">
+                                <el-pagination
+                                    :current-page="traceQueryForm.pageNum"
+                                    :page-size="traceQueryForm.pageSize"
+                                    :page-sizes="[10, 20, 50, 100]"
+                                    layout="total, sizes, prev, pager, next, jumper"
+                                    :total="traceRecordTotal"
+                                    @size-change="handleTracePageSizeChange"
+                                    @current-change="handleTracePageChange"
+                                />
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </el-dialog>
+
+            <!-- 归还电脑确认弹窗 -->
+            <el-dialog 
+                v-model="returnComputerDialogVisible" 
+                title="归还电脑确认" 
+                width="480px" 
+                :close-on-click-modal="false"
+                custom-class="tech-dialog"
+                destroy-on-close>
+                <div class="tech-dialog-content">
+                    <div class="tech-header">
+                        <div class="tech-icon-container">
+                            <el-icon class="tech-icon"><InfoFilled /></el-icon>
+                        </div>
+                        <div class="tech-title-container">
+                            <h3 class="tech-title">归还电脑确认</h3>
+                            <p class="tech-subtitle">请确认是否归还该设备</p>
+                        </div>
+                    </div>
+                    
+                    <div class="return-details">
+                        <div class="return-detail-item">
+                            <div class="return-detail-label">电脑名称:</div>
+                            <div class="return-detail-value">{{ currentReturnComputer?.ciName || '未知' }}</div>
+                        </div>
+                        <div class="return-detail-item">
+                            <div class="return-detail-label">当前使用者:</div>
+                            <div class="return-detail-value">{{ currentReturnComputer?.lastName }} {{ currentReturnComputer?.firstName }}</div>
+                        </div>
+                        <div class="return-detail-item">
+                            <div class="return-detail-label">使用年限:</div>
+                            <div class="return-detail-value">{{ currentReturnComputer ? calculateYearsToToday(currentReturnComputer.lifeCycleStart) + ' 年' : '未知' }}</div>
+                        </div>
+                        <div class="return-detail-item">
+                            <div class="return-detail-label">归还后状态:</div>
+                            <div class="return-detail-value">
+                                <el-select v-model="selectedReturnStatus" style="width: 100%">
+                                    <el-option label="待分配" value="To be assigned"></el-option>
+                                    <el-option label="待报废" value="To be scrapped"></el-option>
+                                </el-select>
+                            </div>
+                        </div>
+                        
+                        <div class="return-note">
+                            <template v-if="currentReturnComputer && parseFloat(calculateYearsToToday(currentReturnComputer.lifeCycleStart)) > 8">
+                                <div class="note-icon"><el-icon><Warning /></el-icon></div>
+                                <div class="note-text">该电脑已使用超过8年，系统建议将其标记为报废状态，您可以根据实际情况调整</div>
+                            </template>
+                            <template v-else>
+                                <div class="note-icon"><el-icon><InfoFilled /></el-icon></div>
+                                <div class="note-text">归还后，该电脑将回到您选择的状态</div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <template #footer>
+                    <div class="tech-dialog-footer">
+                        <el-button @click="returnComputerDialogVisible = false" class="tech-cancel-btn">取 消</el-button>
+                        <el-button type="primary" @click="confirmReturnComputer" :loading="returnComputerLoading" class="tech-confirm-btn">
+                            <span class="tech-btn-text">确认归还</span>
+                            <span class="tech-btn-icon"><i class="el-icon-check"></i></span>
+                        </el-button>
+                    </div>
+                </template>
+            </el-dialog>
         </div>
     </div>
 </template>
@@ -1229,13 +1847,35 @@ const formatDataForExport = (data) => {
     max-width: 250px;             /* 根据需要调整最大宽度 */
 }
 
-.query-form {
+/* 用户输入框容器 */
+.user-input-container {
+    position: relative;
   width: 100%;
-  margin: 5px auto;
-  padding: 0;
-  background: none;
-  display: flex;
-  flex-wrap: wrap;
+    overflow: visible; /* 允许子元素超出容器边界 */
+    z-index: 30; /* 确保输入容器在最高层级 */
+}
+
+/* 用户查询结果下拉框样式 */
+.user-results-dropdown {
+    position: fixed !important;
+    background-color: #fff;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2); /* 增强阴影效果 */
+    z-index: 9999 !important; /* 提高z-index值，确保显示在其他元素之上 */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #909399 #f4f4f5;
+}
+
+.query-form {
+    position: relative;
+    z-index: 10; /* 确保查询表单在较高层级 */
+}
+
+.form-item {
+    position: relative;
+    z-index: 20; /* 确保表单项在更高层级 */
 }
 
 .query-form .el-form-item {
@@ -1353,7 +1993,7 @@ const formatDataForExport = (data) => {
     overflow: hidden;
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 
                 0 5px 15px rgba(0, 0, 0, 0.08);
-    background: linear-gradient(135deg, #f9fcff, #edf7ff);
+    background: #ffffff;
 }
 
 :deep(.tech-dialog .el-dialog__header) {
@@ -1373,13 +2013,13 @@ const formatDataForExport = (data) => {
 }
 
 :deep(.tech-dialog .el-dialog__headerbtn .el-dialog__close) {
-    color: #0abab5;
+    color: #ffffff;
     font-size: 20px;
     transition: all 0.3s ease;
 }
 
 :deep(.tech-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
-    color: #08d5cf;
+    color: #ffffff;
     transform: rotate(90deg);
 }
 
@@ -1398,57 +2038,40 @@ const formatDataForExport = (data) => {
 }
 
 .tech-header {
-    background: linear-gradient(135deg, #08d5cf, #0886d5);
+    background: linear-gradient(135deg, #2580bf, #20b2aa);
     padding: 25px 30px;
     display: flex;
     align-items: center;
     gap: 20px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 3px 10px rgba(8, 213, 207, 0.3);
+    box-shadow: 0 3px 10px rgba(37, 128, 191, 0.3);
 }
 
 .tech-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
-    animation: pulse 15s infinite linear;
+    display: none;
 }
 
 .tech-header::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0) 0%, 
-        rgba(255, 255, 255, 0.2) 50%, 
-        rgba(255, 255, 255, 0) 100%);
-    animation: slide 3s infinite;
+    display: none;
 }
 
-@keyframes pulse {
-    0% {
-        transform: translate(0, 0) rotate(0deg);
-    }
-    100% {
-        transform: translate(0, 0) rotate(360deg);
-    }
+.tech-title {
+    margin: 0;
+    padding: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes slide {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
+.tech-subtitle {
+    margin: 6px 0 0 0;
+    padding: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.3px;
 }
 
 .tech-icon-container {
@@ -1463,15 +2086,44 @@ const formatDataForExport = (data) => {
     z-index: 2;
     border: 2px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    animation: float 3s ease-in-out infinite;
+    animation: none;
 }
 
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
+/* 删除不需要的动画定义 */
+/* 移除原来的动画样式 */
+.tech-header::before, 
+.tech-header::after,
+.tech-btn-icon,
+.tech-title,
+.tech-subtitle,
+.tech-option,
+.upload-icon {
+    animation: none !important;
+}
+
+/* 追溯弹框的动画也清除 */
+.trace-title span,
+.trace-tag,
+.trace-subtitle,
+.trace-content {
+    animation: none !important;
+}
+
+@keyframes pulse {
+    0% {
+        display: none;
     }
-    50% {
-        transform: translateY(-6px);
+    100% {
+        display: none;
+    }
+}
+
+@keyframes slide {
+    0% {
+        display: none;
+    }
+    100% {
+        display: none;
     }
 }
 
@@ -1484,37 +2136,6 @@ const formatDataForExport = (data) => {
 .tech-title-container {
     position: relative;
     z-index: 2;
-}
-
-.tech-title {
-    margin: 0;
-    padding: 0;
-    font-size: 22px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    animation: fadeInUp 0.6s ease;
-}
-
-.tech-subtitle {
-    margin: 6px 0 0 0;
-    padding: 0;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    letter-spacing: 0.3px;
-    animation: fadeInUp 0.8s ease;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .tech-options {
@@ -1563,25 +2184,21 @@ const formatDataForExport = (data) => {
     left: 0;
     width: 4px;
     height: 100%;
-    background: #08d5cf;
+    background: #20b2aa;
     opacity: 0;
     transition: all 0.3s ease;
 }
 
 .tech-option:hover {
     background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 12px rgba(8, 213, 207, 0.1);
+    box-shadow: 0 4px 12px rgba(32, 178, 170, 0.1);
     transform: translateY(-2px);
-}
-
-.tech-option:hover::before {
-    opacity: 0.6;
 }
 
 .tech-option-active {
     background: rgba(255, 255, 255, 0.95) !important;
-    box-shadow: 0 5px 15px rgba(8, 213, 207, 0.15) !important;
-    border: 1px solid rgba(8, 213, 207, 0.3);
+    box-shadow: 0 5px 15px rgba(32, 178, 170, 0.15) !important;
+    border: 1px solid rgba(32, 178, 170, 0.3);
 }
 
 .tech-option-active::before {
@@ -1592,7 +2209,7 @@ const formatDataForExport = (data) => {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid #08d5cf;
+    border: 2px solid #20b2aa;
     margin-right: 15px;
     margin-top: 3px;
     flex-shrink: 0;
@@ -1606,7 +2223,7 @@ const formatDataForExport = (data) => {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #08d5cf;
+    background: #20b2aa;
     animation: scaleIn 0.3s ease forwards;
 }
 
@@ -1664,8 +2281,8 @@ const formatDataForExport = (data) => {
     display: flex;
     justify-content: flex-end;
     padding: 20px 30px;
-    background: rgba(240, 246, 252, 0.5);
-    border-top: 1px solid rgba(8, 213, 207, 0.1);
+    background: #f5f7fa;
+    border-top: 1px solid rgba(32, 178, 170, 0.1);
     gap: 15px;
 }
 
@@ -1677,15 +2294,15 @@ const formatDataForExport = (data) => {
 }
 
 .tech-cancel-btn:hover {
-    color: #08d5cf;
-    border-color: rgba(8, 213, 207, 0.3);
-    background-color: rgba(8, 213, 207, 0.03);
+    color: #20b2aa;
+    border-color: rgba(32, 178, 170, 0.3);
+    background-color: rgba(32, 178, 170, 0.03);
 }
 
 .tech-confirm-btn {
-    background: linear-gradient(135deg, #08d5cf, #0886d5) !important;
+    background: linear-gradient(135deg, #2580bf, #20b2aa) !important;
     border: none !important;
-    box-shadow: 0 4px 10px rgba(8, 213, 207, 0.3) !important;
+    box-shadow: 0 4px 10px rgba(32, 178, 170, 0.3) !important;
     padding: 10px 20px !important;
     overflow: hidden;
     position: relative;
@@ -1696,26 +2313,16 @@ const formatDataForExport = (data) => {
 }
 
 .tech-confirm-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0) 0%, 
-        rgba(255, 255, 255, 0.2) 50%, 
-        rgba(255, 255, 255, 0) 100%);
-    transition: all 0.6s ease;
+    display: none;
 }
 
 .tech-confirm-btn:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 15px rgba(8, 213, 207, 0.4) !important;
+    box-shadow: 0 6px 15px rgba(32, 178, 170, 0.4) !important;
 }
 
 .tech-confirm-btn:hover::before {
-    left: 100%;
+    display: none;
 }
 
 .tech-btn-text {
@@ -1741,8 +2348,8 @@ const formatDataForExport = (data) => {
 :deep(.rounded-dialog) {
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(8, 213, 207, 0.15), 
-                0 1px 8px rgba(8, 213, 207, 0.1);
+    box-shadow: 0 10px 30px rgba(37, 128, 191, 0.15), 
+                0 1px 8px rgba(32, 178, 170, 0.1);
 }
 
 :deep(.rounded-dialog .el-dialog__header) {
@@ -1750,7 +2357,7 @@ const formatDataForExport = (data) => {
     text-align: right;
     border-bottom: none;
     margin-right: 0;
-    background: linear-gradient(to right, #edfcfb, #e0f5fa);
+    background: linear-gradient(to right, #e0f5fa, #edfcfb);
 }
 
 :deep(.rounded-dialog .el-dialog__title) {
@@ -1763,13 +2370,13 @@ const formatDataForExport = (data) => {
 }
 
 :deep(.rounded-dialog .el-dialog__headerbtn .el-dialog__close) {
-    color: #08d5cf;
+    color: #20b2aa;
     transition: all 0.3s ease;
 }
 
 :deep(.rounded-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
     transform: rotate(90deg);
-    color: #0886d5;
+    color: #2580bf;
 }
 
 :deep(.rounded-dialog .el-dialog__body) {
@@ -1778,9 +2385,9 @@ const formatDataForExport = (data) => {
 }
 
 :deep(.rounded-dialog .el-dialog__footer) {
-    border-top: 1px solid rgba(8, 213, 207, 0.1);
+    border-top: 1px solid rgba(32, 178, 170, 0.1);
     padding: 14px 20px;
-    background: linear-gradient(to right, #edfcfb, #e0f5fa);
+    background: #f5f7fa;
 }
 
 .dialog-footer {
@@ -1799,9 +2406,9 @@ const formatDataForExport = (data) => {
 }
 
 .dialog-footer .cancel-btn:hover {
-    color: #08d5cf;
-    border-color: rgba(8, 213, 207, 0.3);
-    background-color: rgba(8, 213, 207, 0.03);
+    color: #20b2aa;
+    border-color: rgba(32, 178, 170, 0.3);
+    background-color: rgba(32, 178, 170, 0.03);
 }
 
 .dialog-footer .confirm-btn {
@@ -1829,7 +2436,7 @@ const formatDataForExport = (data) => {
 
 .dialog-footer .confirm-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(8, 213, 207, 0.3);
+    box-shadow: 0 2px 5px rgba(32, 178, 170, 0.3);
 }
 
 @keyframes glow {
@@ -1860,10 +2467,10 @@ const formatDataForExport = (data) => {
 .upload-dialog-divider {
     width: 1px;
     background: linear-gradient(to bottom, 
-        rgba(8, 213, 207, 0), 
-        rgba(8, 213, 207, 0.2) 15%, 
-        rgba(8, 213, 207, 0.2) 85%, 
-        rgba(8, 213, 207, 0));
+        rgba(32, 178, 170, 0), 
+        rgba(32, 178, 170, 0.2) 15%, 
+        rgba(32, 178, 170, 0.2) 85%, 
+        rgba(32, 178, 170, 0));
     margin: 20px 0;
 }
 
@@ -1930,7 +2537,7 @@ const formatDataForExport = (data) => {
 .upload-container {
     width: 100%;
     border-radius: 12px;
-    background: linear-gradient(145deg, #f8fafc, #f0f8f8);
+    background: #f8fafc;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05),
                 inset 0 1px 1px rgba(255, 255, 255, 0.8);
     overflow: hidden;
@@ -1940,7 +2547,7 @@ const formatDataForExport = (data) => {
 
 .upload-container:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(8, 213, 207, 0.1),
+    box-shadow: 0 8px 20px rgba(32, 178, 170, 0.1),
                 inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
@@ -1955,23 +2562,23 @@ const formatDataForExport = (data) => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(145deg, #ffffff, #f6fdfc);
-    border: 1px dashed rgba(8, 213, 207, 0.4);
+    background: #ffffff;
+    border: 1px dashed rgba(32, 178, 170, 0.4);
     border-radius: 10px;
     transition: all 0.3s;
 }
 
 .upload-excel :deep(.el-upload-dragger:hover) {
-    border-color: #08d5cf;
+    border-color: #20b2aa;
     background: linear-gradient(145deg, #fafcff, #f0f8f8);
-    box-shadow: inset 0 2px 8px rgba(8, 213, 207, 0.08);
+    box-shadow: inset 0 2px 8px rgba(32, 178, 170, 0.08);
 }
 
 .upload-excel :deep(.el-upload-dragger .el-icon--upload) {
     font-size: 38px;
-    color: #08d5cf;
+    color: #20b2aa;
     margin-bottom: 12px;
-    filter: drop-shadow(0 2px 4px rgba(8, 213, 207, 0.2));
+    filter: drop-shadow(0 2px 4px rgba(32, 178, 170, 0.2));
 }
 
 .upload-excel :deep(.el-upload__text) {
@@ -1981,7 +2588,7 @@ const formatDataForExport = (data) => {
 }
 
 .upload-excel :deep(.el-upload__text em) {
-    color: #08d5cf;
+    color: #20b2aa;
     font-style: normal;
     font-weight: 600;
 }
@@ -2002,8 +2609,8 @@ const formatDataForExport = (data) => {
     margin-top: auto;
     margin-bottom: 18px;
     padding: 10px 12px;
-    background-color: rgba(8, 213, 207, 0.05);
-    border-left: 3px solid #08d5cf;
+    background-color: rgba(32, 178, 170, 0.05);
+    border-left: 3px solid #20b2aa;
     border-radius: 4px;
 }
 
@@ -2269,15 +2876,15 @@ const formatDataForExport = (data) => {
 }
 
 .tech-cancel-btn:hover {
-    color: #08d5cf;
-    border-color: rgba(8, 213, 207, 0.3);
-    background-color: rgba(8, 213, 207, 0.03);
+    color: #20b2aa;
+    border-color: rgba(32, 178, 170, 0.3);
+    background-color: rgba(32, 178, 170, 0.03);
 }
 
 .tech-confirm-btn {
-    background: linear-gradient(135deg, #08d5cf, #0886d5) !important;
+    background: linear-gradient(135deg, #2580bf, #20b2aa) !important;
     border: none !important;
-    box-shadow: 0 4px 10px rgba(8, 213, 207, 0.3) !important;
+    box-shadow: 0 4px 10px rgba(32, 178, 170, 0.3) !important;
     padding: 10px 20px !important;
     overflow: hidden;
     position: relative;
@@ -2303,7 +2910,7 @@ const formatDataForExport = (data) => {
 
 .tech-confirm-btn:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 15px rgba(8, 213, 207, 0.4) !important;
+    box-shadow: 0 6px 15px rgba(32, 178, 170, 0.4) !important;
 }
 
 .tech-confirm-btn:hover::before {
@@ -2380,5 +2987,342 @@ const formatDataForExport = (data) => {
     100% {
         left: 150%;
     }
+}
+
+/* 追溯对话框样式 */
+.trace-dialog-container {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.trace-header {
+    background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
+    color: #fff;
+    padding: 25px 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.trace-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.trace-title span {
+    font-size: 22px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    animation: fadeInLeft 0.5s ease-out;
+}
+
+.trace-tag {
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    transform-origin: right;
+    animation: scaleIn 0.4s ease-out 0.2s both;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    padding: 4px 10px;
+}
+
+.trace-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    animation: fadeInUp 0.5s ease-out 0.1s both;
+}
+
+.trace-content {
+    padding: 20px;
+    background-color: #f8f9fa;
+    animation: fadeIn 0.5s ease-out 0.1s both;
+}
+
+.trace-pagination {
+    margin-top: 20px;
+    text-align: right;
+}
+
+/* 记录详情样式 */
+.record-details {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.record-detail-row {
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee;
+    display: flex;
+}
+
+.record-detail-row:last-child {
+    border-bottom: none;
+}
+
+.record-detail-label {
+    font-weight: 500;
+    color: #606266;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.record-detail-value {
+    color: #333;
+    flex-grow: 1;
+    word-break: break-all;
+}
+
+/* 追溯加载样式 */
+.trace-loading {
+    padding: 20px 0;
+}
+
+/* 表格样式增强 */
+.trace-content .el-table {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+/* 状态标签样式增强 */
+.trace-content .el-tag {
+    font-weight: 500;
+    padding: 4px 8px;
+    min-width: 70px;
+    text-align: center;
+}
+
+.current-properties {
+    margin: 20px 20px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.property-header {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.property-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 5px;
+}
+
+.property-row {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+}
+
+.property-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.property-label {
+    font-weight: 500;
+    margin-right: 10px;
+    color: #666;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.property-value {
+    flex-grow: 1;
+}
+
+.more-details-btn {
+    margin: 5px 0;
+    background: #ecf5ff;
+    border: 1px solid #d9ecff;
+    color: #409eff;
+    border-radius: 4px;
+    padding: 5px 15px;
+    cursor: pointer;
+}
+
+.trace-history-header {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+    padding-left: 5px;
+}
+
+.property-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #eee;
+}
+
+/* 归还对话框样式 */
+.return-dialog-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px 10px;
+}
+
+.return-icon {
+    font-size: 24px;
+    color: #E6A23C;
+    margin-right: 16px;
+    margin-top: 4px;
+}
+
+.return-text {
+    flex: 1;
+}
+
+.return-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+    margin: 0 0 16px 0;
+}
+
+.return-desc {
+    font-size: 14px;
+    color: #606266;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.text-danger {
+    color: #F56C6C;
+}
+
+.text-primary {
+    color: #409EFF;
+}
+
+/* 新的归还弹框详情样式 */
+.return-details {
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.5s ease;
+}
+
+.return-detail-item {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px dashed rgba(37, 128, 191, 0.1);
+    padding-bottom: 12px;
+}
+
+.return-detail-label {
+    font-weight: 500;
+    color: #606266;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.return-detail-value {
+    flex: 1;
+    color: #303133;
+    font-weight: 500;
+}
+
+.return-note {
+    margin-top: 10px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 6px;
+    background-color: rgba(32, 178, 170, 0.05);
+}
+
+.note-icon {
+    color: #20b2aa;
+    font-size: 16px;
+    margin-top: 2px;
+}
+
+.note-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #606266;
+}
+
+/* 为 Webkit 浏览器自定义滚动条样式 */
+.user-results-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.user-results-dropdown::-webkit-scrollbar-track {
+    background: #f4f4f5;
+    border-radius: 4px;
+}
+
+.user-results-dropdown::-webkit-scrollbar-thumb {
+    background-color: #909399;
+    border-radius: 4px;
+    border: 2px solid #f4f4f5;
+}
+
+.user-result-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #ebeef5;
+    white-space: nowrap; /* 防止文本换行 */
+    overflow: hidden; /* 隐藏溢出部分 */
+    text-overflow: ellipsis; /* 显示省略号 */
+    line-height: 1.4; /* 增加行高，提高可读性 */
+    font-size: 14px; /* 调整字体大小 */
+}
+
+.user-result-item:last-child {
+    border-bottom: none;
+}
+
+.user-result-item:hover {
+    background-color: #f5f7fa;
+}
+
+.no-results {
+    padding: 15px 12px;
+    color: #909399;
+    text-align: center;
+    font-size: 14px;
+}
+
+.query-form {
+  width: 100%;
+  margin: 5px auto;
+  padding: 0;
+  background: none;
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 10; /* 确保查询表单在较高层级 */
+}
+
+.form-item {
+  margin-right: 10px;
+  margin-bottom: 8px;
+  width: auto;
+  position: relative;
+  z-index: 20; /* 确保表单项在更高层级 */
 }
 </style>

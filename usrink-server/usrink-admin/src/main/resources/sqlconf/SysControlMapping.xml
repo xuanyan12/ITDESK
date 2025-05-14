@@ -9,9 +9,8 @@
         from sys_control
         <where>
             <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
-            <if test="lastName!=null and lastName!=''">AND LOWER(lastName) LIKE CONCAT('%', LOWER(#{lastName}), '%')</if>
-            <if test="firstName!=null and firstName!=''">AND LOWER(firstName) LIKE CONCAT('%', LOWER(#{firstName}), '%')</if>
-            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="costCenter!=null and costCenter!=''">AND LOWER(costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')</if>
+            <if test="pcClass!=null and pcClass!=''">AND LOWER(pcClass) LIKE CONCAT('%', LOWER(#{pcClass}), '%')</if>
             <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
             <if test="pcStatus!=null and pcStatus!=''">AND LOWER(pcStatus) LIKE CONCAT('%', LOWER(#{pcStatus}), '%')</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
@@ -25,9 +24,8 @@
         from sys_control
         <where>
             <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
-            <if test="lastName!=null and lastName!=''">AND LOWER(lastName) LIKE CONCAT('%', LOWER(#{lastName}), '%')</if>
-            <if test="firstName!=null and firstName!=''">AND LOWER(firstName) LIKE CONCAT('%', LOWER(#{firstName}), '%')</if>
-            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="costCenter!=null and costCenter!=''">AND LOWER(costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')</if>
+            <if test="pcClass!=null and pcClass!=''">AND LOWER(pcClass) LIKE CONCAT('%', LOWER(#{pcClass}), '%')</if>
             <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
             <if test="pcStatus!=null and pcStatus!=''">AND LOWER(pcStatus) LIKE CONCAT('%', LOWER(#{pcStatus}), '%')</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
@@ -227,6 +225,111 @@
 
             <!-- 6. 固定条件：只查询状态为 "To be assigned" 的电脑 -->
             AND pcStatus = 'To be assigned'
+        </where>
+    </select>
+
+    <!-- 记录电脑修改历史 -->
+    <insert id="updateSysControlRecord" parameterType="ink.usr.admin.dao.DTO.SysControlRecordDTO" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_control_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="pcStatus != null and pcStatus != ''">pcStatus,</if>
+            <if test="ciName != null and ciName != ''">ciName,</if>
+            <if test="serialNumber != null and serialNumber != ''">serialNumber,</if>
+            <if test="deviceClass != null and deviceClass != ''">deviceClass,</if>
+            <if test="manufacture != null and manufacture != ''">manufacture,</if>
+            <if test="modelOrVersion != null and modelOrVersion != ''">modelOrVersion,</if>
+            <if test="ntAccount != null and ntAccount != ''">ntAccount,</if>
+            <if test="pcClass != null and pcClass != ''">pcClass,</if>
+            <if test="comment != null and comment != ''">comment,</if>
+            <if test="firstName != null and firstName != ''">firstName,</if>
+            <if test="lastName != null and lastName != ''">lastName,</if>
+            <if test="emailAddress != null and emailAddress != ''">emailAddress,</if>
+            <if test="telephone != null and telephone != ''">telephone,</if>
+            <if test="department != null and department != ''">department,</if>
+            <if test="costCenter != null and costCenter != ''">costCenter,</if>
+            <if test="lifeCycleStart != null and lifeCycleStart != ''">lifeCycleStart,</if>
+            <if test="yrsToDay != null and yrsToDay != ''">yrsToDay,</if>
+            <if test="cpu != null and cpu != ''">cpu,</if>
+            <if test="memory != null and memory != ''">memory,</if>
+            <if test="disk != null and disk != ''">disk,</if>
+            <if test="graphic != null and graphic != ''">graphic,</if>
+            <if test="hardwareStatus != null and hardwareStatus != ''">hardwareStatus,</if>
+            <if test="pr != null and pr != ''">pr,</if>
+            <if test="po != null and po != ''">po,</if>
+            <if test="vendor != null and vendor != ''">vendor,</if>
+            <if test="company != null and company != ''">company,</if>
+            <if test="wbsNum != null and wbsNum != ''">wbsNum,</if>
+            <if test="price != null and price != ''">price,</if>
+            <if test="temp != null">temp,</if>
+            <if test="updateTime != null and updateTime != ''">updateTime,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="pcStatus != null and pcStatus != ''">#{pcStatus},</if>
+            <if test="ciName != null and ciName != ''">#{ciName},</if>
+            <if test="serialNumber != null and serialNumber != ''">#{serialNumber},</if>
+            <if test="deviceClass != null and deviceClass != ''">#{deviceClass},</if>
+            <if test="manufacture != null and manufacture != ''">#{manufacture},</if>
+            <if test="modelOrVersion != null and modelOrVersion != ''">#{modelOrVersion},</if>
+            <if test="ntAccount != null and ntAccount != ''">#{ntAccount},</if>
+            <if test="pcClass != null and pcClass != ''">#{pcClass},</if>
+            <if test="comment != null and comment != ''">#{comment},</if>
+            <if test="firstName != null and firstName != ''">#{firstName},</if>
+            <if test="lastName != null and lastName != ''">#{lastName},</if>
+            <if test="emailAddress != null and emailAddress != ''">#{emailAddress},</if>
+            <if test="telephone != null and telephone != ''">#{telephone},</if>
+            <if test="department != null and department != ''">#{department},</if>
+            <if test="costCenter != null and costCenter != ''">#{costCenter},</if>
+            <if test="lifeCycleStart != null and lifeCycleStart != ''">#{lifeCycleStart},</if>
+            <if test="yrsToDay != null and yrsToDay != ''">#{yrsToDay},</if>
+            <if test="cpu != null and cpu != ''">#{cpu},</if>
+            <if test="memory != null and memory != ''">#{memory},</if>
+            <if test="disk != null and disk != ''">#{disk},</if>
+            <if test="graphic != null and graphic != ''">#{graphic},</if>
+            <if test="hardwareStatus != null and hardwareStatus != ''">#{hardwareStatus},</if>
+            <if test="pr != null and pr != ''">#{pr},</if>
+            <if test="po != null and po != ''">#{po},</if>
+            <if test="vendor != null and vendor != ''">#{vendor},</if>
+            <if test="company != null and company != ''">#{company},</if>
+            <if test="wbsNum != null and wbsNum != ''">#{wbsNum},</if>
+            <if test="price != null and price != ''">#{price},</if>
+            <if test="temp != null">#{temp},</if>
+            <if test="updateTime != null and updateTime != ''">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <!-- 添加查询电脑修改记录列表的SQL -->
+    <select id="getControlRecordList" resultType="ink.usr.admin.dao.DTO.SysControlRecordDTO" parameterType="ink.usr.admin.dao.DTO.SysControlRecordQueryDTO">
+        SELECT *
+        FROM sys_control_record
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+            </if>
+            <if test="startTime != null and startTime != ''">
+                <![CDATA[ AND updateTime >= #{startTime} ]]>
+            </if>
+            <if test="endTime != null and endTime != ''">
+                <![CDATA[ AND updateTime <= CONCAT(#{endTime}, ' 23:59:59') ]]>
+            </if>
+        </where>
+        ORDER BY updateTime DESC
+        LIMIT #{pageNum}, #{pageSize}
+    </select>
+
+    <!-- 添加查询电脑修改记录总数的SQL -->
+    <select id="getControlRecordCount" resultType="java.lang.Integer" parameterType="ink.usr.admin.dao.DTO.SysControlRecordQueryDTO">
+        SELECT COUNT(*)
+        FROM sys_control_record
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+            </if>
+            <if test="startTime != null and startTime != ''">
+                <![CDATA[ AND updateTime >= #{startTime} ]]>
+            </if>
+            <if test="endTime != null and endTime != ''">
+                <![CDATA[ AND updateTime <= CONCAT(#{endTime}, ' 23:59:59') ]]>
+            </if>
         </where>
     </select>
 

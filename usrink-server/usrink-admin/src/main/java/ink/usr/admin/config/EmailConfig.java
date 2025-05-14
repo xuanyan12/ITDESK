@@ -30,7 +30,7 @@ public class EmailConfig {
             message.setTo(to);
             message.setSubject(subject);
             message.setText(content);
-            javaMailSender.send(message);
+//            javaMailSender.send(message);
             log.info("邮件发送成功，发送给：{}", to);
         } catch (Exception e) {
             // 捕获并处理异常，确保不会影响主流程

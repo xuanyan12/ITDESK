@@ -2,6 +2,8 @@ package ink.usr.admin.service;
 
 import ink.usr.admin.dao.DTO.SysAllocateDeviceDTO;
 import ink.usr.admin.dao.DTO.SysControlAssignDTO;
+import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
+import ink.usr.common.core.domain.Dict;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 
@@ -39,4 +41,11 @@ public interface SysControlService {
     List<SysControlModel> getComputerByInfo(SysControlAssignDTO sysControlAssignModel);
 
     boolean allocateDevice(SysAllocateDeviceDTO sysAllocateDeviceDTO);
+    
+    /**
+     * 获取电脑修改记录列表
+     * @param queryDTO 查询条件
+     * @return 记录列表和分页信息
+     */
+    Dict getControlRecordList(SysControlRecordQueryDTO queryDTO);
 }

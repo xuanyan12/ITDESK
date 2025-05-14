@@ -2,18 +2,24 @@ package ink.usr.admin.service.Impl;
 
 import ink.usr.admin.dao.DTO.SysAllocateDeviceDTO;
 import ink.usr.admin.dao.DTO.SysControlAssignDTO;
+import ink.usr.admin.dao.DTO.SysControlRecordDTO;
+import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
 import ink.usr.admin.mapper.SysApplyMapper;
 import ink.usr.admin.mapper.SysControlAssignMapper;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysControlService;
+import ink.usr.common.core.domain.Dict;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import ink.usr.common.model.mysql.SysUserModel;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +46,17 @@ public class SysControlServiceImpl implements SysControlService {
     }
 
     public boolean updateSysControl(SysControlModel sysControlModel) {
+        // 1.先记录原有的数据
+        LocalDateTime now = LocalDateTime.now();
+        // 格式化为字符串：yyyy-MM-dd HH:mm:ss
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedTime = now.format(formatter);
+
+        SysControlRecordDTO sysControlRecordDTO = new SysControlRecordDTO();
+        BeanUtils.copyProperties(sysControlModel, sysControlRecordDTO);
+        sysControlRecordDTO.setUpdateTime(formattedTime);
+        sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
+        // 2.再更新新的数据
         boolean flag = sysControlMapper.updateSysControl(sysControlModel);
         return flag;
     }
@@ -93,7 +110,14 @@ public class SysControlServiceImpl implements SysControlService {
     public boolean allocateDevice(SysAllocateDeviceDTO sysAllocateDeviceDTO) {
         // 1.电脑表sys_control进行更改,根据ciName找到对应的需要修改的行数据
         SysControlModel sysControlModel = sysControlMapper.getComputerInfoByCiName(sysAllocateDeviceDTO.getCiName());
+        SysControlModel originalSysControlModel = new SysControlModel();
+
         if(sysControlModel!=null){
+            BeanUtils.copyProperties(sysControlModel, originalSysControlModel);
+            LocalDateTime now = LocalDateTime.now();
+            // 格式化为字符串：yyyy-MM-dd HH:mm:ss
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedTime = now.format(formatter);
             // pcStatus修改为In Use
             sysControlModel.setPcStatus("In Use");
             // 通过applicant找到ntAccount并赋值进去
@@ -180,31 +204,70 @@ public class SysControlServiceImpl implements SysControlService {
             if(approvalId!=null){
                 SysApprovalRequestModel approvalRequestModel = sysApplyMapper.getByApprovalId(approvalId);
                 String ciName = approvalRequestModel.getCiName();
+
                 SysControlModel computerInfo = null;
-                // 如果之前有电脑的话，原来的电脑要设置为Waiting for Return
+                SysControlModel originalComputerInfo = new SysControlModel();
+                // 如果之前有电脑，且申请的电脑归属情况是Internal User的话，原来的电脑要设置为Waiting for Return
                 if(ciName!=null && !"申请新电脑".equals(ciName)){
                     computerInfo = sysControlMapper.getComputerInfoByCiName(ciName);
+                    // 之前有电脑且申请的电脑归属情况是Internal User时进行修改
                     if(computerInfo!=null){
-                        if("In Use".equals(computerInfo.getPcStatus())){
-                            computerInfo.setPcClass("Waiting for Return");
-                        }
+                        BeanUtils.copyProperties(computerInfo, originalComputerInfo);
+                        // 1.先将老归属情况赋值给新电脑
                         String pcClass = computerInfo.getPcClass();
                         if(pcClass!=null){
                             sysControlModel.setPcClass(pcClass);
                         }
+                        // 2.再将原电脑使用状态为In Use且电脑归属情况为Internal User的电脑设置为Waiting for Return
+                        if("In Use".equals(computerInfo.getPcStatus()) && "Internal User".equals(pcClass)){
+                            computerInfo.setPcClass("Waiting for Return");
+                        }
                     }
 
                 } else {
-                    // 原来没有电脑，设置新的pcClass为Internal User
-//                    sysControlModel.setPcClass("Internal User");
+                    // 原来没有电脑时
+                    // 实习生，蓝领，外服直接设置为对应的标识，如果不是的话（正职）就设置为Internal User
+
                 }
                 if(computerInfo!=null){
+                    // 1.记录原数据
+                    SysControlRecordDTO sysControlRecordDTO = new SysControlRecordDTO();
+                    BeanUtils.copyProperties(originalComputerInfo, sysControlRecordDTO);
+                    sysControlRecordDTO.setUpdateTime(formattedTime);
+                    sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
+                    // 2.更新新的数据
                     sysControlMapper.updateSysControl(computerInfo);
                 }
             }
+            SysControlRecordDTO sysControlRecordDTO2 = new SysControlRecordDTO();
+            BeanUtils.copyProperties(originalSysControlModel, sysControlRecordDTO2);
+            sysControlRecordDTO2.setUpdateTime(formattedTime);
+            sysControlMapper.updateSysControlRecord(sysControlRecordDTO2);
             boolean flag = sysControlMapper.updateSysControl(sysControlModel);
             return flag;
         }
         return false;
+    }
+
+    @Override
+    public Dict getControlRecordList(SysControlRecordQueryDTO queryDTO) {
+        // 检查并设置分页偏移量
+        long offset = (queryDTO.getPageNum() - 1) * queryDTO.getPageSize();
+        queryDTO.setPageNum(offset);
+        
+        // 获取记录列表
+        List<SysControlRecordDTO> recordList = sysControlMapper.getControlRecordList(queryDTO);
+        
+        // 获取记录总数
+        int totalCount = sysControlMapper.getControlRecordCount(queryDTO);
+        
+        // 构建返回对象
+        Dict result = Dict.create()
+            .set("list", recordList)
+            .set("total", totalCount)
+            .set("pageSize", queryDTO.getPageSize())
+            .set("pageNum", queryDTO.getPageNum() / queryDTO.getPageSize() + 1);
+            
+        return result;
     }
 }
