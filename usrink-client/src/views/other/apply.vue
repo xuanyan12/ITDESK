@@ -751,6 +751,12 @@ export default {
         if (valid) {
           loading.value = true;
           
+          // 检查是否需要附加电脑归属情况信息到申请理由
+          if (myComputer.value && myComputer.value.pcClass) {
+            // 在申请理由后附加电脑归属情况信息
+            applicationForm.reason = `${applicationForm.reason}\n电脑归属情况：${myComputer.value.pcClass}`;
+          }
+          
           // 将英文申请类别转为中文
           const deviceCategoryText = getApplicationTypeName(applicationForm.applicationType);
           
