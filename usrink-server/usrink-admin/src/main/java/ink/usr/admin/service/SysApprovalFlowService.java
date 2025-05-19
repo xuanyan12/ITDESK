@@ -33,7 +33,8 @@ public interface SysApprovalFlowService {
      * @param flowId 审批流ID
      * @param requestId 申请ID
      * @param status 审批状态
+     * @param reason 审批理由
      * @return 是否成功
      */
-    boolean updateApprovalStatus(Long flowId, Long requestId, String status);
+    boolean updateApprovalStatus(Long flowId, Long requestId, String status, String reason);
 }

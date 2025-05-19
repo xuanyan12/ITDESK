@@ -27,5 +27,6 @@ public class SysApprovalFlowModel implements Serializable {
     private String createdAt;
     // 更新时间
     private String updatedAt;
-    
+    // 审批理由
+    private String approvalReason;
 }

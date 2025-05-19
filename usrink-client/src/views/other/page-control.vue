@@ -813,16 +813,16 @@ const confirmReturnComputer = () => {
     
     returnComputerLoading.value = true;
     
-    // 使用用户选择的状态
-    const computerData = { 
-        ...currentReturnComputer.value,
-        returnStatus: selectedReturnStatus.value // 添加用户选择的状态
-    };
+    // 使用用户选择的状态，但不添加到对象中
+    const computerData = { ...currentReturnComputer.value };
     
-    // 调用专门的归还接口，让后端处理所有逻辑
+    // 调用专门的归还接口，通过param传递returnStatus参数
     httpUtil.post("/sysControl/returnComputer", computerData, {
         headers: {
             'Content-Type': 'application/json'
+        },
+        params: {
+            returnStatus: selectedReturnStatus.value // 通过URL参数传递用户选择的状态
         }
     }).then(res => {
         ElMessage.success('电脑归还成功');
@@ -1311,7 +1311,17 @@ const getUserDropdownPosition = () => {
                                     <el-row :gutter="20">
                                         <el-col :span="8">
                                             <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
-                                                <el-input v-model="editPartForm.pcClass"></el-input>
+                                                <el-select v-model="editPartForm.pcClass" placeholder="请选择电脑归属" style="width: 100%">
+                                                    <el-option label="External User" value="External User"></el-option>
+                                                    <el-option label="Fixed-Term User" value="Fixed-Term User"></el-option>
+                                                    <el-option label="Internal User" value="Internal User"></el-option>
+                                                    <el-option label="Non-Standard Use" value="Non-Standard Use"></el-option>
+                                                    <el-option label="Public Use" value="Public Use(public/test/connect device)"></el-option>
+                                                    <el-option label="ShareNotebook" value="ShareNotebook"></el-option>
+                                                    <el-option label="To be scrapped" value="To be scrapped"></el-option>
+                                                    <el-option label="To be assigned" value="To be assigned"></el-option>
+                                                    <el-option label="Waiting for Return" value="Waiting for Return"></el-option>
+                                                </el-select>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">

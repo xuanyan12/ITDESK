@@ -145,7 +145,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     
     @Override
     @Transactional
-    public boolean updateApprovalStatus(Long flowId, Long requestId, String status) {
+    public boolean updateApprovalStatus(Long flowId, Long requestId, String status, String reason) {
         try {
             // 设置审批时间
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -159,6 +159,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             flowModel.setFlowId(flowId);
             flowModel.setStatus(status);
             flowModel.setUpdatedAt(approveTime);
+            flowModel.setApprovalReason(reason);
             int flowResult = sysApprovalFlowMapper.updateApprovalFlow(flowModel);
 
             // 更新token状态
@@ -182,6 +183,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                     if (secondStageFlow != null) {
                         secondStageFlow.setStatus("审批不通过");
                         secondStageFlow.setUpdatedAt(approveTime);
+                        secondStageFlow.setApprovalReason(reason);
                         sysApprovalFlowMapper.updateApprovalFlow(secondStageFlow);
                         
                         // 3.更新二级审批流的token状态

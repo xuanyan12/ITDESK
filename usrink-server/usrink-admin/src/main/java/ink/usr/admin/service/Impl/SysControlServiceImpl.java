@@ -208,6 +208,7 @@ public class SysControlServiceImpl implements SysControlService {
                 SysControlModel computerInfo = null;
                 SysControlModel originalComputerInfo = new SysControlModel();
                 // 如果之前有电脑，且申请的电脑归属情况是Internal User的话，原来的电脑要设置为Waiting for Return
+                // 加一个，且不是其他申请
                 if(ciName!=null && !"申请新电脑".equals(ciName)){
                     computerInfo = sysControlMapper.getComputerInfoByCiName(ciName);
                     // 之前有电脑且申请的电脑归属情况是Internal User时进行修改

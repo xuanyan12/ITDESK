@@ -177,6 +177,7 @@ public class SysApplyController {
             BeanUtils.copyProperties(sysApprovalRequestModel,objects);
             objects.setStatus(singleOfList.getStatus());
             objects.setStatus1Signal(singleOfList.getStatus1Signal());
+            objects.setApprovalReason(singleOfList.getApprovalReason());
 //            BeanUtils.copyProperties(singleOfList,objects);
             newList.add(objects);
         }
@@ -247,133 +248,59 @@ public class SysApplyController {
         String token = tempApprovalDTO.getToken();
         Long id = tempApprovalDTO.getId();
         String status = tempApprovalDTO.getStatus();
+        String reason = tempApprovalDTO.getReason();
 
-        if (flowId == null || token == null || token.isEmpty() || id == null || status == null) {
+        if (flowId == null || token == null || token.isEmpty() || id == null || status == null || status.isEmpty()) {
             return Res.error("审批参数不完整");
         }
-
-        // 验证状态值是否合法
-        if (!status.equals("审批通过") && !status.equals("审批不通过")) {
-            return Res.error("审批状态值不合法");
-        }
-
+        
         try {
             // 验证token是否有效
             boolean isValidToken = sysApprovalFlowService.validateApprovalToken(flowId, token);
             if (!isValidToken) {
                 return Res.error("凭证为空或凭证过期，请重新登录！");
             }
-
-            // 获取审批流信息，检查是否是一级审批流
-            SysApprovalFlowModel flowModel = sysApprovalFlowService.getApprovalFlowById(flowId);
-            if (flowModel == null) {
-                return Res.error("未找到对应的审批流程");
-            }
-
-            // 将前端传来的状态值转换为数据库中使用的状态值
-            String dbStatus = status.equals("审批通过") ? "审批通过" : "审批不通过";
-
+            
             // 更新审批状态
-            boolean result = sysApprovalFlowService.updateApprovalStatus(flowId, id, dbStatus);
+            boolean result = sysApprovalFlowService.updateApprovalStatus(flowId, id, status, reason);
             if (!result) {
-                return Res.error("审批操作失败");
+                return Res.error("审批失败");
             }
-
-            return Res.success("审批操作成功");
+            
+            return Res.success("审批成功");
         } catch (Exception e) {
-            log.error("提交临时审批结果失败", e);
-            return Res.error("提交审批结果失败：" + e.getMessage());
+            log.error("提交临时审批失败", e);
+            return Res.error("提交审批失败：" + e.getMessage());
         }
     }
 
     /**
-     * 处理审批操作（通过/拒绝）
-     * @param approvalDTO 审批信息
-     * @return 处理结果
+     * 处理审批
+     * @param approvalDTO
+     * @return
      */
     @RequestMapping("/processApproval")
     public Res processApproval(@RequestBody SysApprovalDTO approvalDTO) {
+        Long flowId = approvalDTO.getFlowId();
+        Long id = approvalDTO.getId();
+        String status = approvalDTO.getStatus();
+        String reason = approvalDTO.getReason();
+
+        if (flowId == null || id == null || status == null || status.isEmpty()) {
+            return Res.error("审批参数不完整");
+        }
+        
         try {
-            // 参数校验
-            if (approvalDTO.getId() == null || approvalDTO.getFlowId() == null || 
-                approvalDTO.getStatus() == null || approvalDTO.getStatus().isEmpty()) {
-                return Res.error("审批参数不完整");
-            }
-
-            // 验证状态值是否合法
-            if (!approvalDTO.getStatus().equals("审批通过") && 
-                !approvalDTO.getStatus().equals("审批不通过") &&
-                !approvalDTO.getStatus().equals("已通过") && 
-                !approvalDTO.getStatus().equals("已驳回")) {
-                return Res.error("审批状态值不合法");
-            }
-
-            // 获取当前用户信息
-            ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
-            if (shiroUserInfo == null) {
-                return Res.error("用户未登录或会话已过期");
-            }
-            
-            Long userId = shiroUserInfo.getUserId();
-            
-            // 确认当前用户是否有权限操作该审批流程
-            String costCenter = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userId)).getCostCenter();
-            Long approverId = sysApproverService.getApproverId(userId, costCenter);
-            SysApprovalFlowModel flowModel = sysApprovalFlowService.getApprovalFlowById(approvalDTO.getFlowId());
-            
-            if (flowModel == null) {
-                return Res.error("未找到对应的审批流程");
-            }
-            
-            if (!flowModel.getApproverId().equals(approverId)) {
-                return Res.error("您不是该审批流程的审批人，无权操作");
-            }
-            
-            // 检查审批流程状态
-            if (!flowModel.getStatus().equals("审批中") && !flowModel.getStatus().equals("待审批")) {
-                return Res.error("该审批流程已被处理，当前状态: " + flowModel.getStatus());
-            }
-
             // 更新审批状态
-            boolean result = sysApprovalFlowService.updateApprovalStatus(
-                approvalDTO.getFlowId(), 
-                approvalDTO.getId(), 
-                approvalDTO.getStatus()
-            );
-            
+            boolean result = sysApprovalFlowService.updateApprovalStatus(flowId, id, status, reason);
             if (!result) {
-                return Res.error("审批操作失败");
+                return Res.error("审批失败");
             }
             
-            // 获取申请详情
-            SysApprovalRequestModel requestModel = sysApprovalRequestService.getByApprovalId(flowModel.getApprovalId());
-            
-            // 获取申请人信息
-            String applicantName = sysUserService.getUserNickNameByUserId(requestModel.getApplicant());
-            String approverName = sysUserService.getUserNickNameByUserId(userId);
-            String applicantEmail = sysUserService.getUserInfoByUserName(
-                sysUserService.getNameByUserId(requestModel.getApplicant())).getEmail();
-            
-            // 发送审批结果邮件给申请人
-            String emailSubject = "设备申请审批结果通知";
-            StringBuilder emailContent = new StringBuilder();
-            emailContent.append("您的设备申请已审批通过\n\n");
-            emailContent.append("申请类别: ").append(requestModel.getDeviceCategory()).append("\n");
-            emailContent.append("电脑类型: ").append(requestModel.getDeviceType()).append("\n");
-            emailContent.append("审批结果: ").append(approvalDTO.getStatus()).append("\n");
-            emailContent.append("审批人: ").append(approverName).append("\n");
-            emailContent.append("审批时间: ").append(approvalDTO.getApprovedAt()).append("\n");
-            if(flowModel.getStage() == 2){
-                emailConfig.sendMail(applicantEmail, emailSubject, emailContent.toString());
-                if("审批通过".equals(approvalDTO.getStatus())){
-                    return Res.success("审批操作成功，已通知申请人");
-                }
-            }
-            return Res.success("审批操作成功");
-
+            return Res.success("审批成功");
         } catch (Exception e) {
-            log.error("审批操作失败", e);
-            return Res.error("审批操作失败: " + e.getMessage());
+            log.error("处理审批失败", e);
+            return Res.error("处理审批失败：" + e.getMessage());
         }
     }
 

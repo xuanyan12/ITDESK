@@ -611,13 +611,14 @@ public class SysControlController {
     /**
      * 归还电脑
      * @param sysControlModel 电脑信息
+     * @param returnStatus 归还后的状态
      * @return 归还结果
      */
     @RequestMapping("/returnComputer")
     @RequiresPermissions("sys:device:control:update")
-    public Res returnComputer(@RequestBody SysControlModel sysControlModel) {
+    public Res returnComputer(@RequestBody SysControlModel sysControlModel, @RequestParam(value = "returnStatus", required = false) String returnStatus) {
         try {
-            log.info("归还电脑，电脑信息: {}", sysControlModel);
+            log.info("归还电脑，电脑信息: {}, 归还状态: {}", sysControlModel, returnStatus);
             
             // 获取原始电脑信息，保存用于记录日志
             SysControlModel originalComputer = sysControlService.getComputerInfoByCiName(sysControlModel.getCiName());
@@ -635,7 +636,7 @@ public class SysControlController {
             sysControlRecordDTO.setUpdateTime(formattedTime);
             sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
             
-            // 计算电脑使用年限
+            // 计算电脑使用年限（仅用于日志记录）
             double yearsToDay = 0;
             if (originalComputer.getLifeCycleStart() != null && !originalComputer.getLifeCycleStart().isEmpty()) {
                 String lifeCycleStart = originalComputer.getLifeCycleStart();
@@ -672,19 +673,28 @@ public class SysControlController {
             SysControlModel updatedComputer = new SysControlModel();
             updatedComputer.setId(originalComputer.getId());
             
-            // 根据使用年限判断状态
-            if (yearsToDay > 6) {
-                // 超过6年，状态改为To be scrapped
-                updatedComputer.setPcStatus("To be scrapped");
-                updatedComputer.setPcClass("To be scrapped");
+            // 根据前端传递的returnStatus参数设置状态，如果未传递则按照使用年限判断
+            if (returnStatus != null && !returnStatus.isEmpty()) {
+                // 使用前端传递的状态
+                updatedComputer.setPcStatus(returnStatus);
+                updatedComputer.setPcClass(returnStatus);
+                log.info("使用前端传递的状态: {}", returnStatus);
             } else {
-                // 未超过6年，状态改为To be assigned
-                updatedComputer.setPcStatus("To be assigned");
-                updatedComputer.setPcClass("To be assigned");
+                // 按照使用年限判断状态（兼容旧版本）
+                if (yearsToDay > 6) {
+                    // 超过6年，状态改为To be scrapped
+                    updatedComputer.setPcStatus("To be scrapped");
+                    updatedComputer.setPcClass("To be scrapped");
+                } else {
+                    // 未超过6年，状态改为To be assigned
+                    updatedComputer.setPcStatus("To be assigned");
+                    updatedComputer.setPcClass("To be assigned");
+                }
+                log.info("使用默认状态判断逻辑，基于使用年限: {} 年", yearsToDay);
             }
             
             // 清空用户相关信息
-            updatedComputer.setNtAccount("");
+//            updatedComputer.setNtAccount("");
             updatedComputer.setLastName("");
             updatedComputer.setFirstName("");
             updatedComputer.setEmailAddress("");
@@ -697,8 +707,7 @@ public class SysControlController {
             boolean updateResult = sysControlService.updateSysControl(updatedComputer);
             
             if (updateResult) {
-                log.info("电脑 {} 归还成功, 更新后状态: {}", sysControlModel.getCiName(), 
-                        yearsToDay > 6 ? "To be scrapped" : "To be assigned");
+                log.info("电脑 {} 归还成功, 更新后状态: {}", sysControlModel.getCiName(), updatedComputer.getPcStatus());
                 return Res.success("电脑归还成功");
             } else {
                 log.error("电脑 {} 归还失败", sysControlModel.getCiName());

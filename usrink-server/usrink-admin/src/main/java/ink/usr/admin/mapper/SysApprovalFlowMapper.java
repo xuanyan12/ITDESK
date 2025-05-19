@@ -51,7 +51,7 @@ public interface SysApprovalFlowMapper {
     /**
      * 更新审批流状态
      */
-    @Update("update sys_approval_flow set status = #{status}, updatedAt = #{updatedAt} where flowId = #{flowId}")
+    @Update("update sys_approval_flow set status = #{status}, updatedAt = #{updatedAt}, approvalReason = #{approvalReason} where flowId = #{flowId}")
     int updateApprovalFlow(SysApprovalFlowModel flowModel);
 
 
@@ -66,4 +66,12 @@ public interface SysApprovalFlowMapper {
      */
     @Select("select * from sys_approval_flow where approvalId = #{approvalId} and stage = 2")
     SysApprovalFlowModel getSecondStageFlowByApprovalId(Long approvalId);
+    
+    /**
+     * 根据审批ID获取所有相关的审批流
+     * @param approvalId 审批ID
+     * @return 审批流列表
+     */
+    @Select("select * from sys_approval_flow where approvalId = #{approvalId} order by stage asc")
+    List<SysApprovalFlowModel> getApprovalFlowsByApprovalId(Long approvalId);
 }
