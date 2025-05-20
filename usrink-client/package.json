@@ -16,6 +16,7 @@
         "element-plus": "^2.6.0",
         "js-cookie": "^3.0.5",
         "js-md5": "^0.8.3",
+        "jspreadsheet-ce": "^5.0.1",
         "nprogress": "^0.2.0",
         "particles.js": "^2.0.0",
         "pinia": "^2.1.7",
