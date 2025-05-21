@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted, ref, watch, nextTick } from "vue";
+import { onMounted, ref, watch, nextTick, computed } from "vue";
 import httpUtil from "@/utils/HttpUtil";
 import { Warning, Download, UploadFilled, InfoFilled, Check } from "@element-plus/icons-vue";
 import { ElTooltip, ElMessage } from 'element-plus';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
+import { useLanguageStore } from '@/stores/_frame/languageStore';
 
 
 
@@ -148,6 +149,156 @@ const handleDocumentClick = (event) => {
 const onBeforeUnmount = () => {
     document.removeEventListener('click', handleDocumentClick);
 };
+
+// 引入语言状态管理
+const languageStore = useLanguageStore();
+const currentLang = computed(() => languageStore.currentLang);
+
+// 多语言文本
+const langText = computed(() => {
+    return {
+        // 查询表单文本
+        computerName: currentLang.value === 'zh' ? '电脑名称' : 'Computer Name',
+        employeeName: currentLang.value === 'zh' ? '员工姓名' : 'Employee Name',
+        computerCategory: currentLang.value === 'zh' ? '电脑归属' : 'Computer Category',
+        department: currentLang.value === 'zh' ? '所属部门' : 'Department',
+        computerStatus: currentLang.value === 'zh' ? '电脑状态' : 'Computer Status',
+        manufactureDate: currentLang.value === 'zh' ? '出厂时间' : 'Manufacture Date',
+        costCenter: currentLang.value === 'zh' ? '成本中心' : 'Cost Center',
+        search: currentLang.value === 'zh' ? '查询' : 'Search',
+        computerUpdate: currentLang.value === 'zh' ? '电脑更新' : 'Update Data',
+        exportData: currentLang.value === 'zh' ? '导出数据' : 'Export Data',
+        
+        // 表格列标题
+        pcStatus: currentLang.value === 'zh' ? '电脑状态' : 'Status',
+        ciName: currentLang.value === 'zh' ? '电脑名' : 'Computer Name',
+        deviceClass: currentLang.value === 'zh' ? '设备类型' : 'Device Type',
+        serialNumber: currentLang.value === 'zh' ? '电脑序列号' : 'Serial Number',
+        manufacture: currentLang.value === 'zh' ? '制造商' : 'Manufacturer',
+        modelOrVersion: currentLang.value === 'zh' ? '电脑型号' : 'Model',
+        ntAccount: currentLang.value === 'zh' ? 'NT账号' : 'NT Account',
+        pcClass: currentLang.value === 'zh' ? '电脑归属情况' : 'Category',
+        comment: currentLang.value === 'zh' ? '备注' : 'Comment',
+        lastName: currentLang.value === 'zh' ? '姓' : 'Last Name',
+        firstName: currentLang.value === 'zh' ? '名' : 'First Name',
+        emailAddress: currentLang.value === 'zh' ? '邮箱地址' : 'Email',
+        telephone: currentLang.value === 'zh' ? '电话号码' : 'Phone',
+        departmentCol: currentLang.value === 'zh' ? '所属部门' : 'Department',
+        costCenterCol: currentLang.value === 'zh' ? '成本中心' : 'Cost Center',
+        lifeCycleStart: currentLang.value === 'zh' ? '出厂时间' : 'Manufacture Date',
+        yrsToDay: currentLang.value === 'zh' ? '出厂日期截至今天的时间' : 'Years Since Manufacture',
+        cpu: currentLang.value === 'zh' ? 'CPU' : 'CPU',
+        memory: currentLang.value === 'zh' ? '内存' : 'Memory',
+        disk: currentLang.value === 'zh' ? '硬盘' : 'Disk',
+        graphic: currentLang.value === 'zh' ? '显卡' : 'Graphics',
+        hardwareStatus: currentLang.value === 'zh' ? '硬件状态' : 'Hardware Status',
+        pr: currentLang.value === 'zh' ? '下单号' : 'PR',
+        po: currentLang.value === 'zh' ? '订单号' : 'PO',
+        vendor: currentLang.value === 'zh' ? '供应商公司' : 'Vendor',
+        company: currentLang.value === 'zh' ? '公司' : 'Company',
+        wbsNum: currentLang.value === 'zh' ? 'wbs号' : 'WBS No.',
+        temp: currentLang.value === 'zh' ? '临时分配' : 'Temp Assignment',
+        year: currentLang.value === 'zh' ? '年' : 'years',
+        
+        // 操作按钮
+        edit: currentLang.value === 'zh' ? '编辑' : 'Edit',
+        delete: currentLang.value === 'zh' ? '删除' : 'Delete',
+        trace: currentLang.value === 'zh' ? '追溯' : 'Trace',
+        return: currentLang.value === 'zh' ? '归还' : 'Return',
+        operation: currentLang.value === 'zh' ? '操作' : 'Actions',
+        
+        // 弹窗标题和内容
+        editTitle: currentLang.value === 'zh' ? '编辑电脑信息' : 'Edit Computer Information',
+        editSubtitle: currentLang.value === 'zh' ? '请修改需要更新的电脑信息' : 'Please update the computer information',
+        cancel: currentLang.value === 'zh' ? '取 消' : 'Cancel',
+        confirm: currentLang.value === 'zh' ? '确 定' : 'Confirm',
+        saveChanges: currentLang.value === 'zh' ? '保存修改' : 'Save Changes',
+        deleteConfirm: currentLang.value === 'zh' ? '删除配件' : 'Delete Device',
+        
+        // 标签页
+        basicInfo: currentLang.value === 'zh' ? '基础信息' : 'Basic Info',
+        userInfo: currentLang.value === 'zh' ? '用户信息' : 'User Info',
+        hardwareInfo: currentLang.value === 'zh' ? '硬件信息' : 'Hardware Info',
+        orderInfo: currentLang.value === 'zh' ? '订单信息' : 'Order Info',
+        
+        // 文件上传相关
+        batchUpdate: currentLang.value === 'zh' ? '批量更新电脑信息' : 'Batch Update Computer Information',
+        uploadTemplate: currentLang.value === 'zh' ? '请上传符合模板格式的Excel文件' : 'Please upload an Excel file in the correct format',
+        templateTip: currentLang.value === 'zh' ? '首次使用请先下载模板，按格式填写' : 'First time users: download template first',
+        downloadTemplate: currentLang.value === 'zh' ? '下载模板' : 'Download Template',
+        dragFile: currentLang.value === 'zh' ? '拖拽文件到此处或' : 'Drag file here or',
+        clickUpload: currentLang.value === 'zh' ? '点击上传' : 'click to upload',
+        fileFormatTip: currentLang.value === 'zh' ? '仅支持 .xlsx/.xls 格式的 Excel 文件' : 'Only .xlsx/.xls Excel files supported',
+        processing: currentLang.value === 'zh' ? '处理中...' : 'Processing...',
+        confirmImport: currentLang.value === 'zh' ? '确认导入' : 'Confirm Import',
+        
+        // 导出相关
+        dataExport: currentLang.value === 'zh' ? '数据导出' : 'Export Data',
+        exportRange: currentLang.value === 'zh' ? '请选择要导出的数据范围' : 'Please select data range to export',
+        exportCurrentPage: currentLang.value === 'zh' ? '导出当前页数据' : 'Export Current Page',
+        exportCurrentDetails: currentLang.value === 'zh' ? '仅导出当前页面显示的' : 'Only export current',
+        records: currentLang.value === 'zh' ? '条记录' : 'records',
+        exportAllData: currentLang.value === 'zh' ? '导出全部符合条件的数据' : 'Export All Matching Data',
+        exportAllDetails: currentLang.value === 'zh' ? '导出符合当前筛选条件的全部' : 'Export all matching',
+        dataAmountWarning: currentLang.value === 'zh' ? '数据量较大，导出可能需要较长时间' : 'Large data volume, export may take time',
+        confirmExport: currentLang.value === 'zh' ? '确认导出' : 'Confirm Export',
+        
+        // 追溯相关
+        computerHistory: currentLang.value === 'zh' ? '电脑历史记录' : 'Computer History',
+        traceSubtitle: currentLang.value === 'zh' ? '按时间线追溯电脑历史状态变更' : 'Track computer status changes by timeline',
+        currentProperties: currentLang.value === 'zh' ? '当前属性' : 'Current Properties',
+        historyRecords: currentLang.value === 'zh' ? '历史记录' : 'History Records',
+        updateTime: currentLang.value === 'zh' ? '更新时间' : 'Update Time',
+        moreDetails: currentLang.value === 'zh' ? '更多详情' : 'More Details',
+        viewDetails: currentLang.value === 'zh' ? '查看详情' : 'View Details',
+        noHistoryData: currentLang.value === 'zh' ? '暂无历史记录数据' : 'No history records',
+        
+        // 归还电脑相关
+        returnConfirm: currentLang.value === 'zh' ? '归还电脑确认' : 'Return Computer Confirmation',
+        confirmReturn: currentLang.value === 'zh' ? '请确认是否归还该设备' : 'Please confirm returning this device',
+        computerNameLabel: currentLang.value === 'zh' ? '电脑名称:' : 'Computer Name:',
+        currentUser: currentLang.value === 'zh' ? '当前使用者:' : 'Current User:',
+        useYears: currentLang.value === 'zh' ? '使用年限:' : 'Years Used:',
+        statusAfterReturn: currentLang.value === 'zh' ? '归还后状态:' : 'Status After Return:',
+        toBeAssigned: currentLang.value === 'zh' ? 'To be assigned' : 'To be assigned',
+        toBeScrapped: currentLang.value === 'zh' ? 'To be scrapped' : 'To be scrapped',
+        scrappedSuggestion: currentLang.value === 'zh' ? '该电脑已使用超过8年，系统建议将其标记为报废状态，您可以根据实际情况调整' : 'This PC has been used for over 8 years. Recommended to mark as scrapped. You can adjust based on actual condition.',
+        returnNote: currentLang.value === 'zh' ? '归还后，该电脑将回到您选择的状态' : 'After return, this PC will be in the selected status',
+        confirmReturnBtn: currentLang.value === 'zh' ? '确认归还' : 'Confirm Return',
+        
+        // 用户查询相关
+        noUserFound: currentLang.value === 'zh' ? '未找到相关用户' : 'No matching users found',
+        
+        // 选择项
+        allStatus: currentLang.value === 'zh' ? '全部状态' : 'ALL STATUS',
+        all: currentLang.value === 'zh' ? '全部' : 'All',
+        inUse: currentLang.value === 'zh' ? 'In Use' : 'In Use',
+        scrapped: currentLang.value === 'zh' ? 'Scrapped' : 'Scrapped',
+        shareNoteBook: currentLang.value === 'zh' ? 'ShareNoteBook' : 'ShareNoteBook',
+        externalUser: currentLang.value === 'zh' ? 'External User' : 'External User',
+        fixedTermUser: currentLang.value === 'zh' ? 'Fixed-Term User' : 'Fixed-Term User',
+        internalUser: currentLang.value === 'zh' ? 'Internal User' : 'Internal User',
+        nonStandardUse: currentLang.value === 'zh' ? 'Non-Standard Use' : 'Non-Standard Use',
+        publicUse: currentLang.value === 'zh' ? 'Public Use' : 'Public Use',
+        waitingForReturn: currentLang.value === 'zh' ? 'Waiting for Return' : 'Waiting for Return',
+        yes: currentLang.value === 'zh' ? '是' : 'Yes',
+        no: currentLang.value === 'zh' ? '否' : 'No',
+        
+        // 其他
+        enterComputerName: currentLang.value === 'zh' ? '请输入电脑名称' : 'Please enter computer name',
+        enterEmployeeName: currentLang.value === 'zh' ? '请输入员工姓名' : 'Please enter employee name',
+        selectComputerCategory: currentLang.value === 'zh' ? '请选择电脑归属' : 'Please select computer category',
+        enterDepartment: currentLang.value === 'zh' ? '请输入所属部门' : 'Please enter department',
+        selectComputerStatus: currentLang.value === 'zh' ? '请选择电脑状态' : 'Please select computer status',
+        selectDate: currentLang.value === 'zh' ? '选择出厂时间' : 'Select manufacture date',
+        enterCostCenter: currentLang.value === 'zh' ? '请输入成本中心' : 'Please enter cost center',
+        unnamedComputer: currentLang.value === 'zh' ? '未命名电脑' : 'Unnamed Computer',
+        selectNTAccount: currentLang.value === 'zh' ? '请输入NT账号' : 'Please enter NT account',
+        selectComputerClass: currentLang.value === 'zh' ? '请输入电脑归属情况' : 'Please select computer category',
+        deleteConfirmMsg: currentLang.value === 'zh' ? '确定删除设备' : 'Confirm delete device',
+        sequence: currentLang.value === 'zh' ? '序号' : 'No.'
+    }
+});
 
 // 用户输入事件处理
 const handleUserInput = (value) => {
@@ -339,7 +490,9 @@ const editPart = () => {
 
 // 删除配件
 const deletePartDialog = (row) => {
-    deletePartTips.value = `确定删除设备【${row.ciName}】吗？`  // 使用配件名称作为提示
+    deletePartTips.value = currentLang.value === 'zh' 
+        ? `确定删除设备【${row.ciName}】吗？` 
+        : `Confirm delete device [${row.ciName}]?`
     deletePartDialogVisible.value = true
     // 将选中的配件的ID传递到删除表单中
     deletePartForm.value.id = row.id
@@ -583,38 +736,41 @@ const exportTableData = async () => {
  */
 const formatDataForExport = (data) => {
   return data.map(item => {
-    // 创建一个新对象，只包含我们需要导出的字段
-    return {
-      '电脑状态': item.pcStatus || '',
-      '电脑名': item.ciName || '',
-      '设备类型': item.deviceClass || '',
-      '电脑序列号': item.serialNumber || '',
-      '制造商': item.manufacture || '',
-      '电脑型号': item.modelOrVersion || '',
-      'NT账号': item.ntAccount || '',
-      '电脑归属情况': item.pcClass || '',
-      '备注': item.comment || '',
-      '姓': item.lastName || '',
-      '名': item.firstName || '',
-      '邮箱地址': item.emailAddress || '',
-      '电话号码': item.telephone || '',
-      '所属部门': item.department || '',
-      '成本中心': item.costCenter || '',
-      '出厂时间': formatDate(item.lifeCycleStart) || '',
-      '使用年限': calculateYearsToToday(item.lifeCycleStart) + ' 年',
-      'CPU': item.cpu || '',
-      '内存': item.memory || '',
-      '硬盘': item.disk || '',
-      '显卡': item.graphic || '',
-      '硬件状态': item.hardwareStatus || '',
-      '下单号': item.pr || '',
-      '订单号': item.po || '',
-      '供应商公司': item.vendor || '',
-      '公司': item.company || '',
-      'WBS号': item.wbsNum || '',
-      '临时分配': item.temp === 1 ? '是' : '否',
-      '价格': item.price || ''
-    };
+    // 创建一个新对象，只包含我们需要导出的字段，使用当前语言的字段名
+    const exportObj = {};
+    
+    // 根据当前语言分配字段名
+    exportObj[langText.pcStatus] = item.pcStatus || '';
+    exportObj[langText.ciName] = item.ciName || '';
+    exportObj[langText.deviceClass] = item.deviceClass || '';
+    exportObj[langText.serialNumber] = item.serialNumber || '';
+    exportObj[langText.manufacture] = item.manufacture || '';
+    exportObj[langText.modelOrVersion] = item.modelOrVersion || '';
+    exportObj[langText.ntAccount] = item.ntAccount || '';
+    exportObj[langText.pcClass] = item.pcClass || '';
+    exportObj[langText.comment] = item.comment || '';
+    exportObj[langText.lastName] = item.lastName || '';
+    exportObj[langText.firstName] = item.firstName || '';
+    exportObj[langText.emailAddress] = item.emailAddress || '';
+    exportObj[langText.telephone] = item.telephone || '';
+    exportObj[langText.departmentCol] = item.department || '';
+    exportObj[langText.costCenterCol] = item.costCenter || '';
+    exportObj[langText.lifeCycleStart] = formatDate(item.lifeCycleStart) || '';
+    exportObj[langText.yrsToDay] = calculateYearsToToday(item.lifeCycleStart) + ' ' + langText.year;
+    exportObj[langText.cpu] = item.cpu || '';
+    exportObj[langText.memory] = item.memory || '';
+    exportObj[langText.disk] = item.disk || '';
+    exportObj[langText.graphic] = item.graphic || '';
+    exportObj[langText.hardwareStatus] = item.hardwareStatus || '';
+    exportObj[langText.pr] = item.pr || '';
+    exportObj[langText.po] = item.po || '';
+    exportObj[langText.vendor] = item.vendor || '';
+    exportObj[langText.company] = item.company || '';
+    exportObj[langText.wbsNum] = item.wbsNum || '';
+    exportObj[langText.temp] = item.temp === 1 ? langText.yes : langText.no;
+    exportObj['Price'] = item.price || '';
+    
+    return exportObj;
   });
 };
 
@@ -745,17 +901,17 @@ const getRecordDetails = (record) => {
     const details = {};
     
     // 添加关键字段到详情中
-    if (record.lifeCycleStart) details['出厂时间'] = record.lifeCycleStart;
-    if (record.modelOrVersion) details['电脑型号'] = record.modelOrVersion;
-    if (record.serialNumber) details['序列号'] = record.serialNumber;
+    if (record.lifeCycleStart) details[langText.value.lifeCycleStart] = record.lifeCycleStart;
+    if (record.modelOrVersion) details[langText.value.modelOrVersion] = record.modelOrVersion;
+    if (record.serialNumber) details[langText.value.serialNumber] = record.serialNumber;
     if (record.lastName || record.firstName) {
-        details['用户'] = `${record.lastName || ''} ${record.firstName || ''}`.trim();
+        details[currentLang.value === 'zh' ? '用户' : 'User'] = `${record.lastName || ''} ${record.firstName || ''}`.trim();
     }
-    if (record.department) details['部门'] = record.department;
-    if (record.costCenter) details['成本中心'] = record.costCenter;
-    if (record.emailAddress) details['邮箱'] = record.emailAddress;
-    if (record.telephone) details['电话'] = record.telephone;
-    if (record.comment) details['备注'] = record.comment;
+    if (record.department) details[langText.value.departmentCol] = record.department;
+    if (record.costCenter) details[langText.value.costCenterCol] = record.costCenter;
+    if (record.emailAddress) details[langText.value.emailAddress] = record.emailAddress;
+    if (record.telephone) details[langText.value.telephone] = record.telephone;
+    if (record.comment) details[langText.value.comment] = record.comment;
     
     return details;
 };
@@ -765,23 +921,23 @@ const getCurrentDetails = () => {
     const details = {};
     
     // 添加关键字段到详情中
-    if (currentComputer.value.pcStatus) details['电脑状态'] = currentComputer.value.pcStatus;
-    if (currentComputer.value.ntAccount) details['NT账号'] = currentComputer.value.ntAccount;
-    if (currentComputer.value.pcClass) details['电脑归属情况'] = currentComputer.value.pcClass;
-    if (currentComputer.value.company) details['公司'] = currentComputer.value.company;
+    if (currentComputer.value.pcStatus) details[langText.value.pcStatus] = currentComputer.value.pcStatus;
+    if (currentComputer.value.ntAccount) details[langText.value.ntAccount] = currentComputer.value.ntAccount;
+    if (currentComputer.value.pcClass) details[langText.value.pcClass] = currentComputer.value.pcClass;
+    if (currentComputer.value.company) details[langText.value.company] = currentComputer.value.company;
     
     // 添加其他详细信息
-    if (currentComputer.value.lifeCycleStart) details['出厂时间'] = currentComputer.value.lifeCycleStart;
-    if (currentComputer.value.modelOrVersion) details['电脑型号'] = currentComputer.value.modelOrVersion;
-    if (currentComputer.value.serialNumber) details['序列号'] = currentComputer.value.serialNumber;
+    if (currentComputer.value.lifeCycleStart) details[langText.value.lifeCycleStart] = currentComputer.value.lifeCycleStart;
+    if (currentComputer.value.modelOrVersion) details[langText.value.modelOrVersion] = currentComputer.value.modelOrVersion;
+    if (currentComputer.value.serialNumber) details[langText.value.serialNumber] = currentComputer.value.serialNumber;
     if (currentComputer.value.lastName || currentComputer.value.firstName) {
-        details['用户'] = `${currentComputer.value.lastName || ''} ${currentComputer.value.firstName || ''}`.trim();
+        details[currentLang.value === 'zh' ? '用户' : 'User'] = `${currentComputer.value.lastName || ''} ${currentComputer.value.firstName || ''}`.trim();
     }
-    if (currentComputer.value.department) details['部门'] = currentComputer.value.department;
-    if (currentComputer.value.costCenter) details['成本中心'] = currentComputer.value.costCenter;
-    if (currentComputer.value.emailAddress) details['邮箱'] = currentComputer.value.emailAddress;
-    if (currentComputer.value.telephone) details['电话'] = currentComputer.value.telephone;
-    if (currentComputer.value.comment) details['备注'] = currentComputer.value.comment;
+    if (currentComputer.value.department) details[langText.value.departmentCol] = currentComputer.value.department;
+    if (currentComputer.value.costCenter) details[langText.value.costCenterCol] = currentComputer.value.costCenter;
+    if (currentComputer.value.emailAddress) details[langText.value.emailAddress] = currentComputer.value.emailAddress;
+    if (currentComputer.value.telephone) details[langText.value.telephone] = currentComputer.value.telephone;
+    if (currentComputer.value.comment) details[langText.value.comment] = currentComputer.value.comment;
     
     return details;
 };
@@ -864,15 +1020,15 @@ const getUserDropdownPosition = () => {
         <!-- 电脑查询 -->
         <el-card shadow="never" class="usr_card_override top">
             <el-form :model="queryForm" inline class="query-form">
-                <el-form-item label="电脑名称" class="form-item">
-                    <el-input v-model="queryForm.ciName" placeholder="请输入电脑名称" class="input-field" @keyup.enter="selectPartListData"></el-input>
+                <el-form-item :label="langText.computerName" class="form-item">
+                    <el-input v-model="queryForm.ciName" :placeholder="langText.enterComputerName" class="input-field" @keyup.enter="selectPartListData"></el-input>
                 </el-form-item>
-                <el-form-item label="员工姓名" class="form-item">
+                <el-form-item :label="langText.employeeName" class="form-item">
                     <div class="user-input-container">
                         <el-input 
                             ref="userInputRef"
                             v-model="queryForm.lastName" 
-                            placeholder="请输入员工姓名" 
+                            :placeholder="langText.enterEmployeeName" 
                             class="input-field"
                             clearable
                             @input="handleUserInput"
@@ -892,44 +1048,44 @@ const getUserDropdownPosition = () => {
                                     </div>
                                 </div>
                                 <div v-else class="no-results">
-                                    未找到相关用户
+                                    {{ langText.noUserFound }}
                                 </div>
                             </div>
                         </teleport>
                     </div>
                 </el-form-item>
-                <el-form-item label="电脑归属" class="form-item">
-                    <el-select v-model="queryForm.pcClass" placeholder="请选择电脑归属" class="input-field">
-                        <el-option label="全部" value=""></el-option>
-                        <el-option label="External User" value="External User"></el-option>
-                        <el-option label="Fixed-Term User" value="Fixed-Term User"></el-option>
-                        <el-option label="Internal User" value="Internal User"></el-option>
-                        <el-option label="Non-Standard Use" value="Non-Standard Use"></el-option>
-                        <el-option label="Public Use" value="Public Use(public/test/connect device)"></el-option>
-                        <el-option label="ShareNotebook" value="ShareNotebook"></el-option>
-                        <el-option label="To be scrapped" value="To be scrapped"></el-option>
-                        <el-option label="To be assigned" value="To be assigned"></el-option>
-                        <el-option label="Waiting for Return" value="Waiting for Return"></el-option>
+                <el-form-item :label="langText.computerCategory" class="form-item">
+                    <el-select v-model="queryForm.pcClass" :placeholder="langText.selectComputerCategory" class="input-field">
+                        <el-option :label="langText.all" value=""></el-option>
+                        <el-option :label="langText.externalUser" value="External User"></el-option>
+                        <el-option :label="langText.fixedTermUser" value="Fixed-Term User"></el-option>
+                        <el-option :label="langText.internalUser" value="Internal User"></el-option>
+                        <el-option :label="langText.nonStandardUse" value="Non-Standard Use"></el-option>
+                        <el-option :label="langText.publicUse" value="Public Use(public/test/connect device)"></el-option>
+                        <el-option :label="langText.shareNoteBook" value="ShareNotebook"></el-option>
+                        <el-option :label="langText.toBeScrapped" value="To be scrapped"></el-option>
+                        <el-option :label="langText.toBeAssigned" value="To be assigned"></el-option>
+                        <el-option :label="langText.waitingForReturn" value="Waiting for Return"></el-option>
                     </el-select>
                 </el-form-item>
-                <el-form-item label="所属部门" class="form-item">
-                    <el-input v-model="queryForm.department" placeholder="请输入所属部门" class="input-field"></el-input>
+                <el-form-item :label="langText.department" class="form-item">
+                    <el-input v-model="queryForm.department" :placeholder="langText.enterDepartment" class="input-field"></el-input>
                 </el-form-item>
-                <el-form-item label="电脑状态" class="form-item">
-                    <el-select v-model="queryForm.pcStatus" placeholder="请选择电脑状态" class="input-field">
-                        <el-option label="ALL STATUS" value=""></el-option>
-                        <el-option label="In Use" value="In Use"></el-option>
-                        <el-option label="Scrapped" value="Scrapped"></el-option>
-                        <el-option label="ShareNoteBook" value="ShareNoteBook"></el-option>
-                        <el-option label="To be assigned" value="To be assigned"></el-option>
-                        <el-option label="To be scrapped" value="To be scrapped"></el-option>
+                <el-form-item :label="langText.computerStatus" class="form-item">
+                    <el-select v-model="queryForm.pcStatus" :placeholder="langText.selectComputerStatus" class="input-field">
+                        <el-option :label="langText.allStatus" value=""></el-option>
+                        <el-option :label="langText.inUse" value="In Use"></el-option>
+                        <el-option :label="langText.scrapped" value="Scrapped"></el-option>
+                        <el-option :label="langText.shareNoteBook" value="ShareNoteBook"></el-option>
+                        <el-option :label="langText.toBeAssigned" value="To be assigned"></el-option>
+                        <el-option :label="langText.toBeScrapped" value="To be scrapped"></el-option>
                     </el-select>
                 </el-form-item>
-                <el-form-item label="出厂时间" class="form-item">
+                <el-form-item :label="langText.manufactureDate" class="form-item">
                     <el-date-picker
                         v-model="queryForm.lifeCycleStart"
                         type="date"
-                        placeholder="选择出厂时间"
+                        :placeholder="langText.selectDate"
                         format="YYYY-MM-DD"
                         value-format="YYYY-MM-DD"
                         class="input-field"
@@ -937,15 +1093,15 @@ const getUserDropdownPosition = () => {
                         @change="confirmUserChange">
                     </el-date-picker>
                 </el-form-item>
-                <el-form-item label="成本中心" class="form-item">
-                    <el-input v-model="queryForm.costCenter" placeholder="请输入成本中心" class="input-field"></el-input>
+                <el-form-item :label="langText.costCenter" class="form-item">
+                    <el-input v-model="queryForm.costCenter" :placeholder="langText.enterCostCenter" class="input-field"></el-input>
                 </el-form-item>
                 <el-form-item class="form-item">
-                    <el-button type="primary" @click="selectPartListData">查询</el-button>
-                    <el-button type="primary" @click="openUploadFileDialog" class="update-btn">电脑更新</el-button>
+                    <el-button type="primary" @click="selectPartListData">{{ langText.search }}</el-button>
+                    <el-button type="primary" @click="openUploadFileDialog" class="update-btn">{{ langText.computerUpdate }}</el-button>
                     <el-button type="primary" @click="openExportDialog" class="update-btn" :loading="exportLoading">
                         <el-icon><Download /></el-icon>
-                        导出数据
+                        {{ langText.exportData }}
                     </el-button>
                 </el-form-item>
             </el-form>
@@ -958,7 +1114,7 @@ const getUserDropdownPosition = () => {
             
             <el-table :data="partList" :loading="loading" style="width: 100%;" >
                 <!-- 电脑状态 -->
-                <el-table-column label="电脑状态" prop="pcStatus" :width="150">
+                <el-table-column :label="langText.pcStatus" prop="pcStatus" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.pcStatus" placement="top">
                             <div class="text-ellipsis">{{ row.pcStatus }}</div>
@@ -967,7 +1123,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 电脑名 -->
-                <el-table-column label="电脑名" prop="ciName" :width="150">
+                <el-table-column :label="langText.ciName" prop="ciName" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.ciName" placement="top">
                             <div class="text-ellipsis">{{ row.ciName }}</div>
@@ -976,7 +1132,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 设备类型 -->
-                <el-table-column label="设备类型" prop="deviceClass" :width="150">
+                <el-table-column :label="langText.deviceClass" prop="deviceClass" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.deviceClass" placement="top">
                             <div class="text-ellipsis">{{ row.deviceClass }}</div>
@@ -985,7 +1141,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 电脑序列号 -->
-                <el-table-column label="电脑序列号" prop="serialNumber" :width="150">
+                <el-table-column :label="langText.serialNumber" prop="serialNumber" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.serialNumber" placement="top">
                             <div class="text-ellipsis">{{ row.serialNumber }}</div>
@@ -995,7 +1151,7 @@ const getUserDropdownPosition = () => {
 
 
                 <!-- 制造商 -->
-                <el-table-column label="制造商" prop="manufacture" :width="150">
+                <el-table-column :label="langText.manufacture" prop="manufacture" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.manufacture" placement="top">
                             <div class="text-ellipsis">{{ row.manufacture }}</div>
@@ -1004,7 +1160,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 电脑型号 -->
-                <el-table-column label="电脑型号" prop="modelOrVersion" :width="200">
+                <el-table-column :label="langText.modelOrVersion" prop="modelOrVersion" :width="200">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.modelOrVersion" placement="top">
                             <div class="text-ellipsis">{{ row.modelOrVersion }}</div>
@@ -1013,7 +1169,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- NT账号 -->
-                <el-table-column label="NT账号" prop="ntAccount" :width="150">
+                <el-table-column :label="langText.ntAccount" prop="ntAccount" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.ntAccount" placement="top">
                             <div class="text-ellipsis">{{ row.ntAccount }}</div>
@@ -1022,7 +1178,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 电脑归属情况 -->
-                <el-table-column label="电脑归属情况" prop="pcClass" :width="200">
+                <el-table-column :label="langText.pcClass" prop="pcClass" :width="200">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.pcClass" placement="top">
                             <div class="text-ellipsis">{{ row.pcClass }}</div>
@@ -1031,7 +1187,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 备注 -->
-                <el-table-column label="备注" prop="comment" :width="200">
+                <el-table-column :label="langText.comment" prop="comment" :width="200">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.comment" placement="top">
                             <div class="text-ellipsis">{{ row.comment }}</div>
@@ -1040,7 +1196,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 姓 -->
-                <el-table-column label="姓" prop="lastName" :width="150">
+                <el-table-column :label="langText.lastName" prop="lastName" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.lastName" placement="top">
                             <div class="text-ellipsis">{{ row.lastName }}</div>
@@ -1049,7 +1205,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 名 -->
-                <el-table-column label="名" prop="firstName" :width="150">
+                <el-table-column :label="langText.firstName" prop="firstName" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.firstName" placement="top">
                             <div class="text-ellipsis">{{ row.firstName }}</div>
@@ -1059,7 +1215,7 @@ const getUserDropdownPosition = () => {
 
 
                 <!-- 邮箱地址 -->
-                <el-table-column label="邮箱地址" prop="emailAddress" :width="150">
+                <el-table-column :label="langText.emailAddress" prop="emailAddress" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.emailAddress" placement="top">
                             <div class="text-ellipsis">{{ row.emailAddress }}</div>
@@ -1068,7 +1224,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 电话号码 -->
-                <el-table-column label="电话号码" prop="telephone" :width="150">
+                <el-table-column :label="langText.telephone" prop="telephone" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.telephone" placement="top">
                             <div class="text-ellipsis">{{ row.telephone }}</div>
@@ -1077,7 +1233,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 所属部门 -->
-                <el-table-column label="所属部门" prop="department" :width="150">
+                <el-table-column :label="langText.departmentCol" prop="department" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.department" placement="top">
                             <div class="text-ellipsis">{{ row.department }}</div>
@@ -1086,7 +1242,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 成本中心 -->
-                <el-table-column label="成本中心" prop="costCenter" :width="150">
+                <el-table-column :label="langText.costCenterCol" prop="costCenter" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.costCenter" placement="top">
                             <div class="text-ellipsis">{{ row.costCenter }}</div>
@@ -1095,7 +1251,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 出厂时间 -->
-                <el-table-column label="出厂时间" prop="lifeCycleStart" :width="150">
+                <el-table-column :label="langText.lifeCycleStart" prop="lifeCycleStart" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="formatDate(row.lifeCycleStart)" placement="top">
                             <div class="text-ellipsis">{{ formatDate(row.lifeCycleStart) }}</div>
@@ -1104,16 +1260,16 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 出厂日期截至今天的时间 -->
-                <el-table-column label="出厂日期截至今天的时间" prop="yrs_To_Day" :width="120">
+                <el-table-column :label="langText.yrsToDay" prop="yrs_To_Day" :width="120">
                     <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="calculateYearsToToday(row.lifeCycleStart) + ' 年'" placement="top" open-delay=1000>
-                            <div class="text-ellipsis">{{ calculateYearsToToday(row.lifeCycleStart) }} 年</div>
+                        <el-tooltip class="item" effect="light" :content="calculateYearsToToday(row.lifeCycleStart) + ' ' + langText.year" placement="top" open-delay=1000>
+                            <div class="text-ellipsis">{{ calculateYearsToToday(row.lifeCycleStart) }} {{ langText.year }}</div>
                         </el-tooltip>
                     </template>
                 </el-table-column>
 
                 <!-- CPU -->
-                <el-table-column label="CPU" prop="cpu" :width="150">
+                <el-table-column :label="langText.cpu" prop="cpu" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.cpu" placement="top">
                             <div class="text-ellipsis">{{ row.cpu }}</div>
@@ -1122,7 +1278,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 内存 -->
-                <el-table-column label="内存" prop="memory" :width="150">
+                <el-table-column :label="langText.memory" prop="memory" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.memory" placement="top">
                             <div class="text-ellipsis">{{ row.memory }}</div>
@@ -1131,7 +1287,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 硬盘 -->
-                <el-table-column label="硬盘" prop="disk" :width="150">
+                <el-table-column :label="langText.disk" prop="disk" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.disk" placement="top">
                             <div class="text-ellipsis">{{ row.disk }}</div>
@@ -1140,7 +1296,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 显卡 -->
-                <el-table-column label="显卡" prop="graphic" :width="150">
+                <el-table-column :label="langText.graphic" prop="graphic" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.graphic" placement="top">
                             <div class="text-ellipsis">{{ row.graphic }}</div>
@@ -1149,7 +1305,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 硬件状态 -->
-                <el-table-column label="硬件状态" prop="hardwareStatus" :width="150">
+                <el-table-column :label="langText.hardwareStatus" prop="hardwareStatus" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.hardwareStatus" placement="top">
                             <div class="text-ellipsis">{{ row.hardwareStatus }}</div>
@@ -1158,7 +1314,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 下单号 -->
-                <el-table-column label="下单号" prop="pr" :width="150">
+                <el-table-column :label="langText.pr" prop="pr" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.pr" placement="top">
                             <div class="text-ellipsis">{{ row.pr }}</div>
@@ -1167,7 +1323,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 订单号 -->
-                <el-table-column label="订单号" prop="po" :width="150">
+                <el-table-column :label="langText.po" prop="po" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.po" placement="top">
                             <div class="text-ellipsis">{{ row.po }}</div>
@@ -1176,7 +1332,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 供应商公司 -->
-                <el-table-column label="供应商公司" prop="vendor" :width="150">
+                <el-table-column :label="langText.vendor" prop="vendor" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.vendor" placement="top">
                             <div class="text-ellipsis">{{ row.vendor }}</div>
@@ -1185,7 +1341,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 公司 -->
-                <el-table-column label="公司" prop="company" :width="150">
+                <el-table-column :label="langText.company" prop="company" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.company" placement="top">
                             <div class="text-ellipsis">{{ row.company }}</div>
@@ -1194,7 +1350,7 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 资产号 -->
-                <el-table-column label="wbs号" prop="wbsNum" :width="150">
+                <el-table-column :label="langText.wbsNum" prop="wbsNum" :width="150">
                     <template #default="{ row }">
                         <el-tooltip class="item" effect="light" :content="row.wbsNum" placement="top">
                             <div class="text-ellipsis">{{ row.wbsNum }}</div>
@@ -1203,24 +1359,24 @@ const getUserDropdownPosition = () => {
                 </el-table-column>
 
                 <!-- 临时分配 -->
-                <el-table-column label="临时分配" prop="temp" :width="150">
+                <el-table-column :label="langText.temp" prop="temp" :width="150">
                     <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="row.temp === 1 ? '是' : '否'" placement="top">
-                            <div class="text-ellipsis">{{ row.temp === 1 ? '是' : '否' }}</div>
+                        <el-tooltip class="item" effect="light" :content="row.temp === 1 ? langText.yes : langText.no" placement="top">
+                            <div class="text-ellipsis">{{ row.temp === 1 ? langText.yes : langText.no }}</div>
                         </el-tooltip>
                     </template>
                 </el-table-column>
 
                 <!-- 操作列：编辑与删除 -->
-                <el-table-column label="操作" :width="200" fixed="right">
+                <el-table-column :label="langText.operation" :width="250" fixed="right">
                     <template #default="{ row }">
-                        <el-button type="text" @click="editPartDialog(row)">编辑</el-button>
-                        <el-button type="text" @click="deletePartDialog(row)">删除</el-button>
-                        <el-button type="text" @click="showTraceDialog(row)">追溯</el-button>
+                        <el-button type="text" @click="editPartDialog(row)">{{ langText.edit }}</el-button>
+                        <el-button type="text" @click="deletePartDialog(row)">{{ langText.delete }}</el-button>
+                        <el-button type="text" @click="showTraceDialog(row)">{{ langText.trace }}</el-button>
                         <el-button 
                             v-if="row.pcStatus === 'In Use'" 
                             type="text" 
-                            @click="returnComputerDialog(row)">归还</el-button>
+                            @click="returnComputerDialog(row)">{{ langText.return }}</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -1272,37 +1428,37 @@ const getUserDropdownPosition = () => {
                 <div class="edit-dialog-container" v-loading="loading">
                     <div class="edit-header">
                         <div class="edit-title">
-                            <span>编辑电脑信息</span>
+                            <span>{{ langText.editTitle }}</span>
                             <el-tag class="edit-tag" type="success">
-                                {{ editPartForm.ciName || '未命名电脑' }}
+                                {{ editPartForm.ciName || langText.unnamedComputer }}
                             </el-tag>
                         </div>
-                        <div class="edit-subtitle">请修改需要更新的电脑信息</div>
+                        <div class="edit-subtitle">{{ langText.editSubtitle }}</div>
                     </div>
                     
                     <div class="edit-content">
                         <el-form :model="editPartForm" ref="editPartFormRef" label-width="100px" class="tech-form">
                             <el-tabs type="border-card" class="tech-tabs">
-                                <el-tab-pane label="基础信息">
+                                <el-tab-pane :label="langText.basicInfo">
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="电脑名称" prop="ciName">
+                                            <el-form-item :label="langText.ciName" prop="ciName">
                                                 <el-input v-model="editPartForm.ciName"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="电脑状态" prop="pcStatus" :rules="[{ required: true, message: '请选择状态', trigger: 'blur' }]">
+                                            <el-form-item :label="langText.pcStatus" prop="pcStatus" :rules="[{ required: true, message: langText.selectComputerStatus, trigger: 'blur' }]">
                                                 <el-select v-model="editPartForm.pcStatus" style="width: 100%">
-                                                    <el-option label="TO BE ASSIGNED" value="TO BE ASSIGNED"></el-option>
-                                                    <el-option label="IN USE" value="IN USE"></el-option>
-                                                    <el-option label="ShareNoteBook" value="ShareNoteBook"></el-option>
-                                                    <el-option label="Scrapped" value="Scrapped"></el-option>
-                                                    <el-option label="To be scrapped" value="To be scrapped"></el-option>
+                                                    <el-option :label="langText.toBeAssigned" value="TO BE ASSIGNED"></el-option>
+                                                    <el-option :label="langText.inUse" value="IN USE"></el-option>
+                                                    <el-option :label="langText.shareNoteBook" value="ShareNoteBook"></el-option>
+                                                    <el-option :label="langText.scrapped" value="Scrapped"></el-option>
+                                                    <el-option :label="langText.toBeScrapped" value="To be scrapped"></el-option>
                                                 </el-select>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="NT账号" prop="ntAccount" :rules="[{ required: true, message: '请输入NT账号', trigger: 'blur' }]">
+                                            <el-form-item :label="langText.ntAccount" prop="ntAccount" :rules="[{ required: true, message: langText.selectNTAccount, trigger: 'blur' }]">
                                                 <el-input v-model="editPartForm.ntAccount"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1310,27 +1466,27 @@ const getUserDropdownPosition = () => {
 
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="电脑归属" prop="pcClass" :rules="[{ required: true, message: '请输入电脑归属情况', trigger: 'blur' }]">
-                                                <el-select v-model="editPartForm.pcClass" placeholder="请选择电脑归属" style="width: 100%">
-                                                    <el-option label="External User" value="External User"></el-option>
-                                                    <el-option label="Fixed-Term User" value="Fixed-Term User"></el-option>
-                                                    <el-option label="Internal User" value="Internal User"></el-option>
-                                                    <el-option label="Non-Standard Use" value="Non-Standard Use"></el-option>
-                                                    <el-option label="Public Use" value="Public Use(public/test/connect device)"></el-option>
-                                                    <el-option label="ShareNotebook" value="ShareNotebook"></el-option>
-                                                    <el-option label="To be scrapped" value="To be scrapped"></el-option>
-                                                    <el-option label="To be assigned" value="To be assigned"></el-option>
-                                                    <el-option label="Waiting for Return" value="Waiting for Return"></el-option>
+                                            <el-form-item :label="langText.computerCategory" prop="pcClass" :rules="[{ required: true, message: langText.selectComputerClass, trigger: 'blur' }]">
+                                                <el-select v-model="editPartForm.pcClass" :placeholder="langText.selectComputerCategory" style="width: 100%">
+                                                    <el-option :label="langText.externalUser" value="External User"></el-option>
+                                                    <el-option :label="langText.fixedTermUser" value="Fixed-Term User"></el-option>
+                                                    <el-option :label="langText.internalUser" value="Internal User"></el-option>
+                                                    <el-option :label="langText.nonStandardUse" value="Non-Standard Use"></el-option>
+                                                    <el-option :label="langText.publicUse" value="Public Use(public/test/connect device)"></el-option>
+                                                    <el-option :label="langText.shareNoteBook" value="ShareNotebook"></el-option>
+                                                    <el-option :label="langText.toBeScrapped" value="To be scrapped"></el-option>
+                                                    <el-option :label="langText.toBeAssigned" value="To be assigned"></el-option>
+                                                    <el-option :label="langText.waitingForReturn" value="Waiting for Return"></el-option>
                                                 </el-select>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="设备类型" prop="deviceClass">
+                                            <el-form-item :label="langText.deviceClass" prop="deviceClass">
                                                 <el-input v-model="editPartForm.deviceClass"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="电脑序列号" prop="serialNumber">
+                                            <el-form-item :label="langText.serialNumber" prop="serialNumber">
                                                 <el-input v-model="editPartForm.serialNumber"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1338,21 +1494,21 @@ const getUserDropdownPosition = () => {
 
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="制造商" prop="manufacture">
+                                            <el-form-item :label="langText.manufacture" prop="manufacture">
                                                 <el-input v-model="editPartForm.manufacture"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="电脑型号" prop="modelOrVersion">
+                                            <el-form-item :label="langText.modelOrVersion" prop="modelOrVersion">
                                                 <el-input v-model="editPartForm.modelOrVersion"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="出厂时间" prop="lifeCycleStart">
+                                            <el-form-item :label="langText.manufactureDate" prop="lifeCycleStart">
                                                 <el-date-picker
                                                     v-model="editPartForm.lifeCycleStart"
                                                     type="date"
-                                                    placeholder="选择出厂时间"
+                                                    :placeholder="langText.selectDate"
                                                     format="YYYY-MM-DD"
                                                     value-format="YYYY-MM-DD"
                                                     style="width: 100%"
@@ -1363,20 +1519,20 @@ const getUserDropdownPosition = () => {
                                     </el-row>
                                 </el-tab-pane>
                                 
-                                <el-tab-pane label="用户信息">
+                                <el-tab-pane :label="langText.userInfo">
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="姓" prop="lastName">
+                                            <el-form-item :label="langText.lastName" prop="lastName">
                                                 <el-input v-model="editPartForm.lastName"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="名" prop="firstName">
+                                            <el-form-item :label="langText.firstName" prop="firstName">
                                                 <el-input v-model="editPartForm.firstName"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="邮箱地址" prop="emailAddress">
+                                            <el-form-item :label="langText.emailAddress" prop="emailAddress">
                                                 <el-input v-model="editPartForm.emailAddress"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1384,17 +1540,17 @@ const getUserDropdownPosition = () => {
 
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="电话号码" prop="telephone">
+                                            <el-form-item :label="langText.telephone" prop="telephone">
                                                 <el-input v-model="editPartForm.telephone"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="所属部门" prop="department">
+                                            <el-form-item :label="langText.departmentCol" prop="department">
                                                 <el-input v-model="editPartForm.department"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="成本中心" prop="costCenter">
+                                            <el-form-item :label="langText.costCenterCol" prop="costCenter">
                                                 <el-input v-model="editPartForm.costCenter"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1402,27 +1558,27 @@ const getUserDropdownPosition = () => {
 
                                     <el-row :gutter="20">
                                         <el-col :span="24">
-                                            <el-form-item label="备注" prop="comment">
+                                            <el-form-item :label="langText.comment" prop="comment">
                                                 <el-input v-model="editPartForm.comment" type="textarea" :rows="2"></el-input>
                                             </el-form-item>
                                         </el-col>
                                     </el-row>
                                 </el-tab-pane>
                                 
-                                <el-tab-pane label="硬件信息">
+                                <el-tab-pane :label="langText.hardwareInfo">
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="CPU" prop="cpu">
+                                            <el-form-item :label="langText.cpu" prop="cpu">
                                                 <el-input v-model="editPartForm.cpu"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="内存" prop="memory">
+                                            <el-form-item :label="langText.memory" prop="memory">
                                                 <el-input v-model="editPartForm.memory"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="硬盘" prop="disk">
+                                            <el-form-item :label="langText.disk" prop="disk">
                                                 <el-input v-model="editPartForm.disk"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1430,40 +1586,40 @@ const getUserDropdownPosition = () => {
 
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="显卡" prop="graphic">
+                                            <el-form-item :label="langText.graphic" prop="graphic">
                                                 <el-input v-model="editPartForm.graphic"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="硬件状态" prop="hardwareStatus">
+                                            <el-form-item :label="langText.hardwareStatus" prop="hardwareStatus">
                                                 <el-input v-model="editPartForm.hardwareStatus"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="临时分配" prop="temp">
+                                            <el-form-item :label="langText.temp" prop="temp">
                                                 <el-select v-model="editPartForm.temp" style="width: 100%">
-                                                    <el-option label="否" :value="0"></el-option>
-                                                    <el-option label="是" :value="1"></el-option>
+                                                    <el-option :label="langText.no" :value="0"></el-option>
+                                                    <el-option :label="langText.yes" :value="1"></el-option>
                                                 </el-select>
                                             </el-form-item>
                                         </el-col>
                                     </el-row>
                                 </el-tab-pane>
                                 
-                                <el-tab-pane label="订单信息">
+                                <el-tab-pane :label="langText.orderInfo">
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="下单号" prop="pr">
+                                            <el-form-item :label="langText.pr" prop="pr">
                                                 <el-input v-model="editPartForm.pr"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="订单号" prop="po">
+                                            <el-form-item :label="langText.po" prop="po">
                                                 <el-input v-model="editPartForm.po"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="供应商公司" prop="vendor">
+                                            <el-form-item :label="langText.vendor" prop="vendor">
                                                 <el-input v-model="editPartForm.vendor"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1471,17 +1627,17 @@ const getUserDropdownPosition = () => {
 
                                     <el-row :gutter="20">
                                         <el-col :span="8">
-                                            <el-form-item label="公司" prop="company">
+                                            <el-form-item :label="langText.company" prop="company">
                                                 <el-input v-model="editPartForm.company"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="wbs号" prop="wbsNum">
+                                            <el-form-item :label="langText.wbsNum" prop="wbsNum">
                                                 <el-input v-model="editPartForm.wbsNum"></el-input>
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item label="价格" prop="price">
+                                            <el-form-item label="Price" prop="price">
                                                 <el-input v-model="editPartForm.price"></el-input>
                                             </el-form-item>
                                         </el-col>
@@ -1493,9 +1649,9 @@ const getUserDropdownPosition = () => {
                 </div>
                 <template #footer>
                     <div class="tech-dialog-footer">
-                        <el-button @click="editPartDialogVisible = false" class="tech-cancel-btn">取 消</el-button>
+                        <el-button @click="editPartDialogVisible = false" class="tech-cancel-btn">{{ langText.cancel }}</el-button>
                         <el-button type="primary" @click="editPart" class="tech-confirm-btn">
-                            <span class="tech-btn-text">保存修改</span>
+                            <span class="tech-btn-text">{{ langText.saveChanges }}</span>
                             <span class="tech-btn-icon"><i class="el-icon-check"></i></span>
                         </el-button>
                     </div>
@@ -1504,11 +1660,11 @@ const getUserDropdownPosition = () => {
 
 
             <!-- 删除配件弹窗 -->
-            <el-dialog v-model="deletePartDialogVisible" title="删除配件">
+            <el-dialog v-model="deletePartDialogVisible" :title="langText.deleteConfirm">
                 <span>{{ deletePartTips }}</span>
                 <template #footer>
-                    <el-button @click="deletePartDialogVisible = false">取 消</el-button>
-                    <el-button type="primary" @click="deletePart">确 定</el-button>
+                    <el-button @click="deletePartDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deletePart">{{ langText.confirm }}</el-button>
                 </template>
             </el-dialog>
 
@@ -1521,12 +1677,12 @@ const getUserDropdownPosition = () => {
                                 <el-icon class="upload-icon-svg"><UploadFilled /></el-icon>
                             </div>
                         </div>
-                        <h3 class="upload-title">批量更新电脑信息</h3>
-                        <p class="upload-subtitle">请上传符合模板格式的Excel文件</p>
+                        <h3 class="upload-title">{{ langText.batchUpdate }}</h3>
+                        <p class="upload-subtitle">{{ langText.uploadTemplate }}</p>
                         
                         <div class="upload-tips">
                             <el-icon><InfoFilled /></el-icon>
-                            <span>首次使用请先下载模板，按格式填写</span>
+                            <span>{{ langText.templateTip }}</span>
                         </div>
                         
                         <el-button 
@@ -1534,7 +1690,7 @@ const getUserDropdownPosition = () => {
                             class="template-download-btn" 
                             @click="downloadTemplate">
                             <el-icon><Download /></el-icon>
-                            下载模板
+                            {{ langText.downloadTemplate }}
                         </el-button>
                     </div>
                     
@@ -1553,11 +1709,11 @@ const getUserDropdownPosition = () => {
                                 :on-change="handleFileChange">
                                 <el-icon class="el-icon--upload"><Upload /></el-icon>
                                 <div class="el-upload__text">
-                                    拖拽文件到此处或 <em>点击上传</em>
+                                    {{ langText.dragFile }} <em>{{ langText.clickUpload }}</em>
                                 </div>
                                 <template #tip>
                                     <div class="el-upload__tip">
-                                        仅支持 .xlsx/.xls 格式的 Excel 文件
+                                        {{ langText.fileFormatTip }}
                                     </div>
                                 </template>
                             </el-upload>
@@ -1566,25 +1722,25 @@ const getUserDropdownPosition = () => {
                 </div>
                 <template #footer>
                     <div class="dialog-footer">
-                        <el-button @click="uploadFileDialogVisible = false" class="cancel-btn">取 消</el-button>
+                        <el-button @click="uploadFileDialogVisible = false" class="cancel-btn">{{ langText.cancel }}</el-button>
                         <el-button type="primary" @click="importComputerByExcel" :loading="uploadLoading" class="confirm-btn">
                             <el-icon v-if="!uploadLoading"><Check /></el-icon>
-                            <span>{{ uploadLoading ? '处理中...' : '确认导入' }}</span>
+                            <span>{{ uploadLoading ? langText.processing : langText.confirmImport }}</span>
                         </el-button>
                     </div>
                 </template>
             </el-dialog>
 
             <!-- 修改导出选项对话框 -->
-            <el-dialog v-model="exportDialogVisible" title="数据导出" width="480px" :close-on-click-modal="false" custom-class="tech-dialog" :show-close="true">
+            <el-dialog v-model="exportDialogVisible" :title="langText.dataExport" width="480px" :close-on-click-modal="false" custom-class="tech-dialog" :show-close="true">
                 <div class="tech-dialog-content">
                     <div class="tech-header">
                         <div class="tech-icon-container">
                             <el-icon class="tech-icon"><Download /></el-icon>
                         </div>
                         <div class="tech-title-container">
-                            <h3 class="tech-title">导出电脑列表数据</h3>
-                            <p class="tech-subtitle">请选择要导出的数据范围</p>
+                            <h3 class="tech-title">{{ langText.exportData }}</h3>
+                            <p class="tech-subtitle">{{ langText.exportRange }}</p>
                         </div>
                     </div>
                     
@@ -1594,8 +1750,8 @@ const getUserDropdownPosition = () => {
                                 <div class="tech-option-radio-inner" v-if="exportOption === 'current'"></div>
                             </div>
                             <div class="tech-option-content">
-                                <div class="tech-option-title">导出当前页数据</div>
-                                <div class="tech-option-details">仅导出当前页面显示的 {{ partList.length }} 条记录</div>
+                                <div class="tech-option-title">{{ langText.exportCurrentPage }}</div>
+                                <div class="tech-option-details">{{ langText.exportCurrentDetails }} {{ partList.length }} {{ langText.records }}</div>
                             </div>
                         </div>
                         
@@ -1604,22 +1760,22 @@ const getUserDropdownPosition = () => {
                                 <div class="tech-option-radio-inner" v-if="exportOption === 'all'"></div>
                             </div>
                             <div class="tech-option-content">
-                                <div class="tech-option-title">导出全部符合条件的数据</div>
-                                <div class="tech-option-details">导出符合当前筛选条件的全部 {{ total }} 条记录</div>
+                                <div class="tech-option-title">{{ langText.exportAllData }}</div>
+                                <div class="tech-option-details">{{ langText.exportAllDetails }} {{ total }} {{ langText.records }}</div>
                             </div>
                         </div>
                         
                         <div class="tech-warning" v-if="exportOption === 'all' && total > 1000">
                             <el-icon><Warning /></el-icon>
-                            <span>数据量较大，导出可能需要较长时间</span>
+                            <span>{{ langText.dataAmountWarning }}</span>
                         </div>
                     </div>
                 </div>
                 <template #footer>
                     <div class="tech-dialog-footer">
-                        <el-button @click="exportDialogVisible = false" class="tech-cancel-btn">取消</el-button>
+                        <el-button @click="exportDialogVisible = false" class="tech-cancel-btn">{{ langText.cancel }}</el-button>
                         <el-button type="primary" @click="exportTableData" :loading="exportLoading" class="tech-confirm-btn">
-                            <span class="tech-btn-text">确认导出</span>
+                            <span class="tech-btn-text">{{ langText.confirmExport }}</span>
                             <span class="tech-btn-icon"><i class="el-icon-right"></i></span>
                         </el-button>
                     </div>
@@ -1636,56 +1792,56 @@ const getUserDropdownPosition = () => {
                 <div class="trace-dialog-container">
                     <div class="trace-header">
                         <div class="trace-title">
-                            <span>电脑历史记录</span>
+                            <span>{{ langText.computerHistory }}</span>
                             <el-tag class="trace-tag" type="info">
-                                {{ currentComputer.ciName || '未命名电脑' }}
+                                {{ currentComputer.ciName || langText.unnamedComputer }}
                             </el-tag>
                         </div>
-                        <div class="trace-subtitle">按时间线追溯电脑历史状态变更</div>
+                        <div class="trace-subtitle">{{ langText.traceSubtitle }}</div>
                     </div>
                     
                     <!-- 新增：当前电脑属性 -->
                     <div class="current-properties">
                         <div class="property-header">
-                            <span>当前属性</span>
+                            <span>{{ langText.currentProperties }}</span>
                         </div>
                         <div class="property-content">
                             <div class="property-row">
                                 <div class="property-item">
-                                    <div class="property-label">电脑状态:</div>
+                                    <div class="property-label">{{ langText.pcStatus }}:</div>
                                     <div class="property-value">
                                         <el-tag :type="getStatusTagType(currentComputer.pcStatus)">
-                                            {{ currentComputer.pcStatus || '未知' }}
+                                            {{ currentComputer.pcStatus || (currentLang.value === 'zh' ? '未知' : 'Unknown') }}
                                         </el-tag>
                                     </div>
                                 </div>
                                 <div class="property-item">
-                                    <div class="property-label">NT账号:</div>
-                                    <div class="property-value">{{ currentComputer.ntAccount || '无' }}</div>
+                                    <div class="property-label">{{ langText.ntAccount }}:</div>
+                                    <div class="property-value">{{ currentComputer.ntAccount || (currentLang.value === 'zh' ? '无' : 'None') }}</div>
                                 </div>
                             </div>
                             <div class="property-row">
                                 <div class="property-item">
-                                    <div class="property-label">电脑归属情况:</div>
-                                    <div class="property-value">{{ currentComputer.pcClass || '无' }}</div>
+                                    <div class="property-label">{{ langText.pcClass }}:</div>
+                                    <div class="property-value">{{ currentComputer.pcClass || (currentLang.value === 'zh' ? '无' : 'None') }}</div>
                                 </div>
                                 <div class="property-item">
-                                    <div class="property-label">公司:</div>
-                                    <div class="property-value">{{ currentComputer.company || '无' }}</div>
+                                    <div class="property-label">{{ langText.company }}:</div>
+                                    <div class="property-value">{{ currentComputer.company || (currentLang.value === 'zh' ? '无' : 'None') }}</div>
                                 </div>
                             </div>
                             <div class="property-row">
                                 <div class="property-item">
-                                    <div class="property-label">当前用户:</div>
+                                    <div class="property-label">{{ currentLang.value === 'zh' ? '当前用户' : 'Current User' }}:</div>
                                     <div class="property-value">
                                         {{ currentComputer.lastName && currentComputer.firstName ? 
                                            `${currentComputer.lastName} ${currentComputer.firstName}` : 
-                                           (currentComputer.ntAccount || '无') }}
+                                           (currentComputer.ntAccount || (currentLang.value === 'zh' ? '无' : 'None')) }}
                                     </div>
                                 </div>
                                 <div class="property-item">
-                                    <div class="property-label">部门:</div>
-                                    <div class="property-value">{{ currentComputer.department || '无' }}</div>
+                                    <div class="property-label">{{ langText.departmentCol }}:</div>
+                                    <div class="property-value">{{ currentComputer.department || (currentLang.value === 'zh' ? '无' : 'None') }}</div>
                                 </div>
                             </div>
                             <div class="property-actions">
@@ -1694,7 +1850,7 @@ const getUserDropdownPosition = () => {
                                     :width="400"
                                     trigger="click">
                                     <template #reference>
-                                        <el-button type="primary" size="small" class="more-details-btn">更多详情</el-button>
+                                        <el-button type="primary" size="small" class="more-details-btn">{{ langText.moreDetails }}</el-button>
                                     </template>
                                     <div class="record-details">
                                         <div class="record-detail-row" v-for="(value, key) in getCurrentDetails()" :key="key">
@@ -1708,7 +1864,7 @@ const getUserDropdownPosition = () => {
                     </div>
                     
                     <div class="trace-content">
-                        <div class="trace-history-header">历史记录</div>
+                        <div class="trace-history-header">{{ langText.historyRecords }}</div>
                         <div v-if="traceLoading" class="trace-loading">
                             <el-skeleton :rows="5" animated />
                         </div>
@@ -1720,33 +1876,33 @@ const getUserDropdownPosition = () => {
                                 stripe
                                 style="width: 100%">
                                 <!-- 表格内容保持不变 -->
-                                <el-table-column type="index" label="序号" width="80" />
-                                <el-table-column prop="updateTime" label="更新时间" width="180" sortable />
-                                <el-table-column prop="pcStatus" label="电脑状态" width="150">
+                                <el-table-column type="index" :label="langText.sequence" width="80" />
+                                <el-table-column prop="updateTime" :label="langText.updateTime" width="180" sortable />
+                                <el-table-column prop="pcStatus" :label="langText.pcStatus" width="150">
                                     <template #default="{ row }">
                                         <el-tag :type="getStatusTagType(row.pcStatus)">
                                             {{ row.pcStatus }}
                                         </el-tag>
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="ntAccount" label="NT账号" width="150" />
-                                <el-table-column label="用户" width="180">
+                                <el-table-column prop="ntAccount" :label="langText.ntAccount" width="150" />
+                                <el-table-column :label="currentLang.value === 'zh' ? '用户' : 'User'" width="180">
                                     <template #default="{ row }">
                                         {{ row.lastName && row.firstName ? 
                                            `${row.lastName} ${row.firstName}` : 
-                                           (row.ntAccount || '无') }}
+                                           (row.ntAccount || (currentLang.value === 'zh' ? '无' : 'None')) }}
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="pcClass" label="电脑归属情况" width="300" />
-                                <el-table-column prop="company" label="公司" width="150" />
-                                <el-table-column label="更多信息" width="100">
+                                <el-table-column prop="pcClass" :label="langText.pcClass" width="300" />
+                                <el-table-column prop="company" :label="langText.company" width="150" />
+                                <el-table-column :label="langText.moreDetails" width="100">
                                     <template #default="{ row }">
                                         <el-popover
                                             placement="right"
                                             :width="400"
                                             trigger="click">
                                             <template #reference>
-                                                <el-button type="text">查看详情</el-button>
+                                                <el-button type="text">{{ langText.viewDetails }}</el-button>
                                             </template>
                                             <div class="record-details">
                                                 <div class="record-detail-row" v-for="(value, key) in getRecordDetails(row)" :key="key">
@@ -1760,7 +1916,7 @@ const getUserDropdownPosition = () => {
                             </el-table>
                             
                             <!-- 表格为空时显示的内容 -->
-                            <el-empty v-else description="暂无历史记录数据"></el-empty>
+                            <el-empty v-else :description="langText.noHistoryData"></el-empty>
                             
                             <!-- 分页 -->
                             <div class="trace-pagination" v-if="traceRecordList && traceRecordList.length > 0">
@@ -1782,7 +1938,7 @@ const getUserDropdownPosition = () => {
             <!-- 归还电脑确认弹窗 -->
             <el-dialog 
                 v-model="returnComputerDialogVisible" 
-                title="归还电脑确认" 
+                :title="langText.returnConfirm" 
                 width="480px" 
                 :close-on-click-modal="false"
                 custom-class="tech-dialog"
@@ -1793,30 +1949,30 @@ const getUserDropdownPosition = () => {
                             <el-icon class="tech-icon"><InfoFilled /></el-icon>
                         </div>
                         <div class="tech-title-container">
-                            <h3 class="tech-title">归还电脑确认</h3>
-                            <p class="tech-subtitle">请确认是否归还该设备</p>
+                            <h3 class="tech-title">{{ langText.returnConfirm }}</h3>
+                            <p class="tech-subtitle">{{ langText.confirmReturn }}</p>
                         </div>
                     </div>
                     
                     <div class="return-details">
                         <div class="return-detail-item">
-                            <div class="return-detail-label">电脑名称:</div>
-                            <div class="return-detail-value">{{ currentReturnComputer?.ciName || '未知' }}</div>
+                            <div class="return-detail-label">{{ langText.computerNameLabel }}</div>
+                            <div class="return-detail-value">{{ currentReturnComputer?.ciName || (currentLang.value === 'zh' ? '未知' : 'Unknown') }}</div>
                         </div>
                         <div class="return-detail-item">
-                            <div class="return-detail-label">当前使用者:</div>
+                            <div class="return-detail-label">{{ langText.currentUser }}</div>
                             <div class="return-detail-value">{{ currentReturnComputer?.lastName }} {{ currentReturnComputer?.firstName }}</div>
                         </div>
                         <div class="return-detail-item">
-                            <div class="return-detail-label">使用年限:</div>
-                            <div class="return-detail-value">{{ currentReturnComputer ? calculateYearsToToday(currentReturnComputer.lifeCycleStart) + ' 年' : '未知' }}</div>
+                            <div class="return-detail-label">{{ langText.useYears }}</div>
+                            <div class="return-detail-value">{{ currentReturnComputer ? calculateYearsToToday(currentReturnComputer.lifeCycleStart) + ' ' + langText.year : (currentLang.value === 'zh' ? '未知' : 'Unknown') }}</div>
                         </div>
                         <div class="return-detail-item">
-                            <div class="return-detail-label">归还后状态:</div>
+                            <div class="return-detail-label">{{ langText.statusAfterReturn }}</div>
                             <div class="return-detail-value">
                                 <el-select v-model="selectedReturnStatus" style="width: 100%">
-                                    <el-option label="待分配" value="To be assigned"></el-option>
-                                    <el-option label="待报废" value="To be scrapped"></el-option>
+                                    <el-option :label="langText.toBeAssigned" value="To be assigned"></el-option>
+                                    <el-option :label="langText.toBeScrapped" value="To be scrapped"></el-option>
                                 </el-select>
                             </div>
                         </div>
@@ -1824,20 +1980,20 @@ const getUserDropdownPosition = () => {
                         <div class="return-note">
                             <template v-if="currentReturnComputer && parseFloat(calculateYearsToToday(currentReturnComputer.lifeCycleStart)) > 8">
                                 <div class="note-icon"><el-icon><Warning /></el-icon></div>
-                                <div class="note-text">该电脑已使用超过8年，系统建议将其标记为报废状态，您可以根据实际情况调整</div>
+                                <div class="note-text">{{ langText.scrappedSuggestion }}</div>
                             </template>
                             <template v-else>
                                 <div class="note-icon"><el-icon><InfoFilled /></el-icon></div>
-                                <div class="note-text">归还后，该电脑将回到您选择的状态</div>
+                                <div class="note-text">{{ langText.returnNote }}</div>
                             </template>
                         </div>
                     </div>
                 </div>
                 <template #footer>
                     <div class="tech-dialog-footer">
-                        <el-button @click="returnComputerDialogVisible = false" class="tech-cancel-btn">取 消</el-button>
+                        <el-button @click="returnComputerDialogVisible = false" class="tech-cancel-btn">{{ langText.cancel }}</el-button>
                         <el-button type="primary" @click="confirmReturnComputer" :loading="returnComputerLoading" class="tech-confirm-btn">
-                            <span class="tech-btn-text">确认归还</span>
+                            <span class="tech-btn-text">{{ langText.confirmReturnBtn }}</span>
                             <span class="tech-btn-icon"><i class="el-icon-check"></i></span>
                         </el-button>
                     </div>

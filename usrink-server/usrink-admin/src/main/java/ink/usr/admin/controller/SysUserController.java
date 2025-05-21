@@ -39,6 +39,9 @@ public class SysUserController {
     @Autowired
     private ISysRoleService sysRoleService;
 
+    @Autowired
+    private ink.usr.admin.config.EmailConfig emailConfig;
+
     // 文件上传路径
     @Value("${file.upload.path}")
     private String uploadPath;
@@ -288,5 +291,36 @@ public class SysUserController {
             return Res.error("删除用户失败");
         }
         return Res.success();
+    }
+
+    /**
+     * 获取临时密码
+     */
+    @Log("获取临时密码")
+    @RequestMapping(value = "/getTempPassword")
+    public Res getTempPassword(String userName) {
+        if (StringUtil.isEmpty(userName)) {
+            return Res.error("用户名不能为空");
+        }
+        
+        log.info("正在处理获取临时密码请求，用户名: {}", userName);
+        
+        // 检查用户是否存在
+        SysUserModel sysUserModel = sysUserService.checkUserNameUnique(userName);
+        if (sysUserModel == null) {
+            return Res.error("该用户不存在，请联系IT进行处理");
+        }
+        
+        // 验证邮箱是否存在
+        if (StringUtil.isEmpty(sysUserModel.getEmail())) {
+            return Res.error("该用户未设置邮箱，请联系IT进行处理");
+        }
+        
+        // 发送邮件
+        String emailSubject = emailConfig.buildTempPasswordEmailSubject();
+        String emailContent = emailConfig.buildTempPasswordEmailContent(userName, sysUserModel.getUserPassword());
+        emailConfig.sendMail(sysUserModel.getEmail(), emailSubject, emailContent);
+        
+        return Res.success("临时密码已发送到您的邮箱，请查收");
     }
 }

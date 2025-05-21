@@ -33,14 +33,14 @@
         )
     </select>
 
-    <select id="getStatusByAprroval1Id" resultType="String">
-        select status
+    <select id="getStatusByAprroval1Id" resultType="java.util.Map">
+        select status, approvalReason, updatedAt
         from sys_approval_flow
         where approvalId = #{aprrovalId} and stage = 1
     </select>
 
-    <select id="getStatusByAprroval2Id" resultType="String">
-        select status
+    <select id="getStatusByAprroval2Id" resultType="java.util.Map">
+        select status, approvalReason, updatedAt
         from sys_approval_flow
         where approvalId = #{aprrovalId} and stage = 2
     </select>

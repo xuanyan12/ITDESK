@@ -1,14 +1,75 @@
 <script setup>
 import {computed, onMounted, ref, watch} from "vue"
 import {useNavStore} from "@/stores/_frame/navStore"
+import {useLanguageStore} from "@/stores/_frame/languageStore"
 import {useRouter} from "vue-router"
 
 const router = useRouter()
 const navStore = useNavStore()
+const languageStore = useLanguageStore()
+
+// 当前语言
+const currentLang = computed(() => languageStore.currentLang)
 
 // Tabs 列表
 // 数据结构：{label: '欢迎页', path: '/welcome', closable: false}
-const tabs = computed(() => navStore.tabs)
+const tabs = computed(() => {
+    // 获取原始标签数据
+    const originalTabs = navStore.tabs;
+    
+    // 如果是中文，直接返回原始标签
+    if (currentLang.value === 'zh') {
+        return originalTabs;
+    }
+    
+    // 如果是英文，需要进行深拷贝并翻译标签文本
+    return originalTabs.map(tab => {
+        const newTab = {...tab};
+        newTab.label = translateTabLabel(tab.label);
+        return newTab;
+    });
+});
+
+// 单个标签项翻译 - 根据常见中文标签项提供英文翻译
+const translateTabLabel = (label) => {
+    const translations = {
+        '欢迎页': 'Welcome',
+        '控制台': 'Dashboard',
+        '系统管理': 'System',
+        '用户管理': 'Users',
+        '角色管理': 'Roles',
+        '权限管理': 'Permissions',
+        '菜单管理': 'Menus',
+        '部门管理': 'Departments',
+        '日志管理': 'Logs',
+        '系统日志': 'System Logs',
+        '登录日志': 'Login Logs',
+        '操作日志': 'Operation Logs',
+        '个人中心': 'Profile',
+        '修改密码': 'Change Password',
+        '我的消息': 'Messages',
+        '设备管理': 'Devices',
+        '设备列表': 'Device List',
+        '设备分类': 'Device Categories',
+        '设备监控': 'Device Monitoring',
+        '报表中心': 'Reports',
+        '统计分析': 'Statistics',
+        '数据导出': 'Data Export',
+        '网络管理': 'Network',
+        '通知公告': 'Announcements',
+        'IT系统中心': 'IT Center',
+        '电脑管理系统': 'PC',
+        '电脑管理': 'PC Management',
+        '电脑申请': 'PC Request',
+        '电脑审批': 'PC Approval',
+        '订单管理': 'Orders',
+        '电脑追溯': 'PC Tracking',
+        '后台管理': 'Admin'
+    };
+    
+    // 返回翻译后的文本，如果没有翻译则返回原文
+    return translations[label] || label;
+};
 
 // 当前激活的Tab的name，也就是当前路由的path
 const activeTab = ref('')
@@ -26,6 +87,16 @@ watch(() => navStore.routeInfo, (routeInfo) => {
     tabsChange(routeInfo)
 })
 
+// 多语言文本
+const langText = computed(() => {
+    return {
+        closeOther: currentLang.value === 'zh' ? '关闭其他' : 'Close Others',
+        closeLeft: currentLang.value === 'zh' ? '关闭左边' : 'Close Left',
+        closeRight: currentLang.value === 'zh' ? '关闭右边' : 'Close Right',
+        closeAll: currentLang.value === 'zh' ? '关闭全部' : 'Close All'
+    }
+});
+
 /**
  * tabs change 事件
  * 如果Tabs中已经存在当前导航，那么设置高亮
@@ -38,11 +109,11 @@ const tabsChange = (routeInfo) => {
         return
     }
 
-    let findTab = tabs.value.find((tab) => tab.path === routeInfo.path)
+    let findTab = navStore.tabs.find((tab) => tab.path === routeInfo.path)
     if (findTab) {
         activeTab.value = findTab.path
     } else {
-        tabs.value.push({
+        navStore.tabs.push({
             label: routeInfo.label,
             path: routeInfo.path,
             closable: routeInfo.path !== '/welcome'
@@ -67,9 +138,9 @@ const tabClose = (tabName) => {
     // 如果删除的是当前激活的Tab
     // 那么路由跳转到下一个Tab，如果不存在下一个Tab，那么跳上一个Tab
     if (activeTab.value === tabName) {
-        tabs.value.forEach((tab, index) => {
+        navStore.tabs.forEach((tab, index) => {
             if (tab.path === tabName) {
-                let nextTab = tabs.value[index + 1] || tabs.value[index - 1]
+                let nextTab = navStore.tabs[index + 1] || navStore.tabs[index - 1]
                 if (nextTab) {
                     // 跳转到下一个Tab
                     router.push(nextTab.path)
@@ -82,7 +153,7 @@ const tabClose = (tabName) => {
     removeTab(tabName)
 
     // Tabs 被删完了的话，重新进入欢迎页
-    if (tabs.value.length === 0) {
+    if (navStore.tabs.length === 0) {
         router.push('/welcome')
     }
 }
@@ -94,7 +165,7 @@ const tabClose = (tabName) => {
 const removeTab = (tabName) => {
 
     // 过滤没有被删的Tab
-    navStore.tabs = tabs.value.filter(tab => tab.path !== tabName);
+    navStore.tabs = navStore.tabs.filter(tab => tab.path !== tabName);
 
     // 销毁被删页面组件的缓存
     navStore.includes = navStore.includes.filter(item => item.path !== tabName)
@@ -105,7 +176,7 @@ const removeTab = (tabName) => {
  */
 const closeOther = () => {
     let waitCloseTabs = []
-    tabs.value.forEach((tab) => {
+    navStore.tabs.forEach((tab) => {
         if (tab.path !== activeTab.value && tab.closable) {
             waitCloseTabs.push(tab.path)
         }
@@ -120,9 +191,9 @@ const closeOther = () => {
  */
 const closeLeft = () => {
     let waitCloseTabs = []
-    for (let i = 0; i < tabs.value.length; i++) {
-        let path = tabs.value[i].path
-        if (path !== activeTab.value && tabs.value[i].closable) {
+    for (let i = 0; i < navStore.tabs.length; i++) {
+        let path = navStore.tabs[i].path
+        if (path !== activeTab.value && navStore.tabs[i].closable) {
             waitCloseTabs.push(path)
         }
     }
@@ -136,9 +207,9 @@ const closeLeft = () => {
  */
 const closeRight = () => {
     let waitCloseTabs = []
-    for (let i = tabs.value.length - 1; i >= 0; i--) {
-        let path = tabs.value[i].path
-        if (path !== activeTab.value && tabs.value[i].closable) {
+    for (let i = navStore.tabs.length - 1; i >= 0; i--) {
+        let path = navStore.tabs[i].path
+        if (path !== activeTab.value && navStore.tabs[i].closable) {
             waitCloseTabs.push(path)
         }
     }
@@ -152,9 +223,9 @@ const closeRight = () => {
  */
 let closeAll = () => {
     let waitCloseTabs = []
-    for (let i = 0; i < tabs.value.length; i++) {
-        let path = tabs.value[i].path
-        if (tabs.value[i].closable) {
+    for (let i = 0; i < navStore.tabs.length; i++) {
+        let path = navStore.tabs[i].path
+        if (navStore.tabs[i].closable) {
             waitCloseTabs.push(path)
         }
     }
@@ -181,7 +252,7 @@ const dropdownEvent = (command) => {
     mapDrive.get(command)();
 
     // Tabs 被删完了的话，重新进入欢迎页
-    if (tabs.value.length === 0) {
+    if (navStore.tabs.length === 0) {
         router.push('/welcome')
     }
 }
@@ -220,25 +291,25 @@ const dropdownEvent = (command) => {
                             <el-icon>
                                 <Close/>
                             </el-icon>
-                            关闭其他
+                            {{ langText.closeOther }}
                         </el-dropdown-item>
                         <el-dropdown-item command="closeLeft">
                             <el-icon>
                                 <ArrowLeft/>
                             </el-icon>
-                            关闭左边
+                            {{ langText.closeLeft }}
                         </el-dropdown-item>
                         <el-dropdown-item command="closeRight">
                             <el-icon>
                                 <ArrowRight/>
                             </el-icon>
-                            关闭右边
+                            {{ langText.closeRight }}
                         </el-dropdown-item>
                         <el-dropdown-item command="closeAll">
                             <el-icon>
                                 <CircleClose/>
                             </el-icon>
-                            关闭全部
+                            {{ langText.closeAll }}
                         </el-dropdown-item>
                     </el-dropdown-menu>
                 </template>

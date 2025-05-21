@@ -100,40 +100,37 @@ public class SysApplyController {
             // 获取申请人姓名
             String applicantName = sysUserService.getUserNickNameByUserId(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()));
             applicantName = applicantName != null ? applicantName : "未知申请人";
-            
-            // 构建邮件内容，包含所有申请信息
-            StringBuilder emailContent = new StringBuilder();
-            emailContent.append("设备申请审批\n\n");
-            emailContent.append("申请人: ").append(applicantName).append("\n");
-            emailContent.append("申请类别: ").append(sysApplyRequestDTO.getDeviceCategory()).append("\n");
-            emailContent.append("电脑类型: ").append(sysApplyRequestDTO.getDeviceType()).append("\n");
-            emailContent.append("成本中心: ").append(sysApplyRequestDTO.getCostCenter()).append("\n");
-            emailContent.append("所属公司: ").append(sysApplyRequestDTO.getCompany()).append("\n");
-            emailContent.append("责任人: ").append(sysUserService.getUserInfoByUserName(sysApplyRequestDTO.getResponsibilityName()).getUserNick()).append("\n");
-            emailContent.append("电脑情形: ").append(sysApplyRequestDTO.getDeviceSituation()).append("\n");
-            emailContent.append("公司系统: ").append(sysApplyRequestDTO.getCompanySystem()).append("\n");
-            emailContent.append("申请理由: ").append(sysApplyRequestDTO.getReason()).append("\n");
-            
-            if (sysApplyRequestDTO.getCiName() != null && !sysApplyRequestDTO.getCiName().isEmpty()) {
-                emailContent.append("需要更换的电脑: ").append(sysApplyRequestDTO.getCiName()).append("\n");
-            }
-            
-            emailContent.append("\n请点击以下链接进行审批: \n").append(url);
 
+            // 获取责任人姓名
+            String responsibilityName = sysUserService.getUserInfoByUserName(sysApplyRequestDTO.getResponsibilityName()).getUserNick();
+            
             // 发邮件给一级审批人
             // 1.获取一级审批人id
             Long approverId = sysApproverService.getApproverIdUseCostCenter(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()), sysApplyRequestDTO.getCostCenter());
             // 2.根据审批人id获取邮箱
             // 通过审批人id获取其userId
             Long userApproverId = sysApproverService.getApproverInfoByApproverId(approverId);
-            String email = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userApproverId)).getEmail();
-            String approverEmail = email;
+            String approverEmail = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userApproverId)).getEmail();
             
-            // 组装邮件主题
-            String emailSubject = String.format("设备申请审批 - %s - %s", applicantName, sysApplyRequestDTO.getDeviceCategory());
+            // 使用EmailConfig构建和发送邮件
+            String emailContent = emailConfig.buildApplyEmailContent(
+                    applicantName,
+                    sysApplyRequestDTO.getDeviceCategory(),
+                    sysApplyRequestDTO.getDeviceType(),
+                    sysApplyRequestDTO.getCostCenter(),
+                    sysApplyRequestDTO.getCompany(),
+                    responsibilityName,
+                    sysApplyRequestDTO.getDeviceSituation(),
+                    sysApplyRequestDTO.getCompanySystem(),
+                    sysApplyRequestDTO.getReason(),
+                    sysApplyRequestDTO.getCiName(),
+                    url
+            );
+            
+            String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, sysApplyRequestDTO.getDeviceCategory());
             
             // 发送邮件
-            emailConfig.sendMail(approverEmail, emailSubject, emailContent.toString());
+            emailConfig.sendMail(approverEmail, emailSubject, emailContent);
             
             return Res.success("申请提交成功，已发送审批邮件");
         } catch (Exception e) {

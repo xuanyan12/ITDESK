@@ -1,9 +1,10 @@
 <script setup>
-import {ref} from "vue";
+import {ref, computed} from "vue";
 import loginUtil from "@/utils/LoginUtil";
 import httpUtil from "@/utils/HttpUtil";
 import {useRouter} from 'vue-router'
 import {ElMessage} from "element-plus";
+import { ArrowDown } from '@element-plus/icons-vue';
 
 const router = useRouter()
 
@@ -16,15 +17,38 @@ const loginForm = ref({
     password: ''
 })
 
+// 当前语言: 'zh' 中文, 'en' 英文
+const currentLang = ref('zh')
+
+// 语言切换处理函数
+const handleLangChange = (command) => {
+    currentLang.value = command
+}
+
+// 多语言文本
+const langText = computed(() => {
+    return {
+        title: currentLang.value === 'zh' ? 'SEG IT管理系统' : 'SEG IT Management',
+        systemLogin: currentLang.value === 'zh' ? '系统登录' : 'System Login',
+        username: currentLang.value === 'zh' ? '用户名' : 'Username',
+        password: currentLang.value === 'zh' ? '密码' : 'Password',
+        login: currentLang.value === 'zh' ? '登录' : 'Login',
+        footer: currentLang.value === 'zh' ? 'Copyright © 2025 SEG IT 部门. 保留所有权利' : 'Copyright © 2025 SEG IT Department. All Rights Reserved',
+        usernameRequired: currentLang.value === 'zh' ? '用户名不能为空，请输入用户名！' : 'Username cannot be empty!',
+        passwordRequired: currentLang.value === 'zh' ? '密码不能为空，请输入密码！' : 'Password cannot be empty!',
+        getTempPassword: currentLang.value === 'zh' ? '获取临时密码' : 'Get Temporary Password'
+    }
+})
+
 // 登录事件
 const submitLogin = () => {
     // 验证表单
     if (!loginForm.value.userName) {
-        ElMessage.error('用户名不能为空，请输入用户名！')
+        ElMessage.error(langText.value.usernameRequired)
         return
     }
     if (!loginForm.value.password) {
-        ElMessage.error('密码不能为空，请输入密码！')
+        ElMessage.error(langText.value.passwordRequired)
         return
     }
 
@@ -44,6 +68,24 @@ const submitLogin = () => {
         loading.value = false
     })
 }
+
+// 获取临时密码
+const getTempPassword = () => {
+    // 验证用户名
+    if (!loginForm.value.userName) {
+        ElMessage.error(langText.value.usernameRequired)
+        return
+    }
+    
+    httpUtil.get(`/sysUser/getTempPassword?userName=${loginForm.value.userName}`).then(res => {
+        ElMessage({
+            type: 'success',
+            message: res.msg
+        })
+    }).catch(err => {
+        console.error(err)
+    })
+}
 </script>
 
 <template>
@@ -55,14 +97,29 @@ const submitLogin = () => {
             <div class="particle-network"></div>
         </div>
 
+        <!-- 语言切换下拉框 - 移到屏幕右上角 -->
+        <div class="lang-dropdown">
+            <el-dropdown @command="handleLangChange">
+                <span class="lang-dropdown-link">
+                    {{ currentLang === 'zh' ? 'ZH' : 'EN' }}
+                    <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                </span>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item :command="'zh'" :class="{ 'active-lang': currentLang === 'zh' }">ZH 中文</el-dropdown-item>
+                        <el-dropdown-item :command="'en'" :class="{ 'active-lang': currentLang === 'en' }">EN English</el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+        </div>
+
         <div class="login-card">
             <!-- 左侧品牌区域 -->
             <div class="brand-section">
             <div class="logo-container">
                 <img src="/SEG-logo.png" alt="SEG Logo" class="seg-logo">
                 </div>
-                <h2 class="brand-title">SEG IT Management</h2>
-                <p class="brand-slogan">智能、高效、安全的IT管理平台</p>
+                <h2 class="brand-title">{{ langText.title }}</h2>
             </div>
             
             <!-- 右侧登录表单区域 -->
@@ -72,14 +129,14 @@ const submitLogin = () => {
                 class="tech-form"
                 @submit.native.prevent @keyup.enter="submitLogin">
                 <h3 class="tech-title">
-                    <span class="gradient-text">系统登录</span>
+                        <span class="gradient-text">{{ langText.systemLogin }}</span>
                 </h3>
                 <div class="title-decoration"></div>
                 
                 <el-form-item>
                     <el-input
                         v-model="loginForm.userName"
-                        placeholder="用户名"
+                            :placeholder="langText.username"
                         size="large"
                         prefix-icon="UserFilled"
                         clearable
@@ -88,7 +145,7 @@ const submitLogin = () => {
                 <el-form-item>
                     <el-input
                         v-model="loginForm.password"
-                        placeholder="密码"
+                            :placeholder="langText.password"
                         type="password"
                         size="large"
                         prefix-icon="Lock"
@@ -96,21 +153,30 @@ const submitLogin = () => {
                         class="tech-input"/>
                 </el-form-item>
                 <el-form-item>
-                    <el-button
-                        type="primary"
-                        :loading="loading"
-                        @click="submitLogin"
-                        size="large"
-                        class="tech-button">
-                        登录
-                    </el-button>
+                    <div class="button-container">
+                        <el-button
+                            type="primary"
+                            :loading="loading"
+                            @click="submitLogin"
+                            size="large"
+                            class="tech-button login-btn">
+                                {{ langText.login }}
+                        </el-button>
+                        <el-button
+                            type="primary"
+                            @click="getTempPassword"
+                            size="large"
+                            class="tech-button temp-password-btn">
+                                {{ langText.getTempPassword }}
+                        </el-button>
+                    </div>
                 </el-form-item>
                 </el-form>
             </div>
                     </div>
             
             <div class="tech-footer">
-                <span>© 2025 SEG IT 部门. 保留所有权利</span>
+            <span>{{ langText.footer }}</span>
         </div>
     </section>
 </template>
@@ -195,6 +261,41 @@ const submitLogin = () => {
     position: relative;
 }
 
+/* 语言下拉菜单 - 移到屏幕右上角 */
+.lang-dropdown {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.lang-dropdown-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 5px 12px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    background: rgba(0, 83, 137, 0.4);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.lang-dropdown-link:hover {
+    background: rgba(0, 83, 137, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+:deep(.active-lang) {
+    color: #005389;
+    font-weight: bold;
+    background-color: rgba(0, 83, 137, 0.1);
+}
+
 /* 左侧品牌区域 */
 .brand-section {
     width: 40%;
@@ -221,7 +322,7 @@ const submitLogin = () => {
 }
 
 .logo-container {
-    margin-bottom: 30px;
+    margin-bottom: 15px; /* 减小间距，使logo和标题更接近 */
     position: relative;
     z-index: 5;
 }
@@ -239,15 +340,6 @@ const submitLogin = () => {
     margin-bottom: 10px;
     text-align: center;
     font-family: 'Montserrat', sans-serif;
-    position: relative;
-    z-index: 5;
-}
-
-.brand-slogan {
-    font-size: 16px;
-    opacity: 0.9;
-    text-align: center;
-    margin-bottom: 0;
     position: relative;
     z-index: 5;
 }
@@ -354,6 +446,36 @@ const submitLogin = () => {
     box-shadow: 0 4px 10px rgba(0, 83, 137, 0.1);
 }
 
+.button-container {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.button-container .login-btn,
+.button-container .temp-password-btn {
+    flex: 1;
+    margin-top: 0;
+}
+
+.tech-button.temp-password-btn {
+    background: linear-gradient(135deg, #005389, #029165);
+    border: none;
+    box-shadow: 0 6px 15px rgba(0, 83, 137, 0.15);
+    transition: all 0.3s ease;
+}
+
+.tech-button.temp-password-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 83, 137, 0.2);
+    background: linear-gradient(135deg, #0068ab, #02a674);
+}
+
+.tech-button.temp-password-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(0, 83, 137, 0.1);
+}
+
 .tech-footer {
     margin-top: 20px;
     color: rgba(0, 83, 137, 0.7);
@@ -392,8 +514,10 @@ const submitLogin = () => {
         font-size: 20px;
     }
     
-    .brand-slogan {
-        font-size: 14px;
+    /* 响应式语言选择器位置调整 */
+    .lang-dropdown {
+        top: 10px;
+        right: 10px;
     }
 }
 </style>

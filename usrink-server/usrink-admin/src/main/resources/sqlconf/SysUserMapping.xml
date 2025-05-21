@@ -86,7 +86,7 @@
     <select id="checkUserNameUnique" parameterType="java.lang.String"
             resultType="ink.usr.common.model.mysql.SysUserModel">
         <include refid="selectSysUserSql"/>
-        where userName = #{userName} limit 1
+        where UPPER(userName) = UPPER(#{userName}) limit 1
     </select>
 
     <!-- 修改用户 -->

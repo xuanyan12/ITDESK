@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface SysApprovalFlowMapper {
@@ -55,9 +56,9 @@ public interface SysApprovalFlowMapper {
     int updateApprovalFlow(SysApprovalFlowModel flowModel);
 
 
-    String getStatusByAprroval1Id(Long aprrovalId);
+    Map<String, Object> getStatusByAprroval1Id(Long aprrovalId);
 
-    String getStatusByAprroval2Id(Long aprrovalId);
+    Map<String, Object> getStatusByAprroval2Id(Long aprrovalId);
 
     /**
      * 根据申请ID获取二级审批流

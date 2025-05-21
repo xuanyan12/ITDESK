@@ -22,5 +22,12 @@ public class SysApproversVO {
     private String status1;
     // status2
     private String status2;
-
+    // approvalReason1 - 审批理由1
+    private String approvalReason1;
+    // approvalReason2 - 审批理由2
+    private String approvalReason2;
+    // updatedAt1 - 审批更新时间1
+    private String updatedAt1;
+    // updatedAt2 - 审批更新时间2
+    private String updatedAt2;
 }

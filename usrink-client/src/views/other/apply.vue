@@ -3,10 +3,10 @@
     <!-- 我的电脑 -->
     <el-card shadow="never" class="usr_card_override top">
       <div class="title-with-select">
-        <h3>我的电脑</h3>
+        <h3>{{ t('我的电脑') }}</h3>
         <el-select 
           v-model="selectedComputer" 
-          placeholder="名下电脑选择" 
+          :placeholder="t('名下电脑选择')" 
           @change="handleComputerSelect"
           style="width: 200px">
           <el-option 
@@ -19,41 +19,41 @@
       </div>
       <div v-if="myComputer" class="my-computer-container">
         <el-descriptions :column="3" border size="small" class="elegant-descriptions" :label-width="120" :content-width="200">
-          <el-descriptions-item label="电脑名称" width="300">{{ myComputer.ciName }}</el-descriptions-item>
-          <el-descriptions-item label="NT账号" width="300">{{ myComputer.ntAccount }}</el-descriptions-item>
-          <el-descriptions-item label="部门号" width="300">{{ myComputer.department }}</el-descriptions-item>
-          <el-descriptions-item label="姓" width="300">{{ myComputer.lastName }}</el-descriptions-item>
-          <el-descriptions-item label="名" width="300">{{ myComputer.firstName }}</el-descriptions-item>
-          <el-descriptions-item label="电脑使用状态" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
-          <el-descriptions-item label="电脑归属情况" v-if="myComputer.pcClass" width="300">{{ myComputer.pcClass }}</el-descriptions-item>
-          <el-descriptions-item label="电脑情况备注" width="300">{{ myComputer.comment }}</el-descriptions-item>
-          <el-descriptions-item label="出厂时间" width="300">{{ formatDate(myComputer.lifeCycleStart) }}</el-descriptions-item>
-          <el-descriptions-item label="manufacturer" v-if="myComputer.manufacturer" width="300">{{ myComputer.manufacturer }}</el-descriptions-item>
-          <el-descriptions-item label="model" v-if="myComputer.model" width="300">{{ myComputer.model }}</el-descriptions-item>
-          <el-descriptions-item label="assetTag" v-if="myComputer.assetTag" width="300">{{ myComputer.assetTag }}</el-descriptions-item>
-          <el-descriptions-item label="ipAddress" v-if="myComputer.ipAddress" width="300">{{ myComputer.ipAddress }}</el-descriptions-item>
-          <el-descriptions-item label="macAddress" v-if="myComputer.macAddress" width="300">{{ myComputer.macAddress }}</el-descriptions-item>
-          <el-descriptions-item label="os" v-if="myComputer.os" width="300">{{ myComputer.os }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑名称')" width="300">{{ myComputer.ciName }}</el-descriptions-item>
+          <el-descriptions-item :label="t('NT账号')" width="300">{{ myComputer.ntAccount }}</el-descriptions-item>
+          <el-descriptions-item :label="t('部门号')" width="300">{{ myComputer.department }}</el-descriptions-item>
+          <el-descriptions-item :label="t('姓')" width="300">{{ myComputer.lastName }}</el-descriptions-item>
+          <el-descriptions-item :label="t('名')" width="300">{{ myComputer.firstName }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑使用状态')" width="300">{{ myComputer.pcStatus }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑归属情况')" v-if="myComputer.pcClass" width="300">{{ myComputer.pcClass }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑情况备注')" width="300">{{ myComputer.comment }}</el-descriptions-item>
+          <el-descriptions-item :label="t('出厂时间')" width="300">{{ formatDate(myComputer.lifeCycleStart) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('制造商')" v-if="myComputer.manufacturer" width="300">{{ myComputer.manufacturer }}</el-descriptions-item>
+          <el-descriptions-item :label="t('型号')" v-if="myComputer.model" width="300">{{ myComputer.model }}</el-descriptions-item>
+          <el-descriptions-item :label="t('资产标签')" v-if="myComputer.assetTag" width="300">{{ myComputer.assetTag }}</el-descriptions-item>
+          <el-descriptions-item :label="t('IP地址')" v-if="myComputer.ipAddress" width="300">{{ myComputer.ipAddress }}</el-descriptions-item>
+          <el-descriptions-item :label="t('MAC地址')" v-if="myComputer.macAddress" width="300">{{ myComputer.macAddress }}</el-descriptions-item>
+          <el-descriptions-item :label="t('操作系统')" v-if="myComputer.os" width="300">{{ myComputer.os }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div v-else class="no-computer-data">
-        <el-empty description="暂无电脑信息" />
+        <el-empty :description="t('暂无电脑信息')" />
       </div>
     </el-card>
 
     <!-- 设备申请表单 -->
     <el-card shadow="never" class="usr_card_override top">
-      <h3>电脑申请</h3>
-      <el-form :model="applicationForm" ref="applicationFormRef" label-width="120px" class="application-form" :rules="rules">
+      <h3>{{ t('电脑申请') }}</h3>
+      <el-form :model="applicationForm" ref="applicationFormRef" label-width="150px" class="application-form" :rules="rules">
         <el-row :gutter="20">
 
 
           <el-col :span="12">
-            <el-form-item label="使用人" prop="user">
+            <el-form-item :label="t('使用人')" prop="user">
               <div class="user-input-container">
                 <el-input 
                   v-model="applicationForm.user" 
-                  placeholder="请输入使用人" 
+                  :placeholder="t('请输入使用人')" 
                   style="width: 100%"
                   clearable
                   @input="handleUserInput"
@@ -72,7 +72,7 @@
                     </div>
                   </div>
                   <div v-else class="no-results">
-                    未找到相关用户
+                    {{ t('未找到相关用户') }}
                   </div>
                 </div>
               </div>
@@ -80,16 +80,16 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="成本中心" prop="costCenter">
-              <el-select v-model="applicationForm.costCenter" placeholder="请选择成本中心" style="width: 100%" :disabled="isCostCenterDisabled">
+            <el-form-item :label="t('成本中心')" prop="costCenter">
+              <el-select v-model="applicationForm.costCenter" :placeholder="t('请选择成本中心')" style="width: 100%" :disabled="isCostCenterDisabled">
                 <el-option v-for="item in costCenters" :key="item" :label="item" :value="item"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="所属公司" prop="company">
-              <el-select v-model="applicationForm.company" placeholder="请选择所属公司" style="width: 100%">
+            <el-form-item :label="t('所属公司')" prop="company">
+              <el-select v-model="applicationForm.company" :placeholder="t('请选择所属公司')" style="width: 100%">
                 <el-option v-for="item in companies" :key="item" :label="item" :value="item"></el-option>
                 <el-option label="SGCS" value="SGCS"></el-option>
                 <el-option label="SGCC" value="SGCC"></el-option>
@@ -99,35 +99,35 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="责任人" prop="responsible">
-              <el-select v-model="applicationForm.responsible" placeholder="请选择责任人" style="width: 100%">
+            <el-form-item :label="t('责任人')" prop="responsible">
+              <el-select v-model="applicationForm.responsible" :placeholder="t('请选择责任人')" style="width: 100%">
                 <el-option v-for="item in responsiblePersons" :key="item" :label="item" :value="item"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="申请类别" prop="applicationType">
+            <el-form-item :label="t('申请类别')" prop="applicationType">
               <el-select 
                 v-model="applicationForm.applicationType" 
-                placeholder="请选择申请类别" 
+                :placeholder="t('请选择申请类别')" 
                 style="width: 100%" 
                 @change="handleApplicationTypeChange"
                 :disabled="isApplicationTypeDisabled">
-                <el-option label="办公电脑超六年换新" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="办公电脑未超六年换新" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="办公电脑未超六年换旧" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="秘书代申请新岗位员工电脑" value="secretaryNewEmployee" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="秘书代申请替代岗位员工电脑" value="secretaryReplacement" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="秘书代申请新实习生/外服电脑" value="secretaryIntern" :disabled="isPublicUseComputer"></el-option>
-                <el-option label="其他用途电脑申请" value="specialPurpose"></el-option>
+                <el-option :label="t('办公电脑超六年换新')" value="pcRenewalOverSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('办公电脑未超六年换新')" value="pcRenewalUnderSixYears" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('办公电脑未超六年换旧')" value="pcRenewalUnderSixYearsOld" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('秘书代申请新岗位员工电脑')" value="secretaryNewEmployee" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('秘书代申请替代岗位员工电脑')" value="secretaryReplacement" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('秘书代申请新实习生/外服电脑')" value="secretaryIntern" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('其他用途电脑申请')" value="specialPurpose"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="电脑类型" prop="deviceType">
-              <el-select v-model="applicationForm.deviceType" placeholder="请选择电脑类型" style="width: 100%">
+            <el-form-item :label="t('电脑类型')" prop="deviceType">
+              <el-select v-model="applicationForm.deviceType" :placeholder="t('请选择电脑类型')" style="width: 100%">
                 <el-option label="Standard Notebook" value="Standard Notebook"></el-option>
                 <el-option label="Performance Notebook" value="Performance Notebook"></el-option>
                 <el-option label="Standard Desktop" value="Standard Desktop"></el-option>
@@ -137,25 +137,25 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="电脑情形" prop="computerCondition">
+            <el-form-item :label="t('电脑情形')" prop="computerCondition">
               <el-radio-group v-model="applicationForm.computerCondition" :disabled="isComputerConditionDisabled">
-                <el-radio label="新电脑">新电脑</el-radio>
-                <el-radio label="库存旧电脑">库存旧电脑</el-radio>
+                <el-radio :label="'新电脑'">{{ t('新电脑') }}</el-radio>
+                <el-radio :label="'库存旧电脑'">{{ t('库存旧电脑') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="公司系统" prop="companySys">
+            <el-form-item :label="t('公司系统')" prop="companySys">
               <el-radio-group v-model="applicationForm.companySys">
-                <el-radio label="是（公司系统）">是（公司系统）</el-radio>
-                <el-radio label="否（非标系统）" disabled>否（非标系统）</el-radio>
+                <el-radio :label="'是（公司系统）'">{{ t('是（公司系统）') }}</el-radio>
+                <el-radio :label="'否（非标系统）'" disabled>{{ t('否（非标系统）') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
 
           <el-col :span="24">
-            <el-form-item label="申请理由" prop="reason">
+            <el-form-item :label="t('申请理由')" prop="reason">
               <el-input
                 v-model="applicationForm.reason"
                 :placeholder="reasonPlaceholder"
@@ -169,8 +169,8 @@
         </el-row>
 
         <el-form-item>
-          <el-button type="primary" @click="submitApplication">提交申请</el-button>
-          <el-button @click="resetForm">重置</el-button>
+          <el-button type="primary" @click="submitApplication">{{ t('提交申请') }}</el-button>
+          <el-button @click="resetForm">{{ t('重置') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -178,9 +178,9 @@
     <!-- 申请状态显示 -->
     <el-card shadow="never" class="usr_card_override top" style="margin-top: 20px;">
       <div class="table-header">
-        <h3 class="section-title">我的申请状态</h3>
+        <h3 class="section-title">{{ t('我的申请状态') }}</h3>
         <el-button type="primary" size="small" @click="refreshApplyList">
-          <i class="el-icon-refresh"></i> 刷新
+          <i class="el-icon-refresh"></i> {{ t('刷新') }}
         </el-button>
       </div>
       <el-table 
@@ -193,31 +193,31 @@
         highlight-current-row
         :table-layout="'fixed'"
         class="application-table">
-        <el-table-column label="申请时间" prop="createdAt" width="160"></el-table-column>
-        <el-table-column label="使用人" prop="userName" width="250"></el-table-column>
-        <el-table-column label="责任人" prop="responsibilityName" width="150"></el-table-column>
-        <el-table-column label="电脑类型" prop="deviceType" width="180">
+        <el-table-column :label="t('申请时间')" prop="createdAt" width="160"></el-table-column>
+        <el-table-column :label="t('使用人')" prop="userName" width="250"></el-table-column>
+        <el-table-column :label="t('责任人')" prop="responsibilityName" width="250"></el-table-column>
+        <el-table-column :label="t('电脑类型')" prop="deviceType" width="180">
           <template #default="{ row }">
             {{ getDeviceTypeName(row.deviceType) }}
           </template>
         </el-table-column>
-        <el-table-column label="电脑名称" prop="ciName" width="140">
+        <el-table-column :label="t('电脑名称')" prop="ciName" width="140">
           <template #default="{ row }">
-            {{ row.ciName || '申请新电脑' }}
+            {{ row.ciName || t('申请新电脑') }}
           </template>
         </el-table-column>
-        <el-table-column label="申请类别" prop="deviceCategory" width="220">
+        <el-table-column :label="t('申请类别')" prop="deviceCategory" width="220">
           <template #default="{ row }">
             {{ getApplicationTypeName(row.deviceCategory) }}
           </template>
         </el-table-column>
-        <el-table-column label="申请理由" prop="reason" min-width="250" show-overflow-tooltip></el-table-column>
-        <el-table-column label="更新时间" prop="updatedAt" width="160"></el-table-column>
-        <el-table-column label="状态" prop="status" width="130" align="center" fixed="right">
+        <el-table-column :label="t('申请理由')" prop="reason" min-width="250" show-overflow-tooltip></el-table-column>
+        <el-table-column :label="t('更新时间')" prop="updatedAt" width="160"></el-table-column>
+        <el-table-column :label="t('状态')" prop="status" width="130" align="center" fixed="right">
           <template #default="{ row }">
             <div style="text-align: center;">
               <el-tag :type="statusTagType(row.status)" @click="viewApprovalProgress(row)">
-                {{ row.status }}
+                {{ t(row.status) }}
               </el-tag>
               <!-- 如果状态为审批通过，显示分配状态 -->
               <el-tag 
@@ -226,15 +226,15 @@
                 style="margin-top: 5px; cursor: pointer;"
                 @click="viewAssignProgress(row)"
               >
-                {{ row.assignStatus || '分配中' }}
+                {{ t(row.assignStatus || '分配中') }}
               </el-tag>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right" align="center">
+        <el-table-column :label="t('操作')" width="100" fixed="right" align="center">
           <template #default="{ row }">
             <div style="text-align: center; display: flex; justify-content: center;">
-              <el-button type="primary" text @click="viewApplicationDetails(row)">查看详情</el-button>
+              <el-button type="primary" text @click="viewApplicationDetails(row)">{{ t('查看详情') }}</el-button>
             </div>
           </template>
         </el-table-column>
@@ -253,18 +253,21 @@
           :total="totalItems"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
+          :prev-text="t('上一页')"
+          :next-text="t('下一页')"
+          :popper-class="'pagination-popper'"
         />
       </div>
     </el-card>
 
     <!-- 审批进度弹窗 -->
-    <el-dialog v-model="approvalProgressDialogVisible" title="审批进度" width="700px">
+    <el-dialog v-model="approvalProgressDialogVisible" :title="t('审批进度')" width="850px">
       <div v-if="approvalProgress" class="approval-progress-container custom-steps">
         <el-steps :active="approvalProgressStep" :process-status="getProcessStatus()" align-center>
           <el-step 
             v-for="(step, index) in approvalProgress" 
             :key="index" 
-            :title="step.title" 
+            :title="t(step.title)" 
             :status="getStepStatus(index)"
             :class="{'final-step': index === approvalProgress.length - 1}">
             <template #description>
@@ -276,7 +279,7 @@
                     'success-status': step.status === '审批通过',
                     'warning-status': step.status.includes('上一级审批不通过')
                   }">
-                  {{ step.status }}
+                  {{ t(step.status) }}
                 </div>
                 <div v-if="index === 2 && step.status" class="step-status" 
                   :class="{
@@ -284,7 +287,13 @@
                     'success-status': step.status === '审批通过',
                     'warning-status': step.status.includes('上一级审批不通过')
                   }">
-                  {{ step.status }}
+                  {{ t(step.status) }}
+                </div>
+                <div v-if="(index === 1 || index === 2) && step.updatedAt" class="step-update-time">
+                  {{ t('更新时间') }}: {{ step.updatedAt }}
+                </div>
+                <div v-if="(index === 1 || index === 2) && step.approvalReason" class="step-reason">
+                  {{ t('审批理由') }}: {{ step.approvalReason }}
                 </div>
               </div>
             </template>
@@ -298,31 +307,31 @@
               <i :class="getStatusIcon(currentApplication.status)"></i>
             </div>
             <div class="status-text">
-              当前状态: <span class="status-value">{{ currentApplication.status }}</span>
+              {{ t('当前状态') }}: <span class="status-value">{{ t(currentApplication.status) }}</span>
             </div>
           </div>
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button type="primary" @click="approvalProgressDialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="approvalProgressDialogVisible = false">{{ t('关闭') }}</el-button>
         </span>
       </template>
     </el-dialog>
     
     <!-- 分配进度弹窗 -->
-    <el-dialog v-model="assignProgressDialogVisible" title="分配进度" width="700px">
+    <el-dialog v-model="assignProgressDialogVisible" :title="t('分配进度')" width="700px">
       <div v-if="currentApplication" class="approval-progress-container custom-steps">
         <el-steps :active="assignProgressStep" :process-status="getAssignProcessStatus()" align-center>
           <el-step 
             v-for="(step, index) in assignProgress" 
             :key="index" 
-            :title="step.title" 
+            :title="t(step.title)" 
             :status="getAssignStepStatus(index)"
             :class="{'final-step': index === assignProgress.length - 1}">
             <template #description>
               <div class="step-description">
-                <div>{{ step.description }}</div>
+                <div>{{ t(step.description) }}</div>
               </div>
             </template>
           </el-step>
@@ -335,14 +344,14 @@
               <i :class="getAssignStatusIcon(currentApplication.assignStatus)"></i>
             </div>
             <div class="status-text">
-              当前状态: <span class="status-value">{{ currentApplication.assignStatus || '分配中' }}</span>
+              {{ t('当前状态') }}: <span class="status-value">{{ t(currentApplication.assignStatus || '分配中') }}</span>
             </div>
           </div>
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button type="primary" @click="assignProgressDialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="assignProgressDialogVisible = false">{{ t('关闭') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -358,17 +367,17 @@
         <!-- 顶部概要信息 -->
         <div class="detail-header">
           <div class="application-title">
-            <span class="computer-name">{{ currentApplication.ciName || '申请新电脑' }}</span>
+            <span class="computer-name">{{ currentApplication.ciName || t('申请新电脑') }}</span>
             <el-tag class="status-tag" :type="statusTagType(currentApplication.status)">
-              {{ currentApplication.status }}
+              {{ t(currentApplication.status) }}
             </el-tag>
           </div>
           <div class="application-info">
             <span class="info-item">
-              <i class="el-icon-user"></i> 申请人: {{ currentApplication.userName }}
+              <i class="el-icon-user"></i> {{ t('申请人') }}: {{ currentApplication.userName }}
             </span>
             <span class="info-item">
-              <i class="el-icon-date"></i> 申请时间: {{ currentApplication.createdAt }}
+              <i class="el-icon-date"></i> {{ t('申请时间') }}: {{ currentApplication.createdAt }}
             </span>
           </div>
         </div>
@@ -376,38 +385,38 @@
         <!-- 详细信息 -->
         <div class="detail-content">
           <el-descriptions :column="2" border size="default" class="detail-descriptions">
-            <el-descriptions-item label="申请类别" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('申请类别')" label-class-name="item-label" content-class-name="item-content">
               {{ getApplicationTypeName(currentApplication.deviceCategory) }}
             </el-descriptions-item>
-            <el-descriptions-item label="电脑类型" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('电脑类型')" label-class-name="item-label" content-class-name="item-content">
               {{ getDeviceTypeName(currentApplication.deviceType) }}
             </el-descriptions-item>
-            <el-descriptions-item label="成本中心" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('成本中心')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.costCenter }}
             </el-descriptions-item>
-            <el-descriptions-item label="所属公司" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('所属公司')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.company }}
             </el-descriptions-item>
-            <el-descriptions-item label="责任人" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('责任人')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.responsibilityName }}
             </el-descriptions-item>
-            <el-descriptions-item label="电脑情形" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('电脑情形')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.deviceSituation }}
             </el-descriptions-item>
-            <el-descriptions-item label="公司系统" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('公司系统')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.companySystem }}
             </el-descriptions-item>
-            <el-descriptions-item label="有效期" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('有效期')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.timestamp }}
             </el-descriptions-item>
-            <el-descriptions-item label="更新时间" label-class-name="item-label" content-class-name="item-content">
+            <el-descriptions-item :label="t('更新时间')" label-class-name="item-label" content-class-name="item-content">
               {{ currentApplication.updatedAt }}
             </el-descriptions-item>
           </el-descriptions>
           
           <!-- 申请理由区域 -->
           <div class="reason-section">
-            <div class="reason-title">申请理由</div>
+            <div class="reason-title">{{ t('申请理由') }}</div>
             <div class="reason-content">{{ currentApplication.reason }}</div>
           </div>
         </div>
@@ -415,16 +424,16 @@
         <!-- 底部操作区 -->
         <div class="approval-actions">
           <el-button type="primary" @click="applicationDetailDialogVisible = false">
-            关闭
+            {{ t('关闭') }}
           </el-button>
           <el-button type="info" @click="viewApprovalProgress(currentApplication)">
-            查看审批进度
+            {{ t('查看审批进度') }}
           </el-button>
           <el-button 
             v-if="currentApplication.status === '审批通过' || currentApplication.status === '已通过'" 
             type="success" 
             @click="viewAssignProgress(currentApplication)">
-            查看分配进度
+            {{ t('查看分配进度') }}
           </el-button>
         </div>
       </div>
@@ -434,41 +443,220 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import httpUtil from "@/utils/HttpUtil";
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useUserInfoStore } from "@/stores/_frame/userInfoStore";
+import { useLanguageStore } from "@/stores/_frame/languageStore"; // 修正导入路径
 
 export default {
   setup() {
-    // 获取当前用户信息
+    // Get language store
+    const languageStore = useLanguageStore();
+
+    // Watch for language changes to update HTML lang attribute
+    const updateHtmlLang = () => {
+      document.documentElement.lang = languageStore.currentLang;
+    };
+    // Set initial language
+    updateHtmlLang();
+    // Watch for changes
+    watch(() => languageStore.currentLang, updateHtmlLang);
+
+    // Create translation dictionary
+    const translations = {
+      // My Computer section
+      "我的电脑": { en: "My Computer", zh: "我的电脑" },
+      "名下电脑选择": { en: "Select PC", zh: "名下电脑选择" },
+      "电脑名称": { en: "PC Name", zh: "电脑名称" },
+      "NT账号": { en: "NT Account", zh: "NT账号" },
+      "部门号": { en: "Dept. ID", zh: "部门号" },
+      "姓": { en: "Last Name", zh: "姓" },
+      "名": { en: "First Name", zh: "名" },
+      "电脑使用状态": { en: "PC Status", zh: "电脑使用状态" },
+      "电脑归属情况": { en: "PC Ownership", zh: "电脑归属情况" },
+      "电脑情况备注": { en: "Notes", zh: "电脑情况备注" },
+      "出厂时间": { en: "Prod. Date", zh: "出厂时间" },
+      "暂无电脑信息": { en: "No PC info", zh: "暂无电脑信息" },
+      
+      // Technical fields
+      "制造商": { en: "Manufacturer", zh: "制造商" },
+      "型号": { en: "Model", zh: "型号" },
+      "资产标签": { en: "Asset Tag", zh: "资产标签" },
+      "IP地址": { en: "IP Address", zh: "IP地址" },
+      "MAC地址": { en: "MAC Address", zh: "MAC地址" },
+      "操作系统": { en: "OS", zh: "操作系统" },
+      
+      // Computer Application section
+      "电脑申请": { en: "PC Application", zh: "电脑申请" },
+      "使用人": { en: "User", zh: "使用人" },
+      "请输入使用人": { en: "Enter username", zh: "请输入使用人" },
+      "未找到相关用户": { en: "No users found", zh: "未找到相关用户" },
+      "成本中心": { en: "Cost Center", zh: "成本中心" },
+      "请选择成本中心": { en: "Select cost center", zh: "请选择成本中心" },
+      "所属公司": { en: "Company", zh: "所属公司" },
+      "请选择所属公司": { en: "Select company", zh: "请选择所属公司" },
+      "责任人": { en: "Owner", zh: "责任人" },
+      "请选择责任人": { en: "Select owner", zh: "请选择责任人" },
+      "申请类别": { en: "App. Type", zh: "申请类别" },
+      "请选择申请类别": { en: "Select app. type", zh: "请选择申请类别" },
+      "电脑类型": { en: "PC Type", zh: "电脑类型" },
+      "请选择电脑类型": { en: "Select PC type", zh: "请选择电脑类型" },
+      "电脑情形": { en: "PC Condition", zh: "电脑情形" },
+      "新电脑": { en: "New", zh: "新电脑" },
+      "库存旧电脑": { en: "Used", zh: "库存旧电脑" },
+      "公司系统": { en: "Company Sys", zh: "公司系统" },
+      "是（公司系统）": { en: "Yes (Co. Sys)", zh: "是（公司系统）" },
+      "否（非标系统）": { en: "No (Non-std)", zh: "否（非标系统）" },
+      "申请理由": { en: "Reason", zh: "申请理由" },
+      "请输入申请理由": { en: "Enter reason", zh: "请输入申请理由" },
+      "请输入其他用途电脑申请理由": { en: "Enter special purpose reason", zh: "请输入其他用途电脑申请理由" },
+      "提交申请": { en: "Submit", zh: "提交申请" },
+      "重置": { en: "Reset", zh: "重置" },
+      
+      // Application Type Options
+      "办公电脑超六年换新": { en: "PC Renewal (>6y)", zh: "办公电脑超六年换新" },
+      "办公电脑未超六年换新": { en: "PC Renewal (<6y)", zh: "办公电脑未超六年换新" },
+      "办公电脑未超六年换旧": { en: "PC Used Replacement", zh: "办公电脑未超六年换旧" },
+      "秘书代申请新岗位员工电脑": { en: "New Employee PC", zh: "秘书代申请新岗位员工电脑" },
+      "秘书代申请替代岗位员工电脑": { en: "Replacement PC", zh: "秘书代申请替代岗位员工电脑" },
+      "秘书代申请新实习生/外服电脑": { en: "Intern/Contractor PC", zh: "秘书代申请新实习生/外服电脑" },
+      "其他用途电脑申请": { en: "Special Purpose", zh: "其他用途电脑申请" },
+      
+      // Application Status section
+      "我的申请状态": { en: "My Application Status", zh: "我的申请状态" },
+      "刷新": { en: "Refresh", zh: "刷新" },
+      "申请时间": { en: "Application Time", zh: "申请时间" },
+      "更新时间": { en: "Update Time", zh: "更新时间" },
+      "状态": { en: "Status", zh: "状态" },
+      "操作": { en: "Actions", zh: "操作" },
+      "查看详情": { en: "View Details", zh: "查看详情" },
+      "申请新电脑": { en: "New Computer Application", zh: "申请新电脑" },
+      
+      // Status
+      "审批通过": { en: "Approved", zh: "审批通过" },
+      "审批不通过": { en: "Rejected", zh: "审批不通过" },
+      "审批中": { en: "Under Review", zh: "审批中" },
+      "已通过": { en: "Approved", zh: "已通过" },
+      "已驳回": { en: "Rejected", zh: "已驳回" },
+      "分配中": { en: "Assigning", zh: "分配中" },
+      "分配完成": { en: "Assigned", zh: "分配完成" },
+      "暂分配": { en: "Temporarily Assigned", zh: "暂分配" },
+      
+      // Approval progress dialog
+      "审批进度": { en: "Approval Progress", zh: "审批进度" },
+      "已提交": { en: "Submitted", zh: "已提交" },
+      "审批人1": { en: "Approver 1", zh: "审批人1" },
+      "审批人2": { en: "Approver 2", zh: "审批人2" },
+      "完成": { en: "Completed", zh: "完成" },
+      "上一级审批不通过，审批流程终止": { en: "Previous approval rejected, process terminated", zh: "上一级审批不通过，审批流程终止" },
+      "待审批": { en: "Pending Approval", zh: "待审批" },
+      "暂无审批": { en: "No Approver", zh: "暂无审批" },
+      "暂无批准": { en: "No Approver", zh: "暂无批准" },
+      "当前状态": { en: "Current Status", zh: "当前状态" },
+      "关闭": { en: "Close", zh: "关闭" },
+      
+      // Assignment progress dialog
+      "分配进度": { en: "Assignment Progress", zh: "分配进度" },
+      "设备正在分配中": { en: "Device is being assigned", zh: "设备正在分配中" },
+      "设备暂时分配": { en: "Device is temporarily assigned", zh: "设备暂时分配" },
+      "设备已完成分配": { en: "Device has been assigned", zh: "设备已完成分配" },
+      
+      // Application details dialog
+      "申请人": { en: "Applicant", zh: "申请人" },
+      "申请类别": { en: "Application Type", zh: "申请类别" },
+      "电脑类型": { en: "Computer Type", zh: "电脑类型" },
+      "成本中心": { en: "Cost Center", zh: "成本中心" },
+      "所属公司": { en: "Company", zh: "所属公司" },
+      "责任人": { en: "Responsible Person", zh: "责任人" },
+      "电脑情形": { en: "Computer Condition", zh: "电脑情形" },
+      "公司系统": { en: "Company System", zh: "公司系统" },
+      "有效期": { en: "Valid Until", zh: "有效期" },
+      "更新时间": { en: "Update Time", zh: "更新时间" },
+      "申请理由": { en: "Application Reason", zh: "申请理由" },
+      "查看审批进度": { en: "View Approval Progress", zh: "查看审批进度" },
+      "查看分配进度": { en: "View Assignment Progress", zh: "查看分配进度" },
+      
+      // Form validation messages
+      "请选择申请类别": { en: "Please select application type", zh: "请选择申请类别" },
+      "请选择电脑类型": { en: "Please select computer type", zh: "请选择电脑类型" },
+      "请选择成本中心": { en: "Please select cost center", zh: "请选择成本中心" },
+      "请选择所属公司": { en: "Please select company", zh: "请选择所属公司" },
+      "请输入使用人的NT账号或姓名": { en: "Please enter user's NT account or name", zh: "请输入使用人的NT账号或姓名" },
+      "请选择责任人": { en: "Please select responsible person", zh: "请选择责任人" },
+      "请选择或输入申请理由": { en: "Please select or enter application reason", zh: "请选择或输入申请理由" },
+      "请完成表单填写": { en: "Please complete the form", zh: "请完成表单填写" },
+      
+      // Messages
+      "获取用户信息失败，请手动填写": { en: "Failed to get user info, please fill in manually", zh: "获取用户信息失败，请手动填写" },
+      "当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改": { en: "Current computer ownership is Public Use, automatically set to Special Purpose and cannot be changed", zh: "当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改" },
+      "未找到当前电脑的出厂时间信息，无法判断使用年限": { en: "Production date information not found, unable to determine usage period", zh: "未找到当前电脑的出厂时间信息，无法判断使用年限" },
+      "获取电脑信息失败": { en: "Failed to get computer information", zh: "获取电脑信息失败" },
+      "申请提交成功": { en: "Application submitted successfully", zh: "申请提交成功" },
+      "申请提交失败": { en: "Application submission failed", zh: "申请提交失败" },
+      "需要更换的电脑未超过6年，该电脑更换费用将计入电脑使用人所属部门的成本中心": { en: "The computer to be replaced is less than 6 years old. The replacement cost will be charged to the user's department cost center", zh: "需要更换的电脑未超过6年，该电脑更换费用将计入电脑使用人所属部门的成本中心" },
+      "费用提示": { en: "Cost Note", zh: "费用提示" },
+      "年限不符合要求": { en: "Age requirement not met", zh: "年限不符合要求" },
+      "用户名不能为空": { en: "Username cannot be empty", zh: "用户名不能为空" },
+      "已切换到用户": { en: "Switched to user", zh: "已切换到用户" },
+      "获取用户数据失败": { en: "Failed to get user data", zh: "获取用户数据失败" },
+      "已更新用户信息和电脑": { en: "Updated user info and computer", zh: "已更新用户信息和电脑" },
+      "已切换到电脑": { en: "Switched to computer", zh: "已切换到电脑" },
+      "但用户信息更新失败": { en: "but user info update failed", zh: "但用户信息更新失败" },
+      "无法解析电脑生命周期开始日期": { en: "Cannot parse computer lifecycle start date", zh: "无法解析电脑生命周期开始日期" },
+      "无法确定电脑使用年限，请联系IT部门": { en: "Cannot determine computer usage period, please contact IT department", zh: "无法确定电脑使用年限，请联系IT部门" },
+      "确定": { en: "Confirm", zh: "确定" },
+      "处理中": { en: "Processing", zh: "处理中" },
+      "获取审批进度失败": { en: "Failed to get approval progress", zh: "获取审批进度失败" },
+      "提交的申请数据": { en: "Submitted application data", zh: "提交的申请数据" },
+      "提交申请失败": { en: "Application submission failed", zh: "提交申请失败" },
+      "电脑归属情况": { en: "PC Ownership", zh: "电脑归属情况" },
+      
+      // Pagination translations
+      "上一页": { en: "Previous", zh: "上一页" },
+      "下一页": { en: "Next", zh: "下一页" },
+      "前往": { en: "Go to", zh: "前往" },
+      "页": { en: "Page", zh: "页" },
+      "共": { en: "Total", zh: "共" },
+      "条": { en: "items", zh: "条" },
+      "更新时间": { en: "Update Time", zh: "更新时间" },
+      "审批理由": { en: "Approval Reason", zh: "审批理由" }
+    };
+
+    // Get current user info
     const userInfoStore = useUserInfoStore();
-    // 获取当前用户名，确保获取正确的userName字段
+    // Get current username
     const currentUser = ref(userInfoStore.userInfo?.userName || '');
     
-    // 设备申请表单数据
+    // Translation helper function
+    const t = (key) => {
+      if (!translations[key]) return key;
+      return translations[key][languageStore.currentLang] || key;
+    };
+    
+    // Application form data
     const applicationForm = reactive({
-      applicationType: '', // 申请类别
-      deviceType: '', // 电脑类型
-      costCenter: '', // 成本中心
-      company: '', // 所属公司
-      user: currentUser.value, // 使用人，默认当前用户名
-      responsible: '', // 责任人
-      computerCondition: '新电脑', // 电脑情形，默认新电脑
-      companySys: '是（公司系统）', // 公司系统，默认是
-      reason: '', // 申请理由
-      ciName: '申请新电脑', // 电脑名称，默认为"申请新电脑"
+      applicationType: '', // Application type
+      deviceType: '', // Computer type
+      costCenter: '', // Cost center
+      company: '', // Company
+      user: currentUser.value, // User, default to current user
+      responsible: '', // Responsible person
+      computerCondition: '新电脑', // Computer condition, default to new
+      companySys: '是（公司系统）', // Company system, default to yes
+      reason: '', // Application reason
+      ciName: '申请新电脑', // Computer name, default to "New Computer Application"
     });
 
-    // 表单验证规则
+    // Form validation rules
     const rules = {
-      applicationType: [{ required: true, message: '请选择申请类别', trigger: 'change' }],
-      deviceType: [{ required: true, message: '请选择电脑类型', trigger: 'change' }],
-      costCenter: [{ required: true, message: '请选择成本中心', trigger: 'change' }],
-      company: [{ required: true, message: '请选择所属公司', trigger: 'change' }],
-      user: [{ required: true, message: '请输入使用人的NT账号或姓名', trigger: 'blur' }],
-      responsible: [{ required: true, message: '请选择责任人', trigger: 'change' }],
-      reason: [{ required: true, message: '请选择或输入申请理由', trigger: 'change' }]
+      applicationType: [{ required: true, message: computed(() => t('请选择申请类别')), trigger: 'change' }],
+      deviceType: [{ required: true, message: computed(() => t('请选择电脑类型')), trigger: 'change' }],
+      costCenter: [{ required: true, message: computed(() => t('请选择成本中心')), trigger: 'change' }],
+      company: [{ required: true, message: computed(() => t('请选择所属公司')), trigger: 'change' }],
+      user: [{ required: true, message: computed(() => t('请输入使用人的NT账号或姓名')), trigger: 'blur' }],
+      responsible: [{ required: true, message: computed(() => t('请选择责任人')), trigger: 'change' }],
+      reason: [{ required: true, message: computed(() => t('请选择或输入申请理由')), trigger: 'change' }]
     };
 
     const applicationFormRef = ref(null);
@@ -478,37 +666,37 @@ export default {
     const approvalProgress = ref([]);
     const approvalProgressStep = ref(0);
     
-    // 分配进度相关
+    // Assignment progress related
     const assignProgressDialogVisible = ref(false);
     const assignProgress = ref([]);
     const assignProgressStep = ref(0);
 
-    // 动态数据
-    const costCenters = ref(['IT']); // 成本中心
-    const companies = ref([]); // 公司列表
-    const responsiblePersons = ref([]); // 责任人列表
+    // Dynamic data
+    const costCenters = ref(['IT']); // Cost centers 
+    const companies = ref([]); // Companies
+    const responsiblePersons = ref([]); // Responsible persons
     
-    // 用户查询相关
-    const userSearchResults = ref([]); // 用户查询结果
-    const showUserResults = ref(false); // 是否显示用户查询结果
-    const searchTimeout = ref(null); // 搜索防抖定时器
-    const userInputRef = ref(null); // 用户输入框引用
+    // User search related
+    const userSearchResults = ref([]);
+    const showUserResults = ref(false);
+    const searchTimeout = ref(null);
+    const userInputRef = ref(null);
 
-    // 电脑下拉选择相关
+    // Computer dropdown selection related
     const computerList = ref([]);
     const selectedComputer = ref('');
 
-    // 分页相关
+    // Pagination related
     const currentPage = ref(1);
     const pageSize = ref(10);
     const totalItems = ref(0);
     const paginatedList = ref([]);
 
-    // 在setup函数内添加格式化日期的函数
+    // In the setup function, add a formatDate function
     const formatDate = (dateString) => {
       if (!dateString) return '';
       
-      // 如果日期字符串包含T，则截取T之前的部分
+      // If the date string contains T, split it at T
       if (dateString.includes('T')) {
         return dateString.split('T')[0];
       }
@@ -516,9 +704,9 @@ export default {
       return dateString;
     };
 
-    // 获取用户信息（成本中心、所属公司、责任人）
+    // Get user info (cost center, company, responsible person)
     const fetchUserInfo = (userName) => {
-      if (!userName) return Promise.reject(new Error('用户名为空'));
+      if (!userName) return Promise.reject(new Error(t('用户名为空')));
       
       return httpUtil({
         method: 'get',
@@ -526,7 +714,7 @@ export default {
         params: { userName }
       }).then(response => {
         if (response.data) {
-          // 设置成本中心
+          // Set cost center
           if (response.data.costCenter) {
             applicationForm.costCenter = response.data.costCenter;
             if (!costCenters.value.includes(response.data.costCenter)) {
@@ -534,32 +722,32 @@ export default {
             }
           }
           
-          // 设置所属公司 - 这里需要根据实际情况处理
-          // 如果后端返回了公司信息，则使用后端返回的
+          // Set company - this needs to be handled according to actual backend
+          // If backend returns company information, use it
           if (response.data.company) {
-            // 检查返回的公司是否与预设的选项匹配
+            // Check if the returned company matches the preset options
             const presetCompanies = ["SGCS", "SGCC", "SES"];
             const companyMatch = presetCompanies.find(company => 
               company.toLowerCase() === response.data.company.toLowerCase());
             
             if (companyMatch) {
-              // 如果匹配到预设公司，则使用预设的格式
+              // If a preset company is matched, use the preset format
               applicationForm.company = companyMatch;
             } else {
-              // 如果不匹配预设，则使用后端返回的
+              // If not matched to preset, use the backend returned
               applicationForm.company = response.data.company;
-              // 只有当公司不在列表中时，才添加到列表
+              // Only add to list if company is not already in the list
               if (!companies.value.includes(response.data.company)) {
                 companies.value.push(response.data.company);
               }
             }
           }
           
-          // 设置责任人 - 这里需要根据实际情况处理
-          // 如果后端返回了责任人信息，则使用后端返回的
+          // Set responsible person - this needs to be handled according to actual backend
+          // If backend returns responsible person information, use it
           if (response.data.responsibility) {
             applicationForm.responsible = response.data.responsibility;
-            // 如果责任人不在列表中，添加到列表
+            // If responsible person is not in the list, add to the list
             if (!responsiblePersons.value.includes(response.data.responsibility)) {
               responsiblePersons.value.push(response.data.responsibility);
             }
@@ -569,20 +757,20 @@ export default {
       }).catch(error => {
         ElMessage({
           type: 'warning',
-          message: '获取用户信息失败，请手动填写'
+          message: t('获取用户信息失败，请手动填写')
         });
         return Promise.reject(error);
       });
     };
 
-    // 处理用户输入
+    // Handle user input
     const handleUserInput = (value) => {
-      // 清除之前的定时器
+      // Clear previous timer
       if (searchTimeout.value) {
         clearTimeout(searchTimeout.value);
       }
       
-      // 设置新的定时器，用户停止输入500ms后执行搜索
+      // Set new timer, user stops input for 500ms
       searchTimeout.value = setTimeout(() => {
         if (value && value.trim() !== '') {
           searchUser();
@@ -592,67 +780,67 @@ export default {
       }, 500);
     };
     
-    // 处理用户输入框失焦
+    // Handle user input blur
     const handleUserBlur = () => {
-      // 延迟关闭下拉框，以便用户能够点击下拉框中的选项
+      // Delay closing dropdown, so user can click on options in dropdown
       setTimeout(() => {
         showUserResults.value = false;
       }, 200);
     };
     
-    // 确认用户变更
+    // Confirm user change
     const confirmUserChange = () => {
       const newUserName = applicationForm.user.trim();
       
-      // 如果用户名为空，不进行操作
+      // If user name is empty, do nothing
       if (!newUserName) {
-        ElMessage.warning('用户名不能为空');
+        ElMessage.warning(t('用户名不能为空'));
         return;
       }
       
-      // 如果用户名没有变化，不进行操作
+      // If user name hasn't changed, do nothing
       if (newUserName === currentUser.value) {
         return;
       }
       
-      // 如果用户名发生变化，重置表单并获取新用户的数据
+      // If user name has changed, reset form and get new user's data
       if (newUserName !== currentUser.value) {
-        // 在重置表单前，先手动重置重要字段以确保它们被清除
+        // Before resetting form, manually reset important fields to ensure they're cleared
         applicationForm.applicationType = '';
         applicationForm.reason = '';
         
-        // 清空当前电脑信息
+        // Clear current computer information
         myComputer.value = null;
         computerList.value = [];
         selectedComputer.value = '';
-        applicationForm.ciName = '申请新电脑'; // 重置为默认值
+        applicationForm.ciName = '申请新电脑'; // Reset to default value
         
-        // 同步获取用户信息和电脑信息
+        // Sync user info and computer info
         fetchMyComputer(newUserName)
           .then(() => {
-            // 获取用户名下所有电脑
+            // Get all computers for the user
             return fetchComputerList(newUserName);
           })
           .then(() => {
-            // 确保下拉选择框中的选择与当前显示的电脑匹配
+            // Ensure selected option in dropdown matches current displayed computer
             if (myComputer.value && myComputer.value.ciName) {
-              // 确保已加载的电脑在下拉列表中
+              // Ensure loaded computer is in dropdown list
               if (!computerList.value.includes(myComputer.value.ciName)) {
                 computerList.value.push(myComputer.value.ciName);
               }
-              // 设置下拉框选中值为当前电脑
+              // Set dropdown selected value to current computer
               selectedComputer.value = myComputer.value.ciName;
             }
-            // 获取用户信息，同时重置表单（除了网络请求获取的字段）
+            // Get user info, while also resetting form (excluding network request fields)
             return fetchUserInfo(newUserName).then(() => {
-              // 获取数据成功后重置表单（保留网络请求获取的字段）
+              // Reset form after getting data (keeping network request fields)
               resetFormExceptNetworkFields();
-              // 更新当前用户
+              // Update current user
               currentUser.value = newUserName;
               
               ElMessage({
                 type: 'success',
-                message: '已切换到用户: ' + newUserName
+                message: t('已切换到用户') + ': ' + newUserName
               });
             });
           })
@@ -660,77 +848,77 @@ export default {
             console.error('获取用户数据失败:', error);
             ElMessage({
               type: 'error',
-              message: '获取用户数据失败'
+              message: t('获取用户数据失败')
             });
           });
       }
     };
     
-    // 选择用户
+    // Select user
     const selectUser = (user) => {
-      // 获取新用户名
+      // Get new user name
       const newUserName = user.userName;
       
-      // 设置新用户名
+      // Set new user name
       applicationForm.user = newUserName;
       showUserResults.value = false;
       
-      // 只有当选择了不同的用户时才发送请求
+      // Only send request if a different user is selected
       if (newUserName !== currentUser.value) {
-        // 在重置表单前，先手动重置重要字段以确保它们被清除
+        // Before resetting form, manually reset important fields to ensure they're cleared
         applicationForm.applicationType = '';
         applicationForm.reason = '';
         
-        // 先清空电脑信息，避免显示旧信息
+        // Clear computer information first, to avoid showing old information
         myComputer.value = null;
-        // 清空电脑列表和选择的电脑
+        // Clear computer list and selected computer
         computerList.value = [];
         selectedComputer.value = '';
-        applicationForm.ciName = '申请新电脑'; // 重置为默认值
+        applicationForm.ciName = '申请新电脑'; // Reset to default value
         
-        // 同步获取用户信息和电脑信息
+        // Sync user info and computer info
         Promise.all([
           fetchUserInfo(newUserName),
           fetchMyComputer(newUserName),
           fetchComputerList(newUserName)
         ]).then(([userInfoRes, computerRes, computerListRes]) => {
-          // 获取数据成功后重置表单（保留网络请求获取的字段）
+          // Reset form after getting data (keeping network request fields)
           resetFormExceptNetworkFields();
-          // 重置申请类别
+          // Reset application type
           applicationForm.applicationType = '';
-          // 更新当前用户
+          // Update current user
           currentUser.value = newUserName;
           
           ElMessage({
             type: 'success',
-            message: '已切换到用户: ' + newUserName
+            message: t('已切换到用户') + ': ' + newUserName
           });
         }).catch(error => {
           console.error('获取用户数据失败:', error);
           ElMessage({
             type: 'error',
-            message: '获取用户数据失败'
+            message: t('获取用户数据失败')
           });
         });
       }
     };
     
-    // 点击文档其他地方关闭下拉框
+    // Click outside document to close dropdown
     const handleDocumentClick = (event) => {
-      // 检查点击是否在用户输入框或下拉框之外
+      // Check if click is outside user input or dropdown
       const userInputContainer = document.querySelector('.user-input-container');
       if (userInputContainer && !userInputContainer.contains(event.target)) {
         showUserResults.value = false;
       }
     };
 
-    // 获取申请列表
+    // Get application list
     const getApplyList = () => {
       loading.value = true;
-      // 构建请求参数，使用后端期望的参数名称
+      // Build request parameters, using backend's expected parameter names
       const params = {
-        pageNum: currentPage.value,  // 当前页码
-        pageSize: pageSize.value     // 每页条数
+        pageNum: currentPage.value,  // Current page number
+        pageSize: pageSize.value     // Number of items per page
       };
       
       httpUtil.post("/sysApply/getApplyList", params).then(res => {
@@ -745,22 +933,22 @@ export default {
       });
     };
 
-    // 提交申请
+    // Submit application
     const submitApplication = () => {
       applicationFormRef.value.validate((valid) => {
         if (valid) {
           loading.value = true;
           
-          // 检查是否需要附加电脑归属情况信息到申请理由
+          // Check if need to append computer ownership information to application reason
           if (myComputer.value && myComputer.value.pcClass) {
-            // 在申请理由后附加电脑归属情况信息
-            applicationForm.reason = `${applicationForm.reason}\n电脑归属情况：${myComputer.value.pcClass}`;
+            // Append computer ownership information to application reason
+            applicationForm.reason = `${applicationForm.reason}\n${t('电脑归属情况')}：${myComputer.value.pcClass}`;
           }
           
-          // 将英文申请类别转为中文
+          // Convert English application type to Chinese - Keep this to ensure we send Chinese values
           const deviceCategoryText = getApplicationTypeName(applicationForm.applicationType);
           
-          // 简化公司系统的值
+          // Simplify company system value
           let companySystemValue = applicationForm.companySys;
           if (companySystemValue.includes('是')) {
             companySystemValue = '是';
@@ -768,25 +956,26 @@ export default {
             companySystemValue = '否';
           }
           
-          // 创建一个包含所有必要字段的提交对象，确保字段名与后端一致
+          // Create a submission object containing all necessary fields, ensuring field names match backend
+          // and ensuring we submit Chinese values even when displaying English
           const submitData = {
-            // 使用后端期望的字段名称
-            deviceCategory: deviceCategoryText, // 申请类别（使用中文文本）
-            deviceType: applicationForm.deviceType, // 电脑类型
-            costCenter: applicationForm.costCenter, // 成本中心
-            company: applicationForm.company, // 所属公司
-            userName: applicationForm.user, // 使用人
-            responsibilityName: applicationForm.responsible, // 责任人
-            deviceSituation: applicationForm.computerCondition, // 电脑情形
-            companySystem: companySystemValue, // 公司系统（简化为"是"或"否"）
-            reason: applicationForm.reason, // 申请理由
-            ciName: applicationForm.ciName, // 电脑名称
-            // 保留原始字段以防万一，但覆盖已转换的值
+            // Use backend's expected field names with Chinese values
+            deviceCategory: deviceCategoryText, // Application type (using Chinese text)
+            deviceType: applicationForm.deviceType, // Computer type
+            costCenter: applicationForm.costCenter, // Cost center
+            company: applicationForm.company, // Company
+            userName: applicationForm.user, // User
+            responsibilityName: applicationForm.responsible, // Responsible person
+            deviceSituation: applicationForm.computerCondition, // Computer condition as Chinese
+            companySystem: companySystemValue, // Company system (simplified to "yes" or "no")
+            reason: applicationForm.reason, // Application reason
+            ciName: applicationForm.ciName, // Computer name
+            // Keep original fields in case, but override converted values
             ...applicationForm,
             companySys: companySystemValue
           };
           
-          console.log('提交的申请数据:', submitData);
+          console.log(t('提交的申请数据') + ':', submitData);
           
           httpUtil.post("/sysApply/submitApply", submitData, {
             headers: {
@@ -795,18 +984,18 @@ export default {
           }).then(res => {
             ElMessage({
               type: 'success',
-              message: '申请提交成功'
+              message: t('申请提交成功')
             });
             resetForm();
-            // 重置分页到第一页
+            // Reset pagination to first page
             currentPage.value = 1;
-            // 刷新列表数据
+            // Refresh list data
             getApplyList();
           }).catch(err => {
-            console.error("提交申请失败:", err);
+            console.error(t('提交申请失败') + ":", err);
             ElMessage({
               type: 'error',
-              message: '申请提交失败'
+              message: t('申请提交失败')
             });
           }).finally(() => {
             loading.value = false;
@@ -814,68 +1003,68 @@ export default {
         } else {
           ElMessage({
             type: 'warning',
-            message: '请完成表单填写'
+            message: t('请完成表单填写')
           });
           return false;
         }
       });
     };
 
-    // 重置表单
+    // Reset form
     const resetForm = () => {
       if (applicationFormRef.value) {
         applicationFormRef.value.resetFields();
       }
-      // 重置为默认值
+      // Reset to default values
       applicationForm.user = currentUser.value;
       applicationForm.computerCondition = '新电脑';
       applicationForm.companySys = '是（公司系统）';
-      applicationForm.ciName = '申请新电脑'; // 重置电脑名称为默认值
-      // 重新获取当前用户信息
+      applicationForm.ciName = '申请新电脑'; // Reset computer name to default value
+      // Re-fetch current user info
       if (currentUser.value) {
         fetchUserInfo(currentUser.value);
       }
     };
 
-    // 除了网络请求获取的字段外，重置其他表单字段
+    // Reset all form fields except network request fields
     const resetFormExceptNetworkFields = () => {
-      // 保存网络请求获取的字段
+      // Save network request fields
       const currentUser = applicationForm.user;
       const currentCostCenter = applicationForm.costCenter;
       const currentCompany = applicationForm.company;
       const currentResponsible = applicationForm.responsible;
-      // 保存自动填充的电脑类型
+      // Save auto-filled computer type
       const currentDeviceType = applicationForm.deviceType;
       
-      // 创建初始状态的表单
+      // Create initial form state
       const initialForm = {
-        applicationType: '', // 申请类别 - 总是重置
-        deviceType: currentDeviceType, // 电脑类型 - 保留自动填充的值
-        costCenter: currentCostCenter, // 成本中心 - 保留
-        company: currentCompany, // 所属公司 - 保留
-        user: currentUser, // 使用人 - 保留
-        responsible: currentResponsible, // 责任人 - 保留
-        computerCondition: '新电脑', // 电脑情形，默认新电脑
-        companySys: '是（公司系统）', // 公司系统，默认是
-        reason: '', // 申请理由 - 总是重置
-        ciName: '申请新电脑', // 电脑名称，默认为"申请新电脑"
+        applicationType: '', // Application type - always reset
+        deviceType: currentDeviceType, // Computer type - keep auto-filled value
+        costCenter: currentCostCenter, // Cost center - keep
+        company: currentCompany, // Company - keep
+        user: currentUser, // User - keep
+        responsible: currentResponsible, // Responsible person - keep
+        computerCondition: '新电脑', // Computer condition, default to new
+        companySys: '是（公司系统）', // Company system, default to yes
+        reason: '', // Application reason - always reset
+        ciName: '申请新电脑', // Computer name, default to "New Computer Application"
       };
       
-      // 使用初始状态替换当前表单内容
+      // Use initial state to replace current form content
       Object.keys(applicationForm).forEach(key => {
         applicationForm[key] = initialForm[key];
       });
     };
 
-    // 查看申请详情
+    // View application details
     const viewApplicationDetails = (row) => {
       currentApplication.value = row;
       applicationDetailDialogVisible.value = true;
     };
 
-    // 查看审批进度
+    // View approval progress
     const viewApprovalProgress = (row) => {
-      currentApplication.value = row; // 设置当前应用
+      currentApplication.value = row; // Set current application
       
       httpUtil.get("/sysApply/getApproversByAprrovalId", {
         params: { approvalId: row.approvalId }
@@ -884,8 +1073,8 @@ export default {
         const status1 = flowRoles.status1 || '';
         const status2 = flowRoles.status2 || '';
         
-        // 检查是否符合"status1为审批不通过，且status2为审批中"的条件
-        let status2Display = flowRoles.status2 || '待审批';
+        // Check if conditions "status1 is not approved and status2 is under review" are met
+        let status2Display = flowRoles.status2 || t('待审批');
         if (status1 === '审批不通过' && (status2 === '审批中' || status2 === '待审批')) {
           status2Display = '上一级审批不通过，审批流程终止';
         }
@@ -898,54 +1087,58 @@ export default {
           },
           { 
             title: '审批人1', 
-            description: flowRoles.approver1 || '暂无审批',
-            status: flowRoles.status1 || '待审批'
+            description: flowRoles.approver1 || t('暂无审批'),
+            status: flowRoles.status1 || t('待审批'),
+            updatedAt: flowRoles.updatedAt1 || '',
+            approvalReason: flowRoles.approvalReason1 || ''
           },
           { 
             title: '审批人2', 
-            description: flowRoles.approver2 || '暂无批准',
-            status: status2Display
+            description: flowRoles.approver2 || t('暂无批准'),
+            status: status2Display,
+            updatedAt: flowRoles.updatedAt2 || '',
+            approvalReason: flowRoles.approvalReason2 || ''
           },
           { 
             title: '完成', 
-            description: row.status || '处理中',
+            description: '',
             status: row.status || '处理中'
           }
         ];
         
-        // 根据status1和status2确定当前的活跃步骤
+        // Determine current active step based on status1 and status2
         
-        // 根据规则设置活跃步骤
+        // Set active step based on rules
         let activeStep = 0;
         
-        // 1. status1为待审批时，step置为1（当前活跃节点为第二个节点——审批人1）
+        // 1. If status1 is pending approval or under review, step is set to 1 (current active node is second node - approver1)
         if (status1 === '待审批' || status1 === '审批中') {
           activeStep = 1;
         }
-        // 2. status1为审批通过，status2为待审批时，step置为2（当前活跃节点为第三个节点——审批人2）
+        // 2. If status1 is approved and status2 is pending approval or under review, step is set to 2 (current active node is third node - approver2)
         else if (status1 === '审批通过' && (status2 === '待审批' || status2 === '审批中')) {
           activeStep = 2;
         }
-        // 3. status1，status2均为审批通过时，step置为3（当前活跃节点为第四个节点——完成）
+        // 3. If status1 and status2 are both approved, step is set to 3 (current active node is fourth node - completed)
         else if (status1 === '审批通过' && status2 === '审批通过') {
           activeStep = 3;
         }
-        // 4. status1为审批通过，status2为审批不通过时，step置为3（当前活跃节点为第四个节点——完成）
+        // 4. If status1 is approved and status2 is not approved, step is set to 3 (current active node is fourth node - completed)
         else if (status1 === '审批通过' && status2 === '审批不通过') {
           activeStep = 3;
         }
-        // 5. status1为审批不通过，step直接置为3（当前活跃节点为第四个节点——完成）
+        // 5. If status1 is not approved, step is set directly to 3 (current active node is fourth node - completed)
         else if (status1 === '审批不通过') {
           activeStep = 3;
         }
-        // 兼容旧状态值
+        // Compatibility for old status values
         else if (row.status === '审批通过' || row.status === '已通过') {
           activeStep = 3;
         }
         else if (row.status === '审批不通过' || row.status === '已驳回') {
           activeStep = 3;
         }
-        // 默认状态设置为已提交
+        // Default status is set to submitted
         else {
           activeStep = 0;
         }
@@ -956,18 +1149,18 @@ export default {
         console.error("获取审批进度失败:", err);
         ElMessage({
           type: 'error',
-          message: '获取审批进度失败'
+          message: t('获取审批进度失败')
         });
       });
     };
 
-    // 获取步骤状态
+    // Get step status
     const getStepStatus = (index) => {
       const status = currentApplication.value?.status || '';
       const currentStep = approvalProgressStep.value;
       const isLastStep = index === approvalProgress.value.length - 1;
       
-      // 从审批数据中获取状态信息
+      // Get status information from approval data
       let status1 = '';
       let status2 = '';
       
@@ -978,56 +1171,56 @@ export default {
         }
       }
       
-      // 检查是否有任何拒绝状态
+      // Check for any rejection status
       const hasRejection = status1 === '审批不通过' || status2 === '审批不通过' || 
                           status === '审批不通过' || status === '已驳回';
                           
-      // 如果有任何拒绝状态，确定当前拒绝的节点
+      // If there's any rejection status, determine which node was rejected
       if (hasRejection) {
-        // 找出哪个节点拒绝了
+        // Find out which node was rejected
         const rejectionNodeIndex = status1 === '审批不通过' ? 1 : 
                                  status2 === '审批不通过' ? 2 : 3;
         
-        // 如果是最终节点，总是显示为错误
+        // If it's the final node, always display as error
         if (isLastStep) {
           return 'error';
         }
-        // 如果是拒绝的节点，显示为错误
+        // If it's a rejected node, display as error
         else if (index === rejectionNodeIndex) {
           return 'error';
         }
-        // 如果是拒绝节点之后的节点，也显示为错误
+        // If it's a node after a rejected node, also display as error
         else if (index > rejectionNodeIndex) {
           return 'error';
         }
-        // 如果是拒绝节点之前的节点，保持成功
+        // If it's a node before a rejected node, keep success
         else {
           return 'success';
         }
       }
-      // 审批通过时的逻辑
+      // Logic for approved status
       else if ((status1 === '审批通过' && status2 === '审批通过') || 
                status === '审批通过' || status === '已通过') {
         return 'success';
       }
-      // 处理中的状态
+      // Status for processing
       else {
-        // 已完成的步骤
+        // Completed steps
         if (index < currentStep) {
           return 'success';
         }
-        // 当前步骤
+        // Current step
         else if (index === currentStep) {
           return 'process';
         }
-        // 未完成的步骤
+        // Uncompleted steps
         else {
           return 'wait';
         }
       }
     };
 
-    // 获取审批步骤
+    // Get approval step
     const getApprovalStep = (status) => {
       switch (status) {
         case '已提交': return 0;
@@ -1035,25 +1228,25 @@ export default {
         case '审核中': return 2;
         case '审批通过': return 3;
         case '审批不通过': return 3;
-        case '已通过': return 3; // 兼容旧数据
-        case '已驳回': return 3; // 兼容旧数据
+        case '已通过': return 3; // Compatibility for old data
+        case '已驳回': return 3; // Compatibility for old data
         default: return 0;
       }
     };
 
-    // 获取状态标签类型
+    // Get status tag type
     const statusTagType = (status) => {
       switch (status) {
         case '审批中': return 'primary';
         case '审批通过': return 'success';
         case '审批不通过': return 'danger';
-        case '已通过': return 'success'; // 兼容旧数据
-        case '已驳回': return 'danger'; // 兼容旧数据
+        case '已通过': return 'success'; // Compatibility for old data
+        case '已驳回': return 'danger'; // Compatibility for old data
         default: return 'info';
       }
     };
 
-    // 获取申请类型名称
+    // Get application type name
     const getApplicationTypeName = (type) => {
       const types = {
         'pcRenewalOverSixYears': '办公电脑超六年换新',
@@ -1064,7 +1257,7 @@ export default {
         'secretaryIntern': '秘书代申请新实习生/外服电脑',
         'publicComputer': '申请公共电脑',
         'specialPurpose': '其他用途电脑申请',
-        // 保留旧映射以兼容已有数据
+        // Keep old mapping for compatibility with existing data
         'officePcRenewal': '办公电脑换新',
         'newEmployeePc': '新正式员工电脑',
         'internPc': '新实习生/外服电脑',
@@ -1073,14 +1266,14 @@ export default {
       return types[type] || type;
     };
 
-    // 获取设备类型名称
+    // Get device type name
     const getDeviceTypeName = (type) => {
       const types = {
         'Standard Notebook': 'Standard Notebook',
         'Performance Notebook': 'Performance Notebook',
         'Standard Desktop': 'Standard Desktop',
         'Performance Desktop': 'Performance Desktop',
-        // 保留旧映射以兼容已有数据
+        // Keep old mapping for compatibility with existing data
         'normalLaptop': 'Standard Notebook',
         'workstationLaptop': 'Performance Notebook',
         'normalDesktop': 'Standard Desktop',
@@ -1089,7 +1282,7 @@ export default {
       return types[type] || type;
     };
 
-    // 获取我的电脑信息
+    // Get my computer information
     const myComputer = ref(null);
     
     const fetchMyComputer = (userName) => {
@@ -1103,24 +1296,24 @@ export default {
         if (response.data) {
           myComputer.value = response.data;
           
-          // 如果有电脑信息，设置默认选中的电脑
+          // If there's computer information, set default selected computer
           if (response.data.ciName) {
             selectedComputer.value = response.data.ciName;
-            applicationForm.ciName = response.data.ciName; // 设置申请表单的电脑名称
+            applicationForm.ciName = response.data.ciName; // Set computer name in application form
             
-            // 确保computerList中包含当前电脑名称
+            // Ensure current computer is in the list
             if (!computerList.value.includes(response.data.ciName)) {
-              // 如果当前电脑不在列表中，添加到列表
+              // If current computer is not in the list, add it
               computerList.value.push(response.data.ciName);
             }
           }
           
-          // 自动填充电脑类型
+          // Auto-fill computer type
           if (response.data.deviceClass) {
-            // 将后端返回的deviceClass值映射到前端下拉框选项
+            // Map backend returned deviceClass value to frontend dropdown options
             const deviceClass = response.data.deviceClass.trim();
             
-            // 检查是否为四个选项中的一个，如果是则直接使用
+            // Check if it's one of the four options, if so, use directly
             const validOptions = [
               "Standard Notebook", 
               "Performance Notebook", 
@@ -1131,7 +1324,7 @@ export default {
             if (validOptions.includes(deviceClass)) {
               applicationForm.deviceType = deviceClass;
             } else {
-              // 如果不是有效选项，尝试根据关键字匹配
+              // If not a valid option, try matching by keywords
               if (deviceClass.toLowerCase().includes('notebook') || deviceClass.toLowerCase().includes('laptop')) {
                 if (deviceClass.toLowerCase().includes('performance') || deviceClass.toLowerCase().includes('high')) {
                   applicationForm.deviceType = 'Performance Notebook';
@@ -1145,53 +1338,53 @@ export default {
                   applicationForm.deviceType = 'Standard Desktop';
                 }
               }
-              // 如果无法匹配，则不自动填充，由用户手动选择
+              // If no match, user manually selects
             }
           }
           
-          // 如果当前申请类别是办公电脑换新，则检查年限
+          // If current application type is office PC renewal, check lifespan
           if (applicationForm.applicationType === 'officePcRenewal') {
             checkComputerLifespan();
           }
           
-          // 重置申请类别
+          // Reset application type
           applicationForm.applicationType = '';
           
-          // 检查是否为Public Use电脑
+          // Check if it's Public Use computer
           if (response.data.pcClass && response.data.pcClass.includes('Public Use')) {
-            // 如果是Public Use电脑，强制设置为其他用途电脑申请
+            // If it's Public Use computer, force it to be special purpose computer application
             applicationForm.applicationType = 'specialPurpose';
             applicationForm.reason = '';
             ElMessage({
               type: 'info',
-              message: '当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改'
+              message: t('当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改')
             });
-            // 获取成本中心列表
+            // Get cost center list
             fetchCostCenterList();
           }
           
-          // 重新获取用户信息以更新成本中心等数据
+          // Re-fetch user info to update cost center etc.
           if (response.data.ntAccount) {
             fetchUserInfo(response.data.ntAccount).then(() => {
               ElMessage({
                 type: 'success',
-                message: '已更新用户信息和电脑: ' + response.data.ciName
+                message: t('已更新用户信息和电脑') + ': ' + response.data.ciName
               });
             }).catch(error => {
               console.error('获取用户信息失败:', error);
               ElMessage({
                 type: 'success',
-                message: '已切换到电脑: ' + response.data.ciName + '，但用户信息更新失败'
+                message: t('已切换到电脑') + ': ' + response.data.ciName + '，' + t('但用户信息更新失败')
               });
             });
           } else {
             ElMessage({
               type: 'success',
-              message: '已切换到电脑: ' + response.data.ciName
+              message: t('已切换到电脑') + ': ' + response.data.ciName
             });
           }
         } else {
-          // 如果没有获取到电脑信息，清空相关数据
+          // If no computer information is retrieved, clear related data
           myComputer.value = null;
           selectedComputer.value = '';
         }
@@ -1199,7 +1392,7 @@ export default {
       }).catch(error => {
         ElMessage({
           type: 'warning',
-          message: '获取电脑信息失败'
+          message: t('获取电脑信息失败')
         });
         myComputer.value = null;
         selectedComputer.value = '';
@@ -1207,135 +1400,135 @@ export default {
       });
     };
 
-    // 处理申请类别变化
+    // Handle application type change
     const handleApplicationTypeChange = () => {
-      // 获取当前选中的申请类别
+      // Get current selected application type
       const selectedType = applicationForm.applicationType;
       
-      // 如果没有选择申请类别，直接返回
+      // If no application type is selected, return
       if (!selectedType) return;
       
-      // 判断是否有电脑信息
+      // If there's computer information, check computer usage period
       if (!myComputer.value || !myComputer.value.lifeCycleStart) {
         if (selectedType === 'pcRenewalOverSixYears' || selectedType === 'pcRenewalUnderSixYears' || 
             selectedType === 'pcRenewalUnderSixYearsOld') {
           ElMessage({
             type: 'warning',
-            message: '未找到当前电脑的出厂时间信息，无法判断使用年限'
+            message: t('未找到当前电脑的出厂时间信息，无法判断使用年限')
           });
-          applicationForm.applicationType = ''; // 重置申请类别
+          applicationForm.applicationType = ''; // Reset application type
           return;
         }
       }
       
-      // 如果选择了与年限相关的选项，检查电脑使用年限
+      // If there's a selected option related to lifespan, check computer usage period
       if (selectedType === 'pcRenewalOverSixYears' || selectedType === 'pcRenewalUnderSixYears' || 
           selectedType === 'pcRenewalUnderSixYearsOld') {
-        // 获取电脑生命周期开始日期
+        // Get start date of computer lifecycle
         const lifeCycleStartStr = myComputer.value.lifeCycleStart;
         
-        // 尝试解析日期，支持多种可能的格式
+        // Try parsing date, supporting multiple formats
         let lifeCycleStartDate;
         try {
-          // 尝试解析YYYY-MM-DD格式
+          // Try parsing YYYY-MM-DD format
           if (lifeCycleStartStr.includes('-')) {
             lifeCycleStartDate = new Date(lifeCycleStartStr);
           } 
-          // 尝试解析MM/DD/YYYY格式
+          // Try parsing MM/DD/YYYY format
           else if (lifeCycleStartStr.includes('/')) {
             const parts = lifeCycleStartStr.split('/');
             if (parts.length === 3) {
-              // 假设格式为MM/DD/YYYY
+              // Assume format is MM/DD/YYYY
               lifeCycleStartDate = new Date(parts[2], parts[0] - 1, parts[1]);
             }
           }
-          // 其他可能的格式...
+          // Other possible formats...
         } catch (error) {
           console.error('日期解析错误:', error);
           ElMessage({
             type: 'error',
-            message: '无法解析电脑生命周期开始日期'
+            message: t('无法解析电脑生命周期开始日期')
           });
-          applicationForm.applicationType = ''; // 重置申请类别
+          applicationForm.applicationType = ''; // Reset application type
           return;
         }
         
-        // 如果无法解析日期
+        // If date parsing fails
         if (!lifeCycleStartDate || isNaN(lifeCycleStartDate.getTime())) {
           ElMessage({
             type: 'warning',
-            message: '无法确定电脑使用年限，请联系IT部门'
+            message: t('无法确定电脑使用年限，请联系IT部门')
           });
-          applicationForm.applicationType = ''; // 重置申请类别
+          applicationForm.applicationType = ''; // Reset application type
           return;
         }
         
-        // 获取当前日期
+        // Get current date
         const currentDate = new Date();
         
-        // 计算年限差异
+        // Calculate year difference
         const yearsDiff = currentDate.getFullYear() - lifeCycleStartDate.getFullYear();
         
-        // 处理不同选项的年限检查
+        // Handle different lifespan options
         if (selectedType === 'pcRenewalOverSixYears') {
-          // 超六年检查
+          // Check if over six years
           if (yearsDiff < 6) {
             ElMessageBox.alert(
-              `当前电脑使用年限为${yearsDiff}年，未超过六年，不能选择"办公电脑超六年换新"`,
-              '年限不符合要求',
+              t(`当前电脑使用年限为${yearsDiff}年，未超过六年，不能选择"办公电脑超六年换新"`),
+              t('年限不符合要求'),
               {
-                confirmButtonText: '确定',
-                type: 'warning'
+                confirmButtonText: t('确定'),
+                type: 'warning',
               }
             ).then(() => {
-              applicationForm.applicationType = ''; // 重置申请类别
+              applicationForm.applicationType = ''; // Reset application type
             }).catch(() => {
-              applicationForm.applicationType = ''; // 重置申请类别
+              applicationForm.applicationType = ''; // Reset application type
             });
             return;
           } else {
-            // 满足条件，设置对应的表单字段
+            // Meet conditions, set corresponding form fields
             applicationForm.costCenter = '69F105';
             applicationForm.computerCondition = '新电脑';
             applicationForm.reason = '办公电脑超六年换新';
           }
         } else if (selectedType === 'pcRenewalUnderSixYears' || selectedType === 'pcRenewalUnderSixYearsOld') {
-          // 未超六年检查
+          // Check if not over six years
           if (yearsDiff >= 6) {
             ElMessageBox.alert(
-              `当前电脑使用年限为${yearsDiff}年，已超过六年，不能选择"办公电脑未超六年换新/换旧"`,
-              '年限不符合要求',
+              t(`当前电脑使用年限为${yearsDiff}年，已超过六年，不能选择"办公电脑未超六年换新/换旧"`),
+              t('年限不符合要求'),
               {
-                confirmButtonText: '确定',
-                type: 'warning'
+                confirmButtonText: t('确定'),
+                type: 'warning',
               }
             ).then(() => {
-              applicationForm.applicationType = ''; // 重置申请类别
+              applicationForm.applicationType = ''; // Reset application type
             }).catch(() => {
-              applicationForm.applicationType = ''; // 重置申请类别
+              applicationForm.applicationType = ''; // Reset application type
             });
             return;
           } else {
-            // 满足条件，设置对应的表单字段
+            // Meet conditions, set corresponding form fields
             if (selectedType === 'pcRenewalUnderSixYears') {
-              // 未超六年换新 - 显示费用计入部门提示
+              // Show cost inclusion prompt for less than 6 years
               ElMessageBox.alert(
-                '需要更换的电脑未超过6年，该电脑更换费用将计入电脑使用人所属部门的成本中心',
-                '费用提示',
+                t('需要更换的电脑未超过6年，该电脑更换费用将计入电脑使用人所属部门的成本中心'),
+                t('费用提示'),
                 {
-                  confirmButtonText: '确定',
+                  confirmButtonText: t('确定'),
                   type: 'warning',
                 }
               ).then(() => {
-                // 用户确认后，设置表单字段
-                applicationForm.costCenter = myComputer.value.costCenter || ''; // 使用用户自己的成本中心
+                // After user confirms, set form fields
+                applicationForm.costCenter = myComputer.value.costCenter || ''; // Use user's own cost center
                 applicationForm.computerCondition = '新电脑';
                 applicationForm.reason = '办公电脑未超六年换新';
               }).catch(() => {
-                // 用户取消，不改变任何设置
+                // User cancels, no changes are made
               });
             } else {
-              // 未超六年换旧
+              // Used computer
               applicationForm.costCenter = '69F105';
               applicationForm.computerCondition = '库存旧电脑';
               applicationForm.reason = '办公电脑未超六年换旧';
@@ -1343,7 +1536,7 @@ export default {
           }
         }
       } else {
-        // 处理其他申请类型的逻辑
+        // Handle logic for other application types
         switch (selectedType) {
           case 'secretaryNewEmployee':
             applicationForm.costCenter = '69F105';
@@ -1364,12 +1557,12 @@ export default {
             break;
             
           case 'specialPurpose':
-            // 其他用途电脑申请时，从后端获取成本中心列表
-            // 清空当前成本中心
+            // When applying for special purpose computer, get cost center list from backend
+            // Clear current cost center
             applicationForm.costCenter = '';
-            // 清空申请理由
+            // Clear application reason
             applicationForm.reason = '';
-            // 获取成本中心列表
+            // Get cost center list
             fetchCostCenterList();
             break;
             
@@ -1379,27 +1572,27 @@ export default {
       }
     };
     
-    // 检查电脑使用年限
+    // Check computer usage period
     const checkComputerLifespan = () => {
-      // 获取电脑生命周期开始日期
+      // Get start date of computer lifecycle
       const lifeCycleStartStr = myComputer.value.lifeCycleStart;
       
-      // 尝试解析日期，支持多种可能的格式
+      // Try parsing date, supporting multiple formats
       let lifeCycleStartDate;
       try {
-        // 尝试解析YYYY-MM-DD格式
+        // Try parsing YYYY-MM-DD format
         if (lifeCycleStartStr.includes('-')) {
           lifeCycleStartDate = new Date(lifeCycleStartStr);
         } 
-        // 尝试解析MM/DD/YYYY格式
+        // Try parsing MM/DD/YYYY format
         else if (lifeCycleStartStr.includes('/')) {
           const parts = lifeCycleStartStr.split('/');
           if (parts.length === 3) {
-            // 假设格式为MM/DD/YYYY
+            // Assume format is MM/DD/YYYY
             lifeCycleStartDate = new Date(parts[2], parts[0] - 1, parts[1]);
           }
         }
-        // 其他可能的格式...
+        // Other possible formats...
       } catch (error) {
         console.error('日期解析错误:', error);
         ElMessage({
@@ -1409,7 +1602,7 @@ export default {
         return;
       }
       
-      // 如果无法解析日期
+      // If date parsing fails
       if (!lifeCycleStartDate || isNaN(lifeCycleStartDate.getTime())) {
         ElMessage({
           type: 'warning',
@@ -1418,22 +1611,22 @@ export default {
         return;
       }
       
-      // 获取当前日期
+      // Get current date
       const currentDate = new Date();
       
-      // 计算年限差异
+      // Calculate year difference
       const yearsDiff = currentDate.getFullYear() - lifeCycleStartDate.getFullYear();
       
-      // 如果超过6年
+      // If over six years
       if (yearsDiff >= 6) {
-        // 将成本中心修改为IT
+        // Change cost center to IT
         applicationForm.costCenter = 'IT';
         ElMessage({
           type: 'success',
           message: `电脑使用已超过${yearsDiff}年，符合换新条件，成本中心已自动设置为IT`
         });
       } else {
-        // 弹出确认窗口
+        // Show confirmation window
         ElMessageBox.confirm(
           `当前电脑使用年限为${yearsDiff}年，未超六年，年限内换新是否本部门承担新电脑费用（包括换成其他类型的新电脑）？`,
           '提示',
@@ -1443,13 +1636,13 @@ export default {
             type: 'warning',
           }
         ).catch(() => {
-          // 用户取消，可以重置申请类型
+          // User cancels, can reset application type
           applicationForm.applicationType = '';
         });
       }
     };
 
-    // 搜索用户 - 实现模糊搜索支持姓名查询
+    // Search user - implement fuzzy search supporting name query
     const searchUser = () => {
       const searchTerm = applicationForm.user;
       if (!searchTerm || searchTerm.trim() === '') {
@@ -1461,7 +1654,7 @@ export default {
         params: { query: searchTerm }
       }).then(res => {
         if (res.data && Array.isArray(res.data.list) && res.data.list.length > 0) {
-          // 将查询结果添加到结果列表
+          // Add query results to result list
           userSearchResults.value = res.data.list;
           showUserResults.value = true;
         } else {
@@ -1475,15 +1668,15 @@ export default {
       });
     };
 
-    // 申请详情对话框相关
+    // Application details dialog related
     const applicationDetailDialogVisible = ref(false);
     const currentApplication = ref(null);
 
-    // 获取处理状态样式
+    // Get processing status style
     const getProcessStatus = () => {
       const status = currentApplication.value?.status || '';
       
-      // 尝试从流程数据中获取审批状态
+      // Try getting approval status from workflow data
       let status1 = '';
       let status2 = '';
       
@@ -1494,43 +1687,43 @@ export default {
         }
       }
       
-      // 如果任一审批者拒绝，返回错误状态
+      // If any approver rejects, return error status
       if (status1 === '审批不通过' || status2 === '审批不通过' || 
           status === '审批不通过' || status === '已驳回') {
         return 'error';
       }
       
-      // 如果所有审批者都通过，返回成功状态
+      // If all approvers pass, return success status
       else if ((status1 === '审批通过' && status2 === '审批通过') || 
                status === '审批通过' || status === '已通过') {
         return 'success';
       }
       
-      // 其他情况返回处理中状态
+      // Return processing status for other cases
       else {
         return 'process';
       }
     };
 
-    // 处理页面大小变化
+    // Handle page size change
     const handleSizeChange = (newSize) => {
       pageSize.value = newSize;
-      currentPage.value = 1; // 重置为第一页
-      getApplyList(); // 重新获取数据
+      currentPage.value = 1; // Reset to first page
+      getApplyList(); // Re-fetch data
     };
 
-    // 处理当前页变化
+    // Handle current page change
     const handleCurrentChange = (newPage) => {
       currentPage.value = newPage;
-      getApplyList(); // 重新获取数据
+      getApplyList(); // Re-fetch data
     };
 
-    // 刷新申请列表
+    // Refresh application list
     const refreshApplyList = () => {
       getApplyList();
     };
 
-    // 获取状态对应的CSS类名
+    // Get status corresponding CSS class name
     const getStatusClass = (status) => {
       switch (status) {
         case '审批通过':
@@ -1547,7 +1740,7 @@ export default {
       }
     };
 
-    // 获取状态对应的图标
+    // Get status corresponding icon
     const getStatusIcon = (status) => {
       switch (status) {
         case '审批通过':
@@ -1564,7 +1757,7 @@ export default {
       }
     };
 
-    // 获取用户名下电脑列表
+    // Get list of computers for current user
     const fetchComputerList = (userName) => {
       if (!userName) return Promise.reject(new Error('用户名为空'));
       
@@ -1574,18 +1767,18 @@ export default {
         params: { userName }
       }).then(response => {
         if (response.data && response.data.list && response.data.list.length > 0) {
-          // 直接使用返回的字符串数组
+          // Use returned string array directly
           computerList.value = response.data.list;
-          // 如果有电脑列表，默认选中第一个
+          // If there's a computer list, default to select the first one
           if (response.data.list.length > 0) {
             selectedComputer.value = response.data.list[0];
-            applicationForm.ciName = response.data.list[0]; // 设置申请表单的电脑名称
+            applicationForm.ciName = response.data.list[0]; // Set computer name in application form
           }
         } else {
-          // 如果没有电脑列表，清空相关数据
+          // If there's no computer list, clear related data
           computerList.value = [];
           selectedComputer.value = '';
-          applicationForm.ciName = '申请新电脑'; // 设置为默认值
+          applicationForm.ciName = '申请新电脑'; // Set to default value
         }
         return response;
       }).catch(error => {
@@ -1593,25 +1786,25 @@ export default {
           type: 'warning',
           message: '获取电脑列表失败'
         });
-        // 出错时也清空电脑列表和选择的电脑
+        // Clear computer list and selected computer if error occurs
         computerList.value = [];
         selectedComputer.value = '';
-        applicationForm.ciName = '申请新电脑'; // 设置为默认值
+        applicationForm.ciName = '申请新电脑'; // Set to default value
         return Promise.reject(error);
       });
     };
 
-    // 处理电脑选择
+    // Handle computer selection
     const handleComputerSelect = (ciName) => {
       if (!ciName) {
-        // 如果未选择电脑，设置默认值
+        // If no computer is selected, set default value
         applicationForm.ciName = '申请新电脑';
         return;
       }
       
-      // 设置选中的电脑名称
+      // Set selected computer name
       applicationForm.ciName = ciName;
-      selectedComputer.value = ciName; // 确保下拉框选择与当前选择匹配
+      selectedComputer.value = ciName; // Ensure dropdown selection matches current selection
       
       httpUtil({
         method: 'get',
@@ -1619,16 +1812,16 @@ export default {
         params: { ciName }
       }).then(response => {
         if (response.data) {
-          // 更新"我的电脑"模块中的展示内容
+          // Update content in "My Computer" module
           myComputer.value = response.data;
           
-          // 更新"办公电脑申请"模块中绑定的电脑信息
-          // 自动填充电脑类型，与原有逻辑保持一致
+          // Update computer information in "Office PC Application" module
+          // Auto-fill computer type, keeping original logic
           if (response.data.deviceClass) {
-            // 将后端返回的deviceClass值映射到前端下拉框选项
+            // Map backend returned deviceClass value to frontend dropdown options
             const deviceClass = response.data.deviceClass.trim();
             
-            // 检查是否为四个选项中的一个，如果是则直接使用
+            // Check if it's one of the four options, if so, use directly
             const validOptions = [
               "Standard Notebook", 
               "Performance Notebook", 
@@ -1639,7 +1832,7 @@ export default {
             if (validOptions.includes(deviceClass)) {
               applicationForm.deviceType = deviceClass;
             } else {
-              // 如果不是有效选项，尝试根据关键字匹配
+              // If not a valid option, try matching by keywords
               if (deviceClass.toLowerCase().includes('notebook') || deviceClass.toLowerCase().includes('laptop')) {
                 if (deviceClass.toLowerCase().includes('performance') || deviceClass.toLowerCase().includes('high')) {
                   applicationForm.deviceType = 'Performance Notebook';
@@ -1653,44 +1846,44 @@ export default {
                   applicationForm.deviceType = 'Standard Desktop';
                 }
               }
-              // 如果无法匹配，则不自动填充，由用户手动选择
+              // If no match, user manually selects
             }
           }
           
-          // 重置申请类别
+          // Reset application type
           applicationForm.applicationType = '';
           
-          // 检查是否为Public Use电脑
+          // Check if it's Public Use computer
           if (response.data.pcClass && response.data.pcClass.includes('Public Use')) {
-            // 如果是Public Use电脑，强制设置为其他用途电脑申请
+            // If it's Public Use computer, force it to be special purpose computer application
             applicationForm.applicationType = 'specialPurpose';
             applicationForm.reason = '';
             ElMessage({
               type: 'info',
-              message: '当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改'
+              message: t('当前电脑归属情况为Public Use，已自动设置为其他用途电脑申请且无法修改')
             });
-            // 获取成本中心列表
+            // Get cost center list
             fetchCostCenterList();
           }
           
-          // 如果电脑信息中包含用户信息，重新获取用户信息以更新成本中心等数据
+          // If computer information contains user information, re-fetch user info to update cost center etc.
           if (response.data.ntAccount) {
             fetchUserInfo(response.data.ntAccount).then(() => {
               ElMessage({
                 type: 'success',
-                message: '已更新用户信息和电脑: ' + response.data.ciName
+                message: t('已更新用户信息和电脑') + ': ' + response.data.ciName
               });
             }).catch(error => {
               console.error('获取用户信息失败:', error);
               ElMessage({
                 type: 'success',
-                message: '已切换到电脑: ' + response.data.ciName + '，但用户信息更新失败'
+                message: t('已切换到电脑') + ': ' + response.data.ciName + '，' + t('但用户信息更新失败')
               });
             });
           } else {
             ElMessage({
               type: 'success',
-              message: '已切换到电脑: ' + response.data.ciName
+              message: t('已切换到电脑') + ': ' + response.data.ciName
             });
           }
         }
@@ -1698,22 +1891,22 @@ export default {
         console.error('获取电脑信息失败:', error);
         ElMessage({
           type: 'error',
-          message: '获取电脑信息失败'
+          message: t('获取电脑信息失败')
         });
       });
     };
 
-    // 获取成本中心列表
+    // Get cost center list
     const fetchCostCenterList = () => {
       httpUtil({
         method: 'get',
         url: '/sysApply/getCostCenterList'
       }).then(response => {
         if (response.data && response.data.list && Array.isArray(response.data.list)) {
-          // 更新成本中心列表，并移除IT选项
+          // Update cost center list, removing IT option
           costCenters.value = response.data.list.filter(center => center !== 'IT');
           
-          // 删除成功消息提示
+          // Remove success message prompt
           // ElMessage({
           //   type: 'success',
           //   message: '成本中心列表获取成功'
@@ -1723,7 +1916,7 @@ export default {
             type: 'warning',
             message: '成本中心列表为空'
           });
-          // 确保列表不包含IT
+          // Ensure list does not include IT
           costCenters.value = [];
         }
       }).catch(error => {
@@ -1733,37 +1926,37 @@ export default {
           message: '获取成本中心列表失败'
         });
         
-        // 出错时也确保列表不包含IT
+        // Ensure list does not include IT even if error occurs
         costCenters.value = [];
       });
     };
 
     onMounted(() => {
-      // 重新检查用户信息
+      // Re-check user info
       if (!currentUser.value && userInfoStore.userInfo?.userName) {
         currentUser.value = userInfoStore.userInfo.userName;
         applicationForm.user = currentUser.value;
       }
       
-      // 确保首先使用当前登录用户的userName发送请求获取数据
+      // Ensure request is made with current user's userName first
       if (currentUser.value) {
-        // 获取电脑信息和电脑列表，确保电脑信息加载后再加载电脑列表
+        // Get computer information and computer list, ensure computer information is loaded before computer list
         fetchMyComputer(currentUser.value)
           .then(() => {
-            // 获取用户名下所有电脑
+            // Get all computers for the user
             return fetchComputerList(currentUser.value);
           })
           .then(() => {
-            // 确保下拉选择框中的选择与当前显示的电脑匹配
+            // Ensure selected option in dropdown matches current displayed computer
             if (myComputer.value && myComputer.value.ciName) {
-              // 确保已加载的电脑在下拉列表中
+              // Ensure loaded computer is in dropdown list
               if (!computerList.value.includes(myComputer.value.ciName)) {
                 computerList.value.push(myComputer.value.ciName);
               }
-              // 设置下拉框选中值为当前电脑
+              // Set dropdown selected value to current computer
               selectedComputer.value = myComputer.value.ciName;
             }
-            // 获取用户信息
+            // Get user info
             return fetchUserInfo(currentUser.value);
           })
           .catch(error => {
@@ -1776,49 +1969,49 @@ export default {
         });
       }
       
-      // 初始化获取成本中心列表，确保IT被过滤掉
+      // Initialize fetching cost center list, ensuring IT is filtered out
       fetchCostCenterList();
       
-      // 获取申请列表
+      // Get application list
       getApplyList();
-      // 添加全局点击事件监听
+      // Add global click event listener
       document.addEventListener('click', handleDocumentClick);
     });
     
     onBeforeUnmount(() => {
-      // 移除全局点击事件监听
+      // Remove global click event listener
       document.removeEventListener('click', handleDocumentClick);
     });
 
-    // 在setup函数中添加计算属性
+    // Add computed property in setup function
     const isReasonDisabled = computed(() => {
       const appType = applicationForm.applicationType;
       return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYears', 'pcRenewalUnderSixYearsOld', 
               'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern', 'publicComputer'].includes(appType);
     });
 
-    // 添加成本中心是否禁用的计算属性
+    // Add computed property for whether cost center is disabled
     const isCostCenterDisabled = computed(() => {
       return applicationForm.applicationType !== 'specialPurpose' && applicationForm.applicationType !== '';
     });
 
-    // 添加申请类别是否禁用的计算属性
+    // Add computed property for whether application type is disabled
     const isApplicationTypeDisabled = computed(() => {
       return myComputer.value?.pcClass?.includes('Public Use') && applicationForm.applicationType === 'specialPurpose';
     });
 
-    // 添加是否为公共使用电脑的计算属性
+    // Add computed property for whether it's public use computer
     const isPublicUseComputer = computed(() => {
       return myComputer.value?.pcClass?.includes('Public Use');
     });
 
-    // 添加电脑情形是否禁用的计算属性
+    // Add computed property for whether computer condition is disabled
     const isComputerConditionDisabled = computed(() => {
-      // 当申请类型不是其他用途电脑申请，且已经选择了申请类型时，电脑情形禁用
+      // When application type is not special purpose computer application, and application type has been selected, computer condition is disabled
       return applicationForm.applicationType !== '' && applicationForm.applicationType !== 'specialPurpose';
     });
 
-    // 添加申请理由的占位符文本
+    // Add placeholder text for application reason
     const reasonPlaceholder = computed(() => {
       if (applicationForm.applicationType === 'specialPurpose' || 
           (myComputer.value?.pcClass?.includes('Public Use') && applicationForm.applicationType === 'specialPurpose')) {
@@ -1827,7 +2020,7 @@ export default {
       return '请输入申请理由';
     });
 
-    // 获取分配状态标签类型
+    // Get assign status tag type
     const getAssignStatusTagType = (status) => {
       switch (status) {
         case '分配完成': return 'success';
@@ -1837,15 +2030,15 @@ export default {
       }
     };
     
-    // 查看分配进度
+    // View assignment progress
     const viewAssignProgress = (row) => {
       currentApplication.value = row;
       
-      // 确定分配状态的步骤
+      // Determine steps for assignment status
       let steps = [];
       let activeStep = 0;
       
-      // 默认两个节点：分配中和分配完成
+      // Default two nodes: assigning and completed
       steps = [
         { 
           title: '分配中',
@@ -1857,18 +2050,18 @@ export default {
         }
       ];
       
-      // 如果状态是暂分配，则在中间插入暂分配节点
+      // If status is temporarily assigned, insert temporarily assigned node in the middle
       if (row.assignStatus === '暂分配') {
         steps.splice(1, 0, {
           title: '暂分配',
           description: '设备暂时分配',
         });
-        activeStep = 1; // 当前在暂分配阶段
+        activeStep = 1; // Current in temporarily assigned stage
       } else if (row.assignStatus === '分配完成') {
-        // 如果是分配完成状态
+        // If status is completed
         activeStep = steps.length - 1;
       } else {
-        // 分配中状态
+        // Assigning status
         activeStep = 0;
       }
       
@@ -1877,7 +2070,7 @@ export default {
       assignProgressDialogVisible.value = true;
     };
     
-    // 获取分配进度状态
+    // Get assignment progress status
     const getAssignProcessStatus = () => {
       const status = currentApplication.value?.assignStatus || '';
       
@@ -1890,26 +2083,26 @@ export default {
       }
     };
     
-    // 获取分配步骤状态
+    // Get assignment step status
     const getAssignStepStatus = (index) => {
       const status = currentApplication.value?.assignStatus || '分配中';
       const currentStep = assignProgressStep.value;
       
-      // 已完成的步骤
+      // Completed steps
       if (index < currentStep) {
         return 'success';
       }
-      // 当前步骤
+      // Current step
       else if (index === currentStep) {
         return 'process';
       }
-      // 未完成的步骤
+      // Uncompleted steps
       else {
         return 'wait';
       }
     };
     
-    // 获取分配状态对应的CSS类名
+    // Get status corresponding CSS class name for assignment
     const getAssignStatusClass = (status) => {
       switch (status) {
         case '分配完成':
@@ -1922,7 +2115,7 @@ export default {
       }
     };
     
-    // 获取分配状态对应的图标
+    // Get status corresponding icon for assignment
     const getAssignStatusIcon = (status) => {
       switch (status) {
         case '分配完成':
@@ -1959,39 +2152,39 @@ export default {
       statusTagType,
       getApplicationTypeName,
       getDeviceTypeName,
-      // 用户查询相关
+      // User search related
       userSearchResults,
       showUserResults,
       handleUserInput,
       handleUserBlur,
       searchUser,
       selectUser,
-      // 我的电脑相关
+      // My computer related
       myComputer,
-      // 电脑下拉选择相关
+      // Computer dropdown selection related
       computerList,
       selectedComputer,
       handleComputerSelect,
-      // 分页相关
+      // Pagination related
       currentPage,
       pageSize,
       totalItems,
       paginatedList,
       handleSizeChange,
       handleCurrentChange,
-      // 刷新申请列表
+      // Refresh application list
       refreshApplyList,
-      // 状态和步骤相关
+      // Status and step related
       getApprovalStep,
       getStepStatus,
       getStatusClass,
       getStatusIcon,
       getProcessStatus,
-      // 分配进度相关
+      // Assignment progress related
       assignProgressDialogVisible,
       assignProgress,
       assignProgressStep,
-      // UI状态
+      // UI states
       isReasonDisabled,
       isCostCenterDisabled,
       isApplicationTypeDisabled,
@@ -2003,7 +2196,9 @@ export default {
       getAssignStepStatus,
       getAssignStatusClass,
       getAssignStatusIcon,
-      isComputerConditionDisabled
+      isComputerConditionDisabled,
+      // Translation helper
+      t
     };
   }
 };
@@ -2027,13 +2222,13 @@ export default {
   text-align: center;
 }
 
-/* 用户输入框容器 */
+/* User input container */
 .user-input-container {
   position: relative;
   width: 100%;
 }
 
-/* 用户查询结果下拉框样式 */
+/* User search results dropdown style */
 .user-results-dropdown {
   position: absolute;
   top: 100%;
@@ -2051,7 +2246,7 @@ export default {
   scrollbar-color: #909399 #f4f4f5;
 }
 
-/* 为 Webkit 浏览器自定义滚动条样式 */
+/* Custom scrollbar style for Webkit browsers */
 .user-results-dropdown::-webkit-scrollbar {
   width: 8px;
 }
@@ -2125,13 +2320,13 @@ export default {
 }
 
 .approval-progress-container {
-  padding: 30px 20px;
+  padding: 40px 30px;
 }
 
-/* 自定义审批步骤样式 */
+/* Custom approval step style */
 .approval-progress-container :deep(.el-step__title.is-process) {
   color: #409EFF;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
 }
 
@@ -2150,24 +2345,24 @@ export default {
   font-size: 14px;
 }
 
-/* 增加所有步骤的字体大小 */
+/* Increase font size for all steps */
 .approval-progress-container :deep(.el-step__title) {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .approval-progress-container :deep(.el-step__description) {
-  font-size: 14px;
+  font-size: 15px;
 }
 
-/* 增加图标大小 */
+/* Increase icon size */
 .approval-progress-container :deep(.el-step__icon) {
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
 }
 
-/* 最终节点样式 */
+/* Final node style */
 .final-step:deep(.el-step__head.is-success) {
   color: #409EFF;
   border-color: #409EFF;
@@ -2204,7 +2399,7 @@ export default {
   color: #F56C6C;
 }
 
-/* 对话框标题样式 */
+/* Dialog title style */
 :deep(.el-dialog__title) {
   font-size: 18px;
   font-weight: bold;
@@ -2239,7 +2434,7 @@ export default {
   margin: 0;
 }
 
-/* 状态详情样式 */
+/* Status detail style */
 .approval-status-detail {
   margin-top: 30px;
   display: flex;
@@ -2316,7 +2511,7 @@ export default {
   color: #409EFF;
 }
 
-/* 分页组件样式 */
+/* Pagination component style */
 .pagination-container {
   margin-top: 20px;
   padding: 10px 0;
@@ -2361,12 +2556,76 @@ export default {
   color: #606266;
 }
 
-.pagination-container:deep(.el-pagination .el-pager li.active) {
-  background-color: #409EFF;
-  color: #ffffff;
+.pagination-container:deep(.el-pagination .el-pager li.is-active) {
+  background-color: #409EFF !important;
+  color: #ffffff !important;
+  font-weight: normal !important;
+  border-color: #409EFF !important;
 }
 
-/* 表格样式 */
+/* Override pagination texts for internationalization */
+.pagination-container:deep(.el-pagination__total) {
+  &::before {
+    content: attr(data-content);
+    display: none;
+  }
+  &::after {
+    content: " " attr(data-total) " " attr(data-items);
+    display: none;
+  }
+}
+
+html[lang="zh"] .pagination-container:deep(.el-pagination__total) {
+  &::before {
+    content: "共";
+    display: inline;
+  }
+  &::after {
+    content: " 条";
+    display: inline;
+  }
+}
+
+html[lang="en"] .pagination-container:deep(.el-pagination__total) {
+  &::before {
+    content: "Total ";
+    display: inline;
+  }
+  &::after {
+    content: " items";
+    display: inline;
+  }
+}
+
+.pagination-container:deep(.el-pagination__jump) {
+  .el-pagination__goto {
+    display: none;
+  }
+}
+
+html[lang="zh"] .pagination-container:deep(.el-pagination__jump) {
+  &::before {
+    content: "前往";
+    margin-right: 5px;
+  }
+  &::after {
+    content: "页";
+    margin-left: 5px;
+  }
+}
+
+html[lang="en"] .pagination-container:deep(.el-pagination__jump) {
+  &::before {
+    content: "Go to";
+    margin-right: 5px;
+  }
+  &::after {
+    content: "page";
+    margin-left: 5px;
+  }
+}
+
+/* Table style */
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -2420,22 +2679,23 @@ export default {
   padding: 12px 0;
 }
 
-/* 步骤描述样式 */
+/* Step description style */
 .step-description {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  line-height: 1.4;
-  min-height: 40px;
+  line-height: 1.5;
+  min-height: 50px;
+  font-size: 15px;
 }
 
 .step-status {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 14px;
   color: #409EFF;
   background-color: rgba(64, 158, 255, 0.1);
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 10px;
   font-weight: 500;
 }
@@ -2455,12 +2715,12 @@ export default {
   background-color: rgba(230, 162, 60, 0.1);
 }
 
-/* 自定义步骤线样式 */
+/* Custom step line style */
 .custom-steps:deep(.el-step__line) {
-  background-color: #dcdfe6 !important; /* 统一设置为灰色 */
+  background-color: #dcdfe6 !important; /* Set to gray uniformly */
 }
 
-/* 覆盖不同状态下的连接线样式 */
+/* Override connection line style for different states */
 .custom-steps:deep(.el-step__line-inner) {
   border-color: #dcdfe6 !important;
   background-color: #dcdfe6 !important;
@@ -2481,7 +2741,7 @@ export default {
   background-color: #dcdfe6 !important;
 }
 
-/* 申请详情弹窗样式 */
+/* Application details dialog style */
 .application-detail-dialog {
   :deep(.el-dialog__header) {
     padding: 0;
@@ -2766,7 +3026,7 @@ export default {
   }
 }
 
-/* 响应式调整 */
+/* Responsive adjustments */
 @media screen and (max-width: 768px) {
   .application-info {
     flex-direction: column;
@@ -2826,7 +3086,7 @@ export default {
   }
 }
 
-/* 审批进度弹窗样式 */
+/* Approval progress dialog style */
 .el-dialog__wrapper:has(.approval-progress-container) {
   :deep(.el-dialog__header) {
     background: linear-gradient(135deg, #2580bf 0%, #20b2aa 100%);
@@ -2899,7 +3159,7 @@ export default {
   animation: fadeIn 0.5s ease-out;
 }
 
-/* 自定义审批步骤样式 */
+/* Custom approval step style */
 .approval-progress-container :deep(.el-step__title.is-process) {
   color: #2580bf;
   font-size: 16px;
@@ -2935,7 +3195,7 @@ export default {
   color: #fff;
 }
 
-/* 增加所有步骤的字体大小 */
+/* Increase font size for all steps */
 .approval-progress-container :deep(.el-step__title) {
   font-size: 16px;
   font-weight: 500;
@@ -2947,7 +3207,7 @@ export default {
   transition: transform 0.3s ease, color 0.3s ease;
 }
 
-/* 步骤动画效果 */
+/* Step animation effect */
 .approval-progress-container :deep(.el-step) {
   &:hover {
     .el-step__title, 
@@ -2962,7 +3222,7 @@ export default {
   }
 }
 
-/* 增加图标大小和动画 */
+/* Increase icon size and animation */
 .approval-progress-container :deep(.el-step__icon) {
   width: 32px;
   height: 32px;
@@ -2978,7 +3238,7 @@ export default {
   transition: transform 0.3s ease;
 }
 
-/* 最终节点样式 */
+/* Final node style */
 .final-step:deep(.el-step__head.is-success) {
   color: #20b2aa;
   border-color: #20b2aa;
@@ -3017,7 +3277,7 @@ export default {
   color: #f5587b;
 }
 
-/* 步骤描述样式 */
+/* Step description style */
 .step-description {
   display: flex;
   flex-direction: column;
@@ -3060,7 +3320,7 @@ export default {
   background-color: rgba(230, 162, 60, 0.1);
 }
 
-/* 状态详情样式 */
+/* Status detail style */
 .approval-status-detail {
   margin-top: 30px;
   display: flex;
@@ -3182,7 +3442,7 @@ export default {
   color: #2580bf;
 }
 
-/* 自定义步骤线样式 */
+/* Custom step line style */
 .custom-steps:deep(.el-step__line) {
   background: linear-gradient(to right, rgba(37, 128, 191, 0.2), rgba(32, 178, 170, 0.2)) !important;
   height: 2px !important;
@@ -3198,5 +3458,33 @@ export default {
   100% {
     left: 100%;
   }
+}
+
+.step-update-time, .step-reason {
+  font-size: 14px;
+  color: #606266;
+  margin-top: 4px;
+  padding: 3px 10px;
+  background-color: rgba(144, 147, 153, 0.1);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.step-update-time {
+  color: #409EFF;
+  background-color: rgba(64, 158, 255, 0.1);
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.step-reason {
+  color: #409EFF;
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+/* 确保鼠标悬停在活动页码上时样式不变 */
+.pagination-container:deep(.el-pagination) .el-pager li.is-active:hover {
+  background-color: #409EFF !important;
+  color: #ffffff !important;
 }
 </style>

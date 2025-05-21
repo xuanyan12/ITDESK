@@ -3,6 +3,7 @@ import {useRouter} from "vue-router";
 import {useCollapseStateStore} from "@/stores/_frame/collapseStateStore";
 import {useNavStore} from "@/stores/_frame/navStore";
 import {useUserInfoStore} from "@/stores/_frame/userInfoStore";
+import {useLanguageStore} from "@/stores/_frame/languageStore";
 import {computed} from "vue";
 import loginUtil from "@/utils/LoginUtil";
 import screenUtil from "@/utils/ScreenUtil";
@@ -13,15 +14,72 @@ const router = useRouter()
 const navStore = useNavStore()
 const userInfoStore = useUserInfoStore()
 const collapseStateStore = useCollapseStateStore()
+const languageStore = useLanguageStore()
 
 // 菜单折叠状态
 const collapseState = computed(() => collapseStateStore.collapseState)
 
+// 当前语言
+const currentLang = computed(() => languageStore.currentLang)
+
 // 面包屑
 const breadcrumb = computed(() => {
-    let routeInfo = navStore.routeInfo
-    return routeInfo.breadcrumb
-})
+    // 获取原始面包屑数据
+    let routeInfo = navStore.routeInfo;
+    if (!routeInfo.breadcrumb) return [];
+    
+    const originalBreadcrumb = routeInfo.breadcrumb;
+    
+    // 如果是中文，直接返回原始面包屑
+    if (currentLang.value === 'zh') {
+        return originalBreadcrumb;
+    }
+    
+    // 如果是英文，需要进行翻译
+    return originalBreadcrumb.map(item => translateBreadcrumb(item));
+});
+
+// 单个面包屑项翻译 - 根据常见中文面包屑项提供英文翻译
+const translateBreadcrumb = (label) => {
+    const translations = {
+        '首页': 'Home',
+        '控制台': 'Dashboard',
+        '系统管理': 'System',
+        '用户管理': 'Users',
+        '角色管理': 'Roles',
+        '权限管理': 'Permissions',
+        '菜单管理': 'Menus',
+        '部门管理': 'Departments',
+        '日志管理': 'Logs',
+        '系统日志': 'System Logs',
+        '登录日志': 'Login Logs',
+        '操作日志': 'Operation Logs',
+        '个人中心': 'Profile',
+        '修改密码': 'Change Password',
+        '我的消息': 'Messages',
+        '设备管理': 'Devices',
+        '设备列表': 'Device List',
+        '设备分类': 'Device Categories',
+        '设备监控': 'Device Monitoring',
+        '报表中心': 'Reports',
+        '统计分析': 'Statistics',
+        '数据导出': 'Data Export',
+        '网络管理': 'Network',
+        '通知公告': 'Announcements',
+        '无权访问页面': 'Access Denied',
+        'IT系统中心': 'IT Center',
+        '电脑管理系统': 'PC',
+        '电脑管理': 'PC Management',
+        '电脑申请': 'PC Request',
+        '电脑审批': 'PC Approval',
+        '订单管理': 'Orders',
+        '电脑追溯': 'PC Tracking',
+        '后台管理': 'Admin'
+    };
+    
+    // 返回翻译后的文本，如果没有翻译则返回原文
+    return translations[label] || label;
+};
 
 /**
  * 菜单折叠按钮点击事件
@@ -46,6 +104,22 @@ const logout = () => {
     router.push("/login")
 }
 
+/**
+ * 切换语言
+ */
+const handleLanguageChange = (command) => {
+    languageStore.setLanguage(command)
+}
+
+// 多语言文本
+const langText = computed(() => {
+    return {
+        collapse: currentLang.value === 'zh' ? '折叠菜单' : 'Collapse Menu',
+        logout: currentLang.value === 'zh' ? '退出' : 'Logout',
+        fullscreen: currentLang.value === 'zh' ? '全屏' : 'Fullscreen'
+    }
+})
+
 </script>
 
 <template>
@@ -69,6 +143,20 @@ const logout = () => {
             </div>
         </div>
         <div class="usr_container_header_menu_right">
+            <div class="usr_header_item usr_container_header_menu_right_language">
+                <el-dropdown @command="handleLanguageChange">
+                    <span class="language-dropdown-link">
+                        {{ currentLang === 'zh' ? 'ZH' : 'EN' }}
+                        <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    </span>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item :command="'zh'" :class="{ 'active-lang': currentLang === 'zh' }">ZH 中文</el-dropdown-item>
+                            <el-dropdown-item :command="'en'" :class="{ 'active-lang': currentLang === 'en' }">EN English</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </div>
             <div class="usr_header_item usr_container_header_menu_right_nick no-hover-effect">
                 <el-dropdown class="el_dropdown_override" trigger="click">
                     <span class="user-name-wrapper">
@@ -82,7 +170,7 @@ const logout = () => {
                                 <el-icon :size="18">
                                     <SwitchButton/>
                                 </el-icon>
-                                退出
+                                {{ langText.logout }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
@@ -125,6 +213,21 @@ const logout = () => {
 .usr_header_item:not(.usr_container_header_menu_left_breadcrumb,.usr_container_header_menu_right_nick):hover {
     background-color: #F2F6FC;
     cursor: pointer;
+}
+
+/* 语言切换样式 */
+.language-dropdown-link {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+:deep(.active-lang) {
+    color: #409EFF;
+    font-weight: bold;
+    background-color: rgba(64, 158, 255, 0.1);
 }
 
 :deep(.el_badge_override) sup.is-dot {

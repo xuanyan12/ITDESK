@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -91,15 +92,27 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     public SysApproversVO getApproversByAprrovalId(Long aprrovalId) {
         String approver1 = sysApprovalFlowMapper.getApproversByAprroval1Id(aprrovalId);
         String approver2 = sysApprovalFlowMapper.getApproversByAprroval2Id(aprrovalId);
-        String status1 = sysApprovalFlowMapper.getStatusByAprroval1Id(aprrovalId);
-        String status2 = sysApprovalFlowMapper.getStatusByAprroval2Id(aprrovalId);
+        Map<String, Object> flow1 = sysApprovalFlowMapper.getStatusByAprroval1Id(aprrovalId);
+        Map<String, Object> flow2 = sysApprovalFlowMapper.getStatusByAprroval2Id(aprrovalId);
         String username = sysApprovalFlowMapper.getUserNameByAprrovalId(aprrovalId);
         SysApproversVO sysApproversVO = new SysApproversVO();
         sysApproversVO.setApprover1(approver1);
         sysApproversVO.setApprover2(approver2);
         sysApproversVO.setUsername(username);
-        sysApproversVO.setStatus1(status1);
-        sysApproversVO.setStatus2(status2);
+        
+        // Extract status and additional fields from flow1
+        if (flow1 != null) {
+            sysApproversVO.setStatus1((String) flow1.get("status"));
+            sysApproversVO.setApprovalReason1((String) flow1.get("approvalReason"));
+            sysApproversVO.setUpdatedAt1((String) flow1.get("updatedAt"));
+        }
+        
+        // Extract status and additional fields from flow2
+        if (flow2 != null) {
+            sysApproversVO.setStatus2((String) flow2.get("status"));
+            sysApproversVO.setApprovalReason2((String) flow2.get("approvalReason"));
+            sysApproversVO.setUpdatedAt2((String) flow2.get("updatedAt"));
+        }
 
         return sysApproversVO;
     }
