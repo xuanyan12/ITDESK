@@ -1,8 +1,71 @@
 <script setup>
-import {onMounted, ref} from "vue";
+import {onMounted, ref, computed} from "vue";
 import stringUtil from "@/utils/StringUtil";
 import httpUtil from "@/utils/HttpUtil";
 import TreeUtil from "@/utils/TreeUtil";
+import { useLanguageStore } from '@/stores/_frame/languageStore';
+
+// Import language store
+const languageStore = useLanguageStore();
+const currentLang = computed(() => languageStore.currentLang);
+
+// Language text definitions
+const langText = computed(() => {
+    return {
+        // Form labels and placeholders
+        roleName: currentLang.value === 'zh' ? '角色名称' : 'Role Name',
+        rolePermKey: currentLang.value === 'zh' ? '角色标识符' : 'Role Permission Key',
+        status: currentLang.value === 'zh' ? '状态' : 'Status',
+        normal: currentLang.value === 'zh' ? '正常' : 'Normal',
+        deleted: currentLang.value === 'zh' ? '已删除' : 'Deleted',
+        search: currentLang.value === 'zh' ? '搜索' : 'Search',
+        
+        // Table headers
+        roleId: currentLang.value === 'zh' ? '角色ID' : 'Role ID',
+        roleDescription: currentLang.value === 'zh' ? '角色描述' : 'Role Description',
+        operations: currentLang.value === 'zh' ? '操作' : 'Operations',
+        noData: currentLang.value === 'zh' ? '暂无数据' : 'No Data',
+        
+        // Buttons
+        addRole: currentLang.value === 'zh' ? '添加角色' : 'Add Role',
+        assignPermissions: currentLang.value === 'zh' ? '分配权限' : 'Assign Permissions',
+        edit: currentLang.value === 'zh' ? '编辑' : 'Edit',
+        delete: currentLang.value === 'zh' ? '删除' : 'Delete',
+        restore: currentLang.value === 'zh' ? '恢复' : 'Restore',
+        cancel: currentLang.value === 'zh' ? '取消' : 'Cancel',
+        confirm: currentLang.value === 'zh' ? '确定' : 'Confirm',
+        
+        // Dialog titles
+        addRoleTitle: currentLang.value === 'zh' ? '添加角色' : 'Add Role',
+        editRoleTitle: currentLang.value === 'zh' ? '编辑角色' : 'Edit Role',
+        deleteConfirmTitle: currentLang.value === 'zh' ? '删除确认' : 'Delete Confirmation',
+        restoreConfirmTitle: currentLang.value === 'zh' ? '恢复确认' : 'Restore Confirmation',
+        permanentDeleteTitle: currentLang.value === 'zh' ? '彻底删除' : 'Permanent Deletion',
+        
+        // Form fields
+        roleNameLabel: currentLang.value === 'zh' ? '角色名称' : 'Role Name',
+        permKeyLabel: currentLang.value === 'zh' ? '权限标识符' : 'Permission Key',
+        roleDescLabel: currentLang.value === 'zh' ? '角色描述' : 'Role Description',
+        roleNameRequired: currentLang.value === 'zh' ? '角色名称不能为空！' : 'Role name cannot be empty!',
+        rolePermKeyRequired: currentLang.value === 'zh' ? '角色权限符不能为空！' : 'Role permission key cannot be empty!',
+        
+        // Role assignment
+        assignPermissionsFor: (roleName) => currentLang.value === 'zh' 
+            ? `角色【${roleName}】权限分配` 
+            : `Permission assignment for role [${roleName}]`,
+            
+        // Confirmation messages
+        deleteRoleConfirm: (roleName) => currentLang.value === 'zh' 
+            ? `确定删除角色【${roleName}】吗？` 
+            : `Are you sure you want to delete role [${roleName}]?`,
+        restoreRoleConfirm: (roleName) => currentLang.value === 'zh' 
+            ? `确定恢复角色【${roleName}】吗？` 
+            : `Are you sure you want to restore role [${roleName}]?`,
+        permanentDeleteConfirm: (roleName) => currentLang.value === 'zh' 
+            ? `确定彻底删除角色【${roleName}】吗？删除之后将无法恢复！` 
+            : `Are you sure you want to permanently delete role [${roleName}]? This cannot be undone!`
+    }
+});
 
 const queryForm = ref({
     roleName: '',
@@ -60,10 +123,10 @@ const addRoleIng = ref(false)
 const addFormRef = ref(null)
 const roleFormRules = ref({
     roleName: [
-        {required: true, message: '角色名称不能为空！', trigger: 'blur'}
+        {required: true, message: () => langText.value.roleNameRequired, trigger: 'blur'}
     ],
     rolePermKey: [
-        {required: true, message: '角色权限符不能为空！', trigger: 'blur'}
+        {required: true, message: () => langText.value.rolePermKeyRequired, trigger: 'blur'}
     ]
 });
 
@@ -160,7 +223,7 @@ const permRoleDialog = (row) => {
     editRoleForm.value = {
         roleId: row.roleId
     }
-    permRoleDialogTitle.value = `角色【${row.roleName}】权限分配`
+    permRoleDialogTitle.value = langText.value.assignPermissionsFor(row.roleName)
     permRoleDialogVisible.value = true
     permRoleDialogIng.value = true
     // 查询可用菜单列表
@@ -232,7 +295,7 @@ const deleteLogicIng = ref(false)
 const deleteLogicRoleDialog = (row) => {
     editRoleForm.value = {} // 清空更新表单
     editRoleForm.value.roleId = row.roleId
-    deleteLogicTips.value = `确定删除角色【${row.roleName}】吗？`
+    deleteLogicTips.value = langText.value.deleteRoleConfirm(row.roleName)
     deleteLogicDialogVisible.value = true
 }
 
@@ -263,7 +326,7 @@ const restoreIng = ref(false)
 const restoreRoleDialog = (row) => {
     editRoleForm.value = {} // 清空更新表单
     editRoleForm.value.roleId = row.roleId
-    restoreTips.value = `确定恢复角色【${row.roleName}】吗？`
+    restoreTips.value = langText.value.restoreRoleConfirm(row.roleName)
     restoreDialogVisible.value = true
 }
 
@@ -294,7 +357,7 @@ const deleteIng = ref(false)
 const deleteRoleDialog = (row) => {
     editRoleForm.value = {} // 清空更新表单
     editRoleForm.value.roleId = row.roleId
-    deleteTips.value = `确定彻底删除角色【${row.roleName}】吗？删除之后将无法恢复！`
+    deleteTips.value = langText.value.permanentDeleteConfirm(row.roleName)
     deleteDialogVisible.value = true
 }
 
@@ -320,50 +383,50 @@ const deleteRole = () => {
     <div class="page">
         <el-card shadow="never" class="usr_card_override top">
             <el-form :inline="true" :model="queryForm">
-                <el-form-item label="角色名称">
-                    <el-input v-model="queryForm.roleName" maxlength="10" placeholder="角色名称" clearable
+                <el-form-item :label="langText.roleName">
+                    <el-input v-model="queryForm.roleName" maxlength="10" :placeholder="langText.roleName" clearable
                               style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="角色标识符">
-                    <el-input v-model="queryForm.rolePermKey" maxlength="10" placeholder="角色标识符" clearable
+                <el-form-item :label="langText.rolePermKey">
+                    <el-input v-model="queryForm.rolePermKey" maxlength="10" :placeholder="langText.rolePermKey" clearable
                               style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="状态">
-                    <el-select v-model="queryForm.status" size="default" placeholder="选择状态" clearable
+                <el-form-item :label="langText.status">
+                    <el-select v-model="queryForm.status" size="default" :placeholder="langText.status" clearable
                                style="width: 180px">
-                        <el-option label="正常" value="0"/>
-                        <el-option label="已删除" value="-1"/>
+                        <el-option :label="langText.normal" value="0"/>
+                        <el-option :label="langText.deleted" value="-1"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" plain @click="queryRoleListData">搜索</el-button>
+                    <el-button type="primary" plain @click="queryRoleListData">{{ langText.search }}</el-button>
                 </el-form-item>
             </el-form>
         </el-card>
         <div class="top_btn_panel">
-            <el-button type="primary" @click="addRoleDialog">添加角色</el-button>
+            <el-button type="primary" @click="addRoleDialog">{{ langText.addRole }}</el-button>
         </div>
         <el-card v-loading="loading" shadow="never" class="usr_card_override content">
             <el-table
                 class="role_table"
                 :data="roleList"
                 row-key="roleId">
-                <el-table-column label="角色ID" width="100" align="center">
+                <el-table-column :label="langText.roleId" width="100" align="center">
                     <template #default="scope">
                         {{ scope.row.roleId }}
                     </template>
                 </el-table-column>
-                <el-table-column label="角色名称" width="200">
+                <el-table-column :label="langText.roleName" width="200">
                     <template #default="scope">
                         {{ scope.row.roleName }}
                     </template>
                 </el-table-column>
-                <el-table-column label="角色标识符" width="200">
+                <el-table-column :label="langText.rolePermKey" width="200">
                     <template #default="scope">
                         {{ scope.row.rolePermKey }}
                     </template>
                 </el-table-column>
-                <el-table-column label="角色描述" width="300">
+                <el-table-column :label="langText.roleDescription" width="300">
                     <template #default="scope">
                         <div class="role_desc">
                             <el-tooltip placement="top">
@@ -375,115 +438,115 @@ const deleteRole = () => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="状态" align="center">
+                <el-table-column :label="langText.status" align="center">
                     <template #default="scope">
-                        <el-tag v-if="scope.row.status === 0">正常</el-tag>
-                        <el-tag v-else-if="scope.row.status === -1" type="warning">已删除</el-tag>
+                        <el-tag v-if="scope.row.status === 0">{{ langText.normal }}</el-tag>
+                        <el-tag v-else-if="scope.row.status === -1" type="warning">{{ langText.deleted }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column fixed="right" label="操作" width="280">
+                <el-table-column fixed="right" :label="langText.operations" width="380">
                     <template #default="scope">
                         <div class="action_btn">
                             <template v-if="scope.row.status === 0">
-                                <el-button type="primary" plain @click="permRoleDialog(scope.row)">分配权限</el-button>
-                                <el-button type="success" plain @click="editRoleDialog(scope.row)">编辑</el-button>
+                                <el-button type="primary" plain @click="permRoleDialog(scope.row)">{{ langText.assignPermissions }}</el-button>
+                                <el-button type="success" plain @click="editRoleDialog(scope.row)">{{ langText.edit }}</el-button>
                                 <el-button type="danger" v-if="scope.row.roleId > 3" plain
-                                           @click="deleteLogicRoleDialog(scope.row)">删除
+                                           @click="deleteLogicRoleDialog(scope.row)">{{ langText.delete }}
                                 </el-button>
                             </template>
                             <template v-if="scope.row.status === -1">
-                                <el-button type="warning" plain @click="restoreRoleDialog(scope.row)">恢复</el-button>
-                                <el-button type="info" plain @click="deleteRoleDialog(scope.row)">删除</el-button>
+                                <el-button type="warning" plain @click="restoreRoleDialog(scope.row)">{{ langText.restore }}</el-button>
+                                <el-button type="info" plain @click="deleteRoleDialog(scope.row)">{{ langText.delete }}</el-button>
                             </template>
                         </div>
                     </template>
                 </el-table-column>
                 <template #empty>
-                    <el-empty description="暂无数据"/>
+                    <el-empty :description="langText.noData"/>
                 </template>
             </el-table>
             <el-pagination background layout="prev, pager, next" :current-page="queryForm.pageNum"
                            @current-change="handleCurrentChange" :page-size="queryForm.pageSize" :total="total"/>
         </el-card>
         <!-- 添加角色Dialog -->
-        <el-dialog class="add_role_dialog" :close-on-click-modal="false" v-model="addRoleDialogVisible" title="添加角色"
+        <el-dialog class="add_role_dialog" :close-on-click-modal="false" v-model="addRoleDialogVisible" :title="langText.addRoleTitle"
                    width="600">
             <div class="add_role_form" v-loading="addRoleDialogIng">
                 <el-form :model="addRoleForm" ref="addFormRef" :rules="roleFormRules" label-width="100px">
-                    <el-form-item label="角色名称" prop="roleName">
-                        <el-input v-model="addRoleForm.roleName" maxlength="10" placeholder="角色名称"
+                    <el-form-item :label="langText.roleNameLabel" prop="roleName">
+                        <el-input v-model="addRoleForm.roleName" maxlength="10" :placeholder="langText.roleName"
                                   style="width: 250px" clearable/>
                     </el-form-item>
-                    <el-form-item label="权限标识符" prop="rolePermKey">
-                        <el-input v-model="addRoleForm.rolePermKey" maxlength="30" placeholder="权限标识符"
+                    <el-form-item :label="langText.permKeyLabel" prop="rolePermKey">
+                        <el-input v-model="addRoleForm.rolePermKey" maxlength="30" :placeholder="langText.rolePermKey"
                                   style="width: 250px" clearable/>
                     </el-form-item>
-                    <el-form-item label="角色描述" prop="roleDesc">
+                    <el-form-item :label="langText.roleDescLabel" prop="roleDesc">
                         <el-input v-model="addRoleForm.roleDesc" type="textarea" maxlength="50" rows="4"
-                                  placeholder="角色描述" style="width: 320px"/>
+                                  :placeholder="langText.roleDescription" style="width: 320px"/>
                     </el-form-item>
                 </el-form>
             </div>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="addRoleDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="addRole" :loading="addRoleIng">确定</el-button>
+                    <el-button @click="addRoleDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="addRole" :loading="addRoleIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 编辑角色Dialog -->
         <el-dialog class="edit_role_dialog" :close-on-click-modal="false" v-model="editRoleDialogVisible"
-                   title="编辑角色" width="600">
+                   :title="langText.editRoleTitle" width="600">
             <div class="edit_role_form" v-loading="editRoleDialogIng">
                 <el-form :model="editRoleForm" ref="editFormRef" :rules="roleFormRules" label-width="100px">
-                    <el-form-item label="角色名称" prop="roleName">
-                        <el-input v-model="editRoleForm.roleName" maxlength="10" placeholder="角色名称"
+                    <el-form-item :label="langText.roleNameLabel" prop="roleName">
+                        <el-input v-model="editRoleForm.roleName" maxlength="10" :placeholder="langText.roleName"
                                   style="width: 250px" clearable/>
                     </el-form-item>
-                    <el-form-item label="权限标识符" prop="rolePermKey">
-                        <el-input v-model="editRoleForm.rolePermKey" maxlength="30" placeholder="权限标识符"
+                    <el-form-item :label="langText.permKeyLabel" prop="rolePermKey">
+                        <el-input v-model="editRoleForm.rolePermKey" maxlength="30" :placeholder="langText.rolePermKey"
                                   style="width: 250px" clearable/>
                     </el-form-item>
-                    <el-form-item label="角色描述" prop="roleDesc">
+                    <el-form-item :label="langText.roleDescLabel" prop="roleDesc">
                         <el-input v-model="editRoleForm.roleDesc" type="textarea" maxlength="50" rows="4"
-                                  placeholder="角色描述" style="width: 320px"/>
+                                  :placeholder="langText.roleDescription" style="width: 320px"/>
                     </el-form-item>
                 </el-form>
             </div>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="editRoleDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="editRole" :loading="editRoleIng">确定</el-button>
+                    <el-button @click="editRoleDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="editRole" :loading="editRoleIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 逻辑删除菜单Dialog -->
-        <el-dialog v-model="deleteLogicDialogVisible" title="删除确认" width="500">
+        <el-dialog v-model="deleteLogicDialogVisible" :title="langText.deleteConfirmTitle" width="500">
             <span>{{ deleteLogicTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteLogicDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteLogicRole" :loading="deleteLogicIng">确定</el-button>
+                    <el-button @click="deleteLogicDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteLogicRole" :loading="deleteLogicIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 恢复菜单Dialog -->
-        <el-dialog v-model="restoreDialogVisible" title="恢复确认" width="500">
+        <el-dialog v-model="restoreDialogVisible" :title="langText.restoreConfirmTitle" width="500">
             <span>{{ restoreTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="restoreDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="restoreRole" :loading="restoreIng">确定</el-button>
+                    <el-button @click="restoreDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="restoreRole" :loading="restoreIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 物理删除菜单Dialog -->
-        <el-dialog v-model="deleteDialogVisible" title="彻底删除" width="500">
+        <el-dialog v-model="deleteDialogVisible" :title="langText.permanentDeleteTitle" width="500">
             <span>{{ deleteTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteRole" :loading="deleteIng">确定</el-button>
+                    <el-button @click="deleteDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteRole" :loading="deleteIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
@@ -509,8 +572,8 @@ const deleteRole = () => {
             </template>
             <template #footer>
                 <div style="flex: auto">
-                    <el-button @click="permRoleDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="permRole" :loading="permRoleIng">确定</el-button>
+                    <el-button @click="permRoleDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="permRole" :loading="permRoleIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-drawer>

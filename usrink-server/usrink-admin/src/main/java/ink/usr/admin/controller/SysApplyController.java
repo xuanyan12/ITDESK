@@ -378,4 +378,76 @@ public class SysApplyController {
             return Res.error("查询用户信息失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 获取所有唯一的部门和成本中心，用于下拉菜单
+     * @return 部门和成本中心列表
+     */
+    @RequestMapping("/getUserDepartmentsAndCostCenters")
+    public Res getUserDepartmentsAndCostCenters() {
+        try {
+            List<String> departments = sysUserService.getAllDistinctDepartments();
+            List<String> costCenters = sysUserService.getAllDistinctCostCenters();
+            
+            Dict result = Dict.create()
+                    .set("departments", departments)
+                    .set("costCenters", costCenters);
+            
+            return Res.success(result);
+        } catch (Exception e) {
+            log.error("获取部门和成本中心列表失败", e);
+            return Res.error("获取部门和成本中心列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取当前用户的审批计数信息（待处理和已处理）
+     * @return 待处理和已处理的审批数量
+     */
+    @RequestMapping("/getApprovalCounts")
+    public Res getApprovalCounts() {
+        try {
+            ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+            if (shiroUserInfo == null) {
+                return Res.error("用户未登录或会话已过期");
+            }
+            
+            Long userId = shiroUserInfo.getUserId();
+            if (userId == null) {
+                return Res.error("无法获取用户ID");
+            }
+            
+            // 获取用户的所有审批人ID列表（可能在多个成本中心担任审批人）
+            List<Long> approverIdList = sysApproverService.getApproverIdList(userId);
+            
+            if (approverIdList == null || approverIdList.isEmpty()) {
+                // 用户不是任何成本中心的审批人
+                Dict result = Dict.create()
+                        .set("isApprover", false);
+                return Res.success(result);
+            }
+            
+            // 统计所有成本中心的待处理和已处理审批数量
+            int totalPendingCount = 0;
+            int totalProcessedCount = 0;
+            
+            for (Long approverId : approverIdList) {
+                // 获取待处理审批数量 (status=0)
+                totalPendingCount += sysApprovalFlowService.getApprovalFlowCountByApproverId(approverId, 0L);
+                
+                // 获取已处理审批数量 (status=1)
+                totalProcessedCount += sysApprovalFlowService.getApprovalFlowCountByApproverId(approverId, 1L);
+            }
+            
+            Dict result = Dict.create()
+                    .set("isApprover", true)
+                    .set("pendingCount", totalPendingCount)
+                    .set("processedCount", totalProcessedCount);
+            
+            return Res.success(result);
+        } catch (Exception e) {
+            log.error("获取审批计数失败", e);
+            return Res.error("获取审批计数失败: " + e.getMessage());
+        }
+    }
 }

@@ -1,9 +1,10 @@
 <script setup>
-import {onMounted, ref, watch} from "vue";
+import {onMounted, ref, watch, computed} from "vue";
 import httpUtil from "@/utils/HttpUtil";
 import {ElMessage} from "element-plus";
 import UsrDescriptions from "@/components/_frame/common/usr-descriptions.vue";
 import UsrDescriptionsItem from "@/components/_frame/common/usr-descriptions-item.vue";
+import { useLanguageStore } from '@/stores/_frame/languageStore';
 
 const queryForm = ref({
     userName: '',
@@ -19,6 +20,78 @@ const queryDateRange = ref([])
 const loading = ref(false)
 const logOperatorList = ref([])
 const total = ref(0)
+
+// Import language store
+const languageStore = useLanguageStore();
+const currentLang = computed(() => languageStore.currentLang);
+
+// Language text definitions
+const langText = computed(() => {
+    return {
+        // Form labels and placeholders
+        username: currentLang.value === 'zh' ? '用户名' : 'Username',
+        requestMethod: currentLang.value === 'zh' ? '请求方法' : 'Request Method',
+        userAddress: currentLang.value === 'zh' ? '用户地址' : 'User Address',
+        requestTime: currentLang.value === 'zh' ? '请求时间' : 'Request Time',
+        startTime: currentLang.value === 'zh' ? '开始时间' : 'Start Time',
+        endTime: currentLang.value === 'zh' ? '结束时间' : 'End Time',
+        status: currentLang.value === 'zh' ? '状态' : 'Status',
+        selectStatus: currentLang.value === 'zh' ? '选择状态' : 'Select Status',
+        normal: currentLang.value === 'zh' ? '正常' : 'Normal',
+        failed: currentLang.value === 'zh' ? '失败' : 'Failed',
+        
+        // Buttons
+        search: currentLang.value === 'zh' ? '搜索' : 'Search',
+        deleteByDate: currentLang.value === 'zh' ? '按日期删除' : 'Delete by Date',
+        deleteAll: currentLang.value === 'zh' ? '删除全部' : 'Delete All',
+        details: currentLang.value === 'zh' ? '详情' : 'Details',
+        delete: currentLang.value === 'zh' ? '删除' : 'Delete',
+        cancel: currentLang.value === 'zh' ? '取消' : 'Cancel',
+        confirm: currentLang.value === 'zh' ? '确定' : 'Confirm',
+        close: currentLang.value === 'zh' ? '关闭' : 'Close',
+        
+        // Table headers
+        recordId: currentLang.value === 'zh' ? '记录ID' : 'Record ID',
+        userRole: currentLang.value === 'zh' ? '用户角色' : 'User Role',
+        operationDescription: currentLang.value === 'zh' ? '操作描述' : 'Operation Description',
+        requestType: currentLang.value === 'zh' ? '请求方式' : 'Request Type',
+        requestIP: currentLang.value === 'zh' ? '请求IP' : 'Request IP',
+        browser: currentLang.value === 'zh' ? '浏览器' : 'Browser',
+        os: currentLang.value === 'zh' ? '操作系统' : 'Operating System',
+        operationDuration: currentLang.value === 'zh' ? '操作耗时(MS)' : 'Operation Duration (MS)',
+        operationTime: currentLang.value === 'zh' ? '操作时间' : 'Operation Time',
+        operations: currentLang.value === 'zh' ? '操作' : 'Operations',
+        
+        // Dialog titles and messages
+        deleteConfirmation: currentLang.value === 'zh' ? '删除确认' : 'Delete Confirmation',
+        deleteDateRangeConfirm: (startTime, endTime) => {
+            return currentLang.value === 'zh' 
+                ? `确定删除【${startTime}】-【${endTime}】的操作日志吗？`
+                : `Are you sure you want to delete operation logs from ${startTime} to ${endTime}?`;
+        },
+        deleteAllConfirm: currentLang.value === 'zh' 
+            ? '确定清空全部操作日志吗？'
+            : 'Are you sure you want to delete all operation logs?',
+        deleteLogConfirm: (userName) => {
+            return currentLang.value === 'zh'
+                ? `确定删除【${userName}】的这条操作日志吗？`
+                : `Are you sure you want to delete this operation log for ${userName}?`;
+        },
+        pleaseSelectDateRange: currentLang.value === 'zh'
+            ? '请选择要删除的日期范围！'
+            : 'Please select a date range to delete!',
+        noData: currentLang.value === 'zh' ? '暂无数据' : 'No Data',
+        
+        // Log details
+        logDetails: currentLang.value === 'zh' ? '日志详情' : 'Log Details',
+        logNumber: currentLang.value === 'zh' ? '日志编号' : 'Log Number',
+        requestURL: currentLang.value === 'zh' ? '请求URL' : 'Request URL',
+        requestParams: currentLang.value === 'zh' ? '请求参数' : 'Request Parameters',
+        operationAddress: currentLang.value === 'zh' ? '操作地址' : 'Operation Address',
+        duration: currentLang.value === 'zh' ? '耗时(MS)' : 'Duration (MS)',
+        result: currentLang.value === 'zh' ? '结果' : 'Result'
+    }
+});
 
 /**
  * 监听查询条件日期范围的变化
@@ -99,11 +172,11 @@ watch(deleteDateRange, (newVal) => {
  */
 const deleteLogOperatorByDateDialog = () => {
     if (deleteForm.value.startTime === '' || deleteForm.value.endTime === '') {
-        ElMessage.warning('请选择要删除的日期范围！')
+        ElMessage.warning(langText.value.pleaseSelectDateRange)
         return
     }
 
-    deleteDateRangeTips.value = `确定删除【${deleteForm.value.startTime}】-【${deleteForm.value.endTime}】的操作日志吗？`
+    deleteDateRangeTips.value = langText.value.deleteDateRangeConfirm(deleteForm.value.startTime, deleteForm.value.endTime)
     deleteDateRangeVisible.value = true
 }
 
@@ -130,7 +203,7 @@ const deleteAllIng = ref(false)
  * 清空全部日志Dialog
  */
 const deleteAllDialog = () => {
-    deleteAllTips.value = "确定清空全部操作日志吗？"
+    deleteAllTips.value = langText.value.deleteAllConfirm
     deleteAllVisible.value = true
 }
 
@@ -160,7 +233,7 @@ const deleteByIdIng = ref(false)
  */
 const deleteLogOperatorDialog = (row) => {
     deleteLogId.value = row.logId
-    deleteByIdTips.value = `确定删除【${row.userName}】的这条操作日志吗？`
+    deleteByIdTips.value = langText.value.deleteLogConfirm(row.userName)
     deleteByIdVisible.value = true
 }
 
@@ -207,38 +280,38 @@ const logOperatorInfoDialog = (row) => {
     <div class="page">
         <el-card shadow="never" class="usr_card_override top">
             <el-form :inline="true" :model="queryForm">
-                <el-form-item label="用户名">
-                    <el-input v-model="queryForm.userName" maxlength="10" placeholder="用户名" clearable
+                <el-form-item :label="langText.username">
+                    <el-input v-model="queryForm.userName" maxlength="10" :placeholder="langText.username" clearable
                               style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="请求方法">
-                    <el-input v-model="queryForm.reqMethod" maxlength="10" placeholder="请求方法" clearable
+                <el-form-item :label="langText.requestMethod">
+                    <el-input v-model="queryForm.reqMethod" maxlength="10" :placeholder="langText.requestMethod" clearable
                               style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="用户地址">
-                    <el-input v-model="queryForm.location" maxlength="10" placeholder="请求地址" clearable
+                <el-form-item :label="langText.userAddress">
+                    <el-input v-model="queryForm.location" maxlength="10" :placeholder="langText.userAddress" clearable
                               style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="请求时间">
+                <el-form-item :label="langText.requestTime">
                     <el-date-picker
                         v-model="queryDateRange"
                         type="daterange"
                         :editable="false"
-                        start-placeholder="开始时间"
-                        end-placeholder="结束时间"
+                        :start-placeholder="langText.startTime"
+                        :end-placeholder="langText.endTime"
                         size="default"
                         value-format="YYYY-MM-DD"
                     />
                 </el-form-item>
-                <el-form-item label="状态">
-                    <el-select v-model="queryForm.status" size="default" placeholder="选择状态" clearable
+                <el-form-item :label="langText.status">
+                    <el-select v-model="queryForm.status" size="default" :placeholder="langText.selectStatus" clearable
                                style="width: 180px">
-                        <el-option label="正常" value="0"/>
-                        <el-option label="失败" value="-1"/>
+                        <el-option :label="langText.normal" value="0"/>
+                        <el-option :label="langText.failed" value="-1"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" plain @click="queryLogOperatorListData">搜索</el-button>
+                    <el-button type="primary" plain @click="queryLogOperatorListData">{{ langText.search }}</el-button>
                 </el-form-item>
             </el-form>
         </el-card>
@@ -248,13 +321,13 @@ const logOperatorInfoDialog = (row) => {
                     v-model="deleteDateRange"
                     type="daterange"
                     :editable="false"
-                    start-placeholder="开始时间"
-                    end-placeholder="结束时间"
+                    :start-placeholder="langText.startTime"
+                    :end-placeholder="langText.endTime"
                     size="default"
                     value-format="YYYY-MM-DD"
                 />
-                <el-button type="warning" plain @click="deleteLogOperatorByDateDialog">按日期删除</el-button>
-                <el-button type="danger" plain @click="deleteAllDialog">删除全部</el-button>
+                <el-button type="warning" plain @click="deleteLogOperatorByDateDialog">{{ langText.deleteByDate }}</el-button>
+                <el-button type="danger" plain @click="deleteAllDialog">{{ langText.deleteAll }}</el-button>
             </el-form>
         </div>
         <el-card v-loading="loading" shadow="never" class="usr_card_override content">
@@ -262,119 +335,119 @@ const logOperatorInfoDialog = (row) => {
                 class="log_operator_table"
                 :data="logOperatorList"
                 row-key="logId">
-                <el-table-column label="记录ID" width="100" align="center">
+                <el-table-column :label="langText.recordId" width="100" align="center">
                     <template #default="scope">
                         {{ scope.row.logId }}
                     </template>
                 </el-table-column>
-                <el-table-column label="用户名" width="120">
+                <el-table-column :label="langText.username" width="120">
                     <template #default="scope">
                         {{ scope.row.userName }}
                     </template>
                 </el-table-column>
-                <el-table-column label="用户角色" width="120">
+                <el-table-column :label="langText.userRole" width="120">
                     <template #default="scope">
                         {{ scope.row.userRoleName }}
                     </template>
                 </el-table-column>
-                <el-table-column label="操作描述" width="200">
+                <el-table-column :label="langText.operationDescription" width="200">
                     <template #default="scope">
                         {{ scope.row.operatorDesc }}
                     </template>
                 </el-table-column>
-                <el-table-column label="请求方式" width="130" align="center">
+                <el-table-column :label="langText.requestType" width="130" align="center">
                     <template #default="scope">
                         {{ scope.row.reqType }}
                     </template>
                 </el-table-column>
-                <el-table-column label="请求IP" width="150" align="center">
+                <el-table-column :label="langText.requestIP" width="150" align="center">
                     <template #default="scope">
                         {{ scope.row.ipAddr }}
                     </template>
                 </el-table-column>
-                <el-table-column label="用户地址" width="180">
+                <el-table-column :label="langText.userAddress" width="180">
                     <template #default="scope">
                         {{ scope.row.location }}
                     </template>
                 </el-table-column>
-                <el-table-column label="浏览器" width="120" align="center">
+                <el-table-column :label="langText.browser" width="120" align="center">
                     <template #default="scope">
                         {{ scope.row.browser }}
                     </template>
                 </el-table-column>
-                <el-table-column label="操作系统" width="120" align="center">
+                <el-table-column :label="langText.os" width="120" align="center">
                     <template #default="scope">
                         {{ scope.row.os }}
                     </template>
                 </el-table-column>
-                <el-table-column label="操作耗时(MS)" width="120" align="center">
+                <el-table-column :label="langText.operationDuration" width="120" align="center">
                     <template #default="scope">
                         {{ scope.row.costTime }}
                     </template>
                 </el-table-column>
-                <el-table-column label="操作时间" width="200">
+                <el-table-column :label="langText.operationTime" width="200">
                     <template #default="scope">
                         {{ scope.row.createTime }}
                     </template>
                 </el-table-column>
-                <el-table-column label="状态" align="center">
+                <el-table-column :label="langText.status" align="center">
                     <template #default="scope">
-                        <el-tag v-if="scope.row.status === 0">正常</el-tag>
-                        <el-tag v-else-if="scope.row.status === -1" type="danger">失败</el-tag>
+                        <el-tag v-if="scope.row.status === 0">{{ langText.normal }}</el-tag>
+                        <el-tag v-else-if="scope.row.status === -1" type="danger">{{ langText.failed }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column fixed="right" label="操作" width="160">
+                <el-table-column fixed="right" :label="langText.operations" width="220">
                     <template #default="scope">
                         <div class="action_btn">
-                            <el-button type="primary" plain @click="logOperatorInfoDialog(scope.row)">详情
+                            <el-button type="primary" plain @click="logOperatorInfoDialog(scope.row)">{{ langText.details }}
                             </el-button>
-                            <el-button type="info" plain @click="deleteLogOperatorDialog(scope.row)">删除
+                            <el-button type="info" plain @click="deleteLogOperatorDialog(scope.row)">{{ langText.delete }}
                             </el-button>
                         </div>
                     </template>
                 </el-table-column>
                 <template #empty>
-                    <el-empty description="暂无数据"/>
+                    <el-empty :description="langText.noData"/>
                 </template>
             </el-table>
             <el-pagination background layout="prev, pager, next" :current-page="queryForm.pageNum"
                            @current-change="handleCurrentChange" :page-size="queryForm.pageSize" :total="total"/>
         </el-card>
         <!-- 按日期删除日志Dialog -->
-        <el-dialog v-model="deleteDateRangeVisible" title="删除确认" width="500">
+        <el-dialog v-model="deleteDateRangeVisible" :title="langText.deleteConfirmation" width="500">
             <span>{{ deleteDateRangeTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteDateRangeVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteLogOperatorByDate" :loading="deleteDateRangeIng">确定
+                    <el-button @click="deleteDateRangeVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteLogOperatorByDate" :loading="deleteDateRangeIng">{{ langText.confirm }}
                     </el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 清空全部日志Dialog -->
-        <el-dialog v-model="deleteAllVisible" title="删除确认" width="500">
+        <el-dialog v-model="deleteAllVisible" :title="langText.deleteConfirmation" width="500">
             <span>{{ deleteAllTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteAllVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteAll" :loading="deleteAllIng">确定</el-button>
+                    <el-button @click="deleteAllVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteAll" :loading="deleteAllIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 删除日志Dialog -->
-        <el-dialog v-model="deleteByIdVisible" title="删除确认" width="500">
+        <el-dialog v-model="deleteByIdVisible" :title="langText.deleteConfirmation" width="500">
             <span>{{ deleteByIdTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteByIdVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteLogOperatorById" :loading="deleteByIdIng">确定</el-button>
+                    <el-button @click="deleteByIdVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteLogOperatorById" :loading="deleteByIdIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 日志详情Dialog -->
         <el-drawer class="usr_drawer_log_operator_info" v-model="logOperatorInfoVisible" direction="rtl" size="500">
             <template #header>
-                <h4>日志详情</h4>
+                <h4>{{ langText.logDetails }}</h4>
             </template>
             <template #default>
                 <div class="usr_log_operator_panel" v-loading="logOperatorInfoIng">
@@ -383,37 +456,37 @@ const logOperatorInfoDialog = (row) => {
                             <usr-descriptions direction="column">
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">日志编号：</el-text>
+                                        <el-text type="info">{{ langText.logNumber }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.logId }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">用户名：</el-text>
+                                        <el-text type="info">{{ langText.username }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.userName }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">用户角色：</el-text>
+                                        <el-text type="info">{{ langText.userRole }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.userRoleName }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">操作描述：</el-text>
+                                        <el-text type="info">{{ langText.operationDescription }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.operatorDesc }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">请求URL：</el-text>
+                                        <el-text type="info">{{ langText.requestURL }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.reqUrl }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">请求方式：</el-text>
+                                        <el-text type="info">{{ langText.requestType }}：</el-text>
                                     </template>
                                     <template #desc>
                                         <el-tag>{{ logOperatorInfo.reqType }}</el-tag>
@@ -421,7 +494,7 @@ const logOperatorInfoDialog = (row) => {
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">请求方法：</el-text>
+                                        <el-text type="info">{{ langText.requestMethod }}：</el-text>
                                     </template>
                                     <template #desc>
                                         <div class="code_info">
@@ -431,7 +504,7 @@ const logOperatorInfoDialog = (row) => {
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">请求参数：</el-text>
+                                        <el-text type="info">{{ langText.requestParams }}：</el-text>
                                     </template>
                                     <template #desc>
                                         <div class="code_info">
@@ -441,52 +514,52 @@ const logOperatorInfoDialog = (row) => {
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">请求IP：</el-text>
+                                        <el-text type="info">{{ langText.requestIP }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.ipAddr }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">操作地址：</el-text>
+                                        <el-text type="info">{{ langText.operationAddress }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.location }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">浏览器：</el-text>
+                                        <el-text type="info">{{ langText.browser }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.browser }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">操作系统：</el-text>
+                                        <el-text type="info">{{ langText.os }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.os }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">操作时间：</el-text>
+                                        <el-text type="info">{{ langText.operationTime }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.createTime }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">耗时(MS)：</el-text>
+                                        <el-text type="info">{{ langText.duration }}：</el-text>
                                     </template>
                                     <template #desc>{{ logOperatorInfo.costTime }}</template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">状态：</el-text>
+                                        <el-text type="info">{{ langText.status }}：</el-text>
                                     </template>
                                     <template #desc>
-                                        <el-tag v-if="logOperatorInfo.status === 0">正常</el-tag>
-                                        <el-tag v-else-if="logOperatorInfo.status === -1" type="danger">失败</el-tag>
+                                        <el-tag v-if="logOperatorInfo.status === 0">{{ langText.normal }}</el-tag>
+                                        <el-tag v-else-if="logOperatorInfo.status === -1" type="danger">{{ langText.failed }}</el-tag>
                                     </template>
                                 </usr-descriptions-item>
                                 <usr-descriptions-item>
                                     <template #name>
-                                        <el-text type="info">结果：</el-text>
+                                        <el-text type="info">{{ langText.result }}：</el-text>
                                     </template>
                                     <template #desc>
                                         <div class="code_info">
@@ -496,13 +569,13 @@ const logOperatorInfoDialog = (row) => {
                                 </usr-descriptions-item>
                             </usr-descriptions>
                         </div>
-                        <el-empty v-else/>
+                        <el-empty v-else :description="langText.noData"/>
                     </el-scrollbar>
                 </div>
             </template>
             <template #footer>
                 <div style="flex: auto">
-                    <el-button @click="logOperatorInfoVisible = false">关闭</el-button>
+                    <el-button @click="logOperatorInfoVisible = false">{{ langText.close }}</el-button>
                 </div>
             </template>
         </el-drawer>

@@ -128,9 +128,16 @@ const searchTimeout = ref(null); // 搜索防抖定时器
 // 定义输入框引用
 const userInputRef = ref(null);
 
+// Add new variables for department and cost center options
+const departmentOptions = ref([]);
+const costCenterOptions = ref([]);
+
 onMounted(() => {
     // 查询配件列表
     selectPartListData()
+
+    // 加载部门和成本中心选项
+    loadDepartmentAndCostCenterOptions()
 
     // 添加全局点击事件监听，用于关闭用户搜索下拉框
     document.addEventListener('click', handleDocumentClick);
@@ -1012,6 +1019,22 @@ const getUserDropdownPosition = () => {
     };
 };
 
+/**
+ * 加载部门和成本中心选项
+ */
+const loadDepartmentAndCostCenterOptions = () => {
+    httpUtil.get("/sysApply/getUserDepartmentsAndCostCenters").then(res => {
+        if (res.data && res.data.departments) {
+            departmentOptions.value = res.data.departments;
+        }
+        if (res.data && res.data.costCenters) {
+            costCenterOptions.value = res.data.costCenters;
+        }
+    }).catch(err => {
+        console.error("获取部门和成本中心数据失败:", err);
+    });
+}
+
 </script>
 
 
@@ -1021,7 +1044,7 @@ const getUserDropdownPosition = () => {
         <el-card shadow="never" class="usr_card_override top">
             <el-form :model="queryForm" inline class="query-form">
                 <el-form-item :label="langText.computerName" class="form-item">
-                    <el-input v-model="queryForm.ciName" :placeholder="langText.enterComputerName" class="input-field" @keyup.enter="selectPartListData"></el-input>
+                    <el-input v-model="queryForm.ciName" :placeholder="langText.enterComputerName" class="input-field" @keyup.enter="selectPartListData" clearable></el-input>
                 </el-form-item>
                 <el-form-item :label="langText.employeeName" class="form-item">
                     <div class="user-input-container">
@@ -1069,7 +1092,9 @@ const getUserDropdownPosition = () => {
                     </el-select>
                 </el-form-item>
                 <el-form-item :label="langText.department" class="form-item">
-                    <el-input v-model="queryForm.department" :placeholder="langText.enterDepartment" class="input-field"></el-input>
+                    <el-select v-model="queryForm.department" :placeholder="langText.enterDepartment" class="input-field" filterable clearable>
+                        <el-option v-for="dept in departmentOptions" :key="dept" :label="dept" :value="dept"></el-option>
+                    </el-select>
                 </el-form-item>
                 <el-form-item :label="langText.computerStatus" class="form-item">
                     <el-select v-model="queryForm.pcStatus" :placeholder="langText.selectComputerStatus" class="input-field">
@@ -1094,7 +1119,9 @@ const getUserDropdownPosition = () => {
                     </el-date-picker>
                 </el-form-item>
                 <el-form-item :label="langText.costCenter" class="form-item">
-                    <el-input v-model="queryForm.costCenter" :placeholder="langText.enterCostCenter" class="input-field"></el-input>
+                    <el-select v-model="queryForm.costCenter" :placeholder="langText.enterCostCenter" class="input-field" filterable clearable>
+                        <el-option v-for="center in costCenterOptions" :key="center" :label="center" :value="center"></el-option>
+                    </el-select>
                 </el-form-item>
                 <el-form-item class="form-item">
                     <el-button type="primary" @click="selectPartListData">{{ langText.search }}</el-button>

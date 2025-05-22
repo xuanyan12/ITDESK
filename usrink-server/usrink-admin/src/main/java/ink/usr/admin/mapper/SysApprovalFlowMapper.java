@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Insert;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,22 @@ public interface SysApprovalFlowMapper {
     SysApprovalTokenModel getApprovalToken(@Param("flowId") Long flowId, @Param("token") String token);
     
     /**
+     * 获取流程ID对应的活跃(未使用)的token
+     * @param flowId 流程ID
+     * @return token信息
+     */
+    @Select("select * from sys_approval_token where flowId = #{flowId} and used = 0 order by createTime desc limit 1")
+    SysApprovalTokenModel getActiveTokenByFlowId(@Param("flowId") Long flowId);
+    
+    /**
+     * 插入审批token
+     * @param tokenModel token模型
+     * @return 插入的记录数
+     */
+    @Insert("insert into sys_approval_token(flowId, token, expireTime, used) values(#{flowId}, #{token}, #{expireTime}, #{used})")
+    int insertApprovalToken(SysApprovalTokenModel tokenModel);
+    
+    /**
      * 更新审批状态
      */
     @Update("update sys_approval_request set status = #{status}, " +
@@ -75,4 +92,20 @@ public interface SysApprovalFlowMapper {
      */
     @Select("select * from sys_approval_flow where approvalId = #{approvalId} order by stage asc")
     List<SysApprovalFlowModel> getApprovalFlowsByApprovalId(Long approvalId);
+
+    /**
+     * 统计待处理的审批数量
+     * @param approverId 审批人ID
+     * @return 待处理审批数量
+     */
+    @Select("select count(*) from sys_approval_flow where approverId = #{approverId} and status = '审批中'")
+    int countPendingApprovalsByApproverId(Long approverId);
+    
+    /**
+     * 统计已处理的审批数量
+     * @param approverId 审批人ID
+     * @return 已处理审批数量
+     */
+    @Select("select count(*) from sys_approval_flow where approverId = #{approverId} and status != '审批中'")
+    int countProcessedApprovalsByApproverId(Long approverId);
 }

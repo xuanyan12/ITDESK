@@ -197,4 +197,20 @@ public class SysUserService implements ISysUserService {
     public List<SysUserModel> searchUsersByNameOrNick(String query) {
         return sysUserMapper.searchUsersByNameOrNick(query);
     }
+
+    /**
+     * 获取所有唯一的部门列表
+     * @return 唯一部门列表
+     */
+    public List<String> getAllDistinctDepartments() {
+        return sysUserMapper.getAllDistinctDepartments();
+    }
+
+    /**
+     * 获取所有唯一的成本中心列表
+     * @return 唯一成本中心列表
+     */
+    public List<String> getAllDistinctCostCenters() {
+        return sysUserMapper.getAllDistinctCostCenters();
+    }
 }

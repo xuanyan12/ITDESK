@@ -1,9 +1,100 @@
 <script setup>
-import {nextTick, onMounted, ref} from "vue";
+import {nextTick, onMounted, ref, computed} from "vue";
 import httpUtil from "@/utils/HttpUtil";
 import TreeUtil from "@/utils/TreeUtil";
 import {Warning} from "@element-plus/icons-vue";
 import UsrChooseIcon from "@/components/_frame/common/usr-choose-icon.vue";
+import { useLanguageStore } from '@/stores/_frame/languageStore';
+
+// Import language store
+const languageStore = useLanguageStore();
+const currentLang = computed(() => languageStore.currentLang);
+
+// Language text definitions
+const langText = computed(() => {
+    return {
+        // Form labels and placeholders
+        menuName: currentLang.value === 'zh' ? '菜单名称' : 'Menu Name',
+        status: currentLang.value === 'zh' ? '状态' : 'Status',
+        normal: currentLang.value === 'zh' ? '正常' : 'Normal',
+        deleted: currentLang.value === 'zh' ? '已删除' : 'Deleted',
+        selectStatus: currentLang.value === 'zh' ? '选择状态' : 'Select Status',
+        search: currentLang.value === 'zh' ? '搜索' : 'Search',
+        
+        // Buttons
+        expandCollapse: currentLang.value === 'zh' ? '展开/折叠' : 'Expand/Collapse',
+        addMenu: currentLang.value === 'zh' ? '添加菜单' : 'Add Menu',
+        add: currentLang.value === 'zh' ? '添加' : 'Add',
+        edit: currentLang.value === 'zh' ? '编辑' : 'Edit',
+        delete: currentLang.value === 'zh' ? '删除' : 'Delete',
+        restore: currentLang.value === 'zh' ? '恢复' : 'Restore',
+        cancel: currentLang.value === 'zh' ? '取消' : 'Cancel',
+        confirm: currentLang.value === 'zh' ? '确定' : 'Confirm',
+        
+        // Table headers
+        sortOrder: currentLang.value === 'zh' ? '排序' : 'Sort Order',
+        menuType: currentLang.value === 'zh' ? '菜单类型' : 'Menu Type',
+        permissionKey: currentLang.value === 'zh' ? '权限标识符' : 'Permission Key',
+        pageRoute: currentLang.value === 'zh' ? '页面路由' : 'Page Route',
+        pageComponent: currentLang.value === 'zh' ? '页面组件' : 'Page Component',
+        sceneType: currentLang.value === 'zh' ? '场景类型' : 'Scene Type',
+        operations: currentLang.value === 'zh' ? '操作' : 'Operations',
+        noData: currentLang.value === 'zh' ? '暂无数据' : 'No Data',
+        
+        // Menu types
+        directory: currentLang.value === 'zh' ? '目录' : 'Directory',
+        menu: currentLang.value === 'zh' ? '菜单' : 'Menu',
+        button: currentLang.value === 'zh' ? '按钮' : 'Button',
+        
+        // Scene types
+        mainMenu: currentLang.value === 'zh' ? '主菜单' : 'Main Menu',
+        normalPage: currentLang.value === 'zh' ? '普通页面' : 'Normal Page',
+        
+        // Form fields
+        parentMenu: currentLang.value === 'zh' ? '父菜单' : 'Parent Menu',
+        selectParentMenu: currentLang.value === 'zh' ? '选择父类菜单' : 'Select Parent Menu',
+        selectMenuScene: currentLang.value === 'zh' ? '选择菜单场景' : 'Select Menu Scene',
+        selectMenuType: currentLang.value === 'zh' ? '选择菜单类型' : 'Select Menu Type',
+        icon: currentLang.value === 'zh' ? '图标' : 'Icon',
+        selectIcon: currentLang.value === 'zh' ? '点击选择图标' : 'Click to select icon',
+        
+        // Dialog titles
+        addMenuTitle: currentLang.value === 'zh' ? '添加菜单' : 'Add Menu',
+        editMenuTitle: currentLang.value === 'zh' ? '编辑菜单' : 'Edit Menu',
+        deleteConfirmTitle: currentLang.value === 'zh' ? '删除确认' : 'Delete Confirmation',
+        restoreConfirmTitle: currentLang.value === 'zh' ? '恢复确认' : 'Restore Confirmation',
+        permanentDeleteTitle: currentLang.value === 'zh' ? '彻底删除' : 'Permanent Deletion',
+        
+        // Validation messages
+        menuNameRequired: currentLang.value === 'zh' ? '菜单名称不能为空！' : 'Menu name cannot be empty!',
+        orderIndexRequired: currentLang.value === 'zh' ? '排序不能为空！' : 'Sort order cannot be empty!',
+        sceneTypeRequired: currentLang.value === 'zh' ? '使用场景不能为空！' : 'Scene type cannot be empty!',
+        menuTypeRequired: currentLang.value === 'zh' ? '菜单类型不能为空！' : 'Menu type cannot be empty!',
+        permKeyRequired: currentLang.value === 'zh' ? '菜单类型为【按钮】时候，权限标识符不能为空！！' : 'Permission key cannot be empty when menu type is [Button]!',
+        
+        // Tooltips
+        sceneTypeTooltip: currentLang.value === 'zh' 
+            ? '使用场景类型，<br/>【主菜单】为页面左侧的主菜单的页面；<br/>【普通页面】一般为非主菜单页面，如个人中心等。' 
+            : 'Scene type,<br/>[Main Menu] for pages in the left main menu;<br/>[Normal Page] for non-main menu pages, like user profile, etc.',
+        menuTypeTooltip: currentLang.value === 'zh' 
+            ? '菜单类型，<br/>【目录】为页面的父节点；<br/>【菜单】一般为页面；<br/>【按钮】一般为页面上的操作。' 
+            : 'Menu type,<br/>[Directory] is a parent node for pages;<br/>[Menu] is generally a page;<br/>[Button] is generally an operation on a page.',
+        permKeyTooltip: currentLang.value === 'zh' 
+            ? "Shiro权限控制标识符，如：@RequiresPermissions('sys:menu:add')" 
+            : "Shiro permission identifier, e.g.: @RequiresPermissions('sys:menu:add')",
+            
+        // Confirmation messages
+        deleteMenuConfirm: (menuName) => currentLang.value === 'zh' 
+            ? `确定删除菜单【${menuName}】吗？` 
+            : `Are you sure you want to delete menu [${menuName}]?`,
+        restoreMenuConfirm: (menuName) => currentLang.value === 'zh' 
+            ? `确定恢复菜单【${menuName}】吗？` 
+            : `Are you sure you want to restore menu [${menuName}]?`,
+        permanentDeleteConfirm: (menuName) => currentLang.value === 'zh' 
+            ? `确定彻底删除菜单【${menuName}】吗？删除之后将无法恢复！` 
+            : `Are you sure you want to permanently delete menu [${menuName}]? This cannot be undone!`
+    }
+});
 
 const queryForm = ref({
     menuName: '',
@@ -57,18 +148,18 @@ const addMenuIng = ref(false)
 const addFormRef = ref(null)
 const menuFormRules = ref({
     menuName: [
-        {required: true, message: '菜单名称不能为空！', trigger: 'blur'}
+        {required: true, message: () => langText.value.menuNameRequired, trigger: 'blur'}
     ],
     orderIndex: [
-        {required: true, message: '排序不能为空！', trigger: 'blur'}
+        {required: true, message: () => langText.value.orderIndexRequired, trigger: 'blur'}
     ],
     sceneType: [
-        {required: true, message: '使用场景不能为空！', trigger: 'change'},
+        {required: true, message: () => langText.value.sceneTypeRequired, trigger: 'change'},
     ],
     menuType: [
-        {required: true, message: '菜单类型不能为空！', trigger: 'change'}
+        {required: true, message: () => langText.value.menuTypeRequired, trigger: 'change'}
     ],
-    permKey: {required: false, message: '菜单类型为【按钮】时候，权限标识符不能为空！！', trigger: 'blur'}
+    permKey: {required: false, message: () => langText.value.permKeyRequired, trigger: 'blur'}
 });
 
 /**
@@ -226,7 +317,7 @@ const deleteLogicIng = ref(false)
 const deleteLogicMenuDialog = (row) => {
     updateForm.value = {} // 清空更新表单
     updateForm.value.menuId = row.menuId
-    deleteLogicTips.value = `确定删除菜单【${row.menuName}】吗？`
+    deleteLogicTips.value = langText.value.deleteMenuConfirm(row.menuName)
     deleteLogicDialogVisible.value = true
 }
 
@@ -257,7 +348,7 @@ const restoreIng = ref(false)
 const restoreMenuDialog = (row) => {
     updateForm.value = {} // 清空更新表单
     updateForm.value.menuId = row.menuId
-    restoreTips.value = `确定恢复菜单【${row.menuName}】吗？`
+    restoreTips.value = langText.value.restoreMenuConfirm(row.menuName)
     restoreDialogVisible.value = true
 }
 
@@ -288,7 +379,7 @@ const deleteIng = ref(false)
 const deleteMenuDialog = (row) => {
     updateForm.value = {} // 清空更新表单
     updateForm.value.menuId = row.menuId
-    deleteTips.value = `确定彻底删除菜单【${row.menuName}】吗？删除之后将无法恢复！`
+    deleteTips.value = langText.value.permanentDeleteConfirm(row.menuName)
     deleteDialogVisible.value = true
 }
 
@@ -315,25 +406,25 @@ const deleteMenu = () => {
     <div class="page">
         <el-card shadow="never" class="usr_card_override top">
             <el-form :inline="true" :model="queryForm">
-                <el-form-item label="菜单名称">
-                    <el-input v-model="queryForm.menuName" maxlength="10" placeholder="菜单名称" clearable
+                <el-form-item :label="langText.menuName">
+                    <el-input v-model="queryForm.menuName" maxlength="10" :placeholder="langText.menuName" clearable
                               style="width: 180px"/>
                 </el-form-item>
-                <el-form-item label="状态">
-                    <el-select v-model="queryForm.status" size="default" placeholder="选择状态" clearable
+                <el-form-item :label="langText.status">
+                    <el-select v-model="queryForm.status" size="default" :placeholder="langText.selectStatus" clearable
                                style="width: 180px">
-                        <el-option label="正常" value="0"/>
-                        <el-option label="已删除" value="-1"/>
+                        <el-option :label="langText.normal" value="0"/>
+                        <el-option :label="langText.deleted" value="-1"/>
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" plain @click="selectMenuListData">搜索</el-button>
+                    <el-button type="primary" plain @click="selectMenuListData">{{ langText.search }}</el-button>
                 </el-form-item>
             </el-form>
         </el-card>
         <div class="top_btn_panel">
-            <el-button type="warning" plain @click="tableExpandAllChange()">展开/折叠</el-button>
-            <el-button type="primary" @click="addMenuDialog(null)">添加菜单</el-button>
+            <el-button type="warning" plain @click="tableExpandAllChange()">{{ langText.expandCollapse }}</el-button>
+            <el-button type="primary" @click="addMenuDialog(null)">{{ langText.addMenu }}</el-button>
         </div>
         <el-card v-loading="loading" shadow="never" class="usr_card_override content">
             <el-table
@@ -342,7 +433,7 @@ const deleteMenu = () => {
                 :data="menuList"
                 row-key="menuId"
                 :defaultExpandAll="tableExpandAll">
-                <el-table-column class-name="coll_1" label="菜单名称" width="220">
+                <el-table-column class-name="coll_1" :label="langText.menuName" width="220">
                     <template #default="scope">
                         <div style="display: flex; align-items: center">
                             <el-icon v-if="scope.row.icon">
@@ -352,19 +443,19 @@ const deleteMenu = () => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="排序" align="center" width="80">
+                <el-table-column :label="langText.sortOrder" align="center" width="80">
                     <template #default="scope">
                         <el-text>{{ scope.row.orderIndex }}</el-text>
                     </template>
                 </el-table-column>
-                <el-table-column label="菜单类型" align="center" width="120">
+                <el-table-column :label="langText.menuType" align="center" width="120">
                     <template #default="scope">
-                        <el-tag v-if="scope.row.menuType === 0">目录</el-tag>
-                        <el-tag v-else-if="scope.row.menuType === 1" type="warning">菜单</el-tag>
-                        <el-tag v-else-if="scope.row.menuType === 2" type="info">按钮</el-tag>
+                        <el-tag v-if="scope.row.menuType === 0">{{ langText.directory }}</el-tag>
+                        <el-tag v-else-if="scope.row.menuType === 1" type="warning">{{ langText.menu }}</el-tag>
+                        <el-tag v-else-if="scope.row.menuType === 2" type="info">{{ langText.button }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="权限标识符" width="200">
+                <el-table-column :label="langText.permissionKey" width="200">
                     <template #default="scope">
                         <div class="menu_perm">
                             <el-text>
@@ -373,14 +464,14 @@ const deleteMenu = () => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="页面路由" width="200">
+                <el-table-column :label="langText.pageRoute" width="200">
                     <template #default="scope">
                         <div class="menu_path">
                             <el-text>{{ scope.row.route }}</el-text>
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="页面组件" width="200">
+                <el-table-column :label="langText.pageComponent" width="200">
                     <template #default="scope">
                         <div class="menu_component">
                             <el-text>
@@ -389,77 +480,76 @@ const deleteMenu = () => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="场景类型" align="center" width="150">
+                <el-table-column :label="langText.sceneType" align="center" width="150">
                     <template #default="scope">
-                        <el-tag v-if="scope.row.sceneType === 0">主菜单</el-tag>
-                        <el-tag v-else-if="scope.row.sceneType === 1" type="warning">普通页面</el-tag>
+                        <el-tag v-if="scope.row.sceneType === 0">{{ langText.mainMenu }}</el-tag>
+                        <el-tag v-else-if="scope.row.sceneType === 1" type="warning">{{ langText.normalPage }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="状态" align="center">
+                <el-table-column :label="langText.status" align="center">
                     <template #default="scope">
-                        <el-tag v-if="scope.row.status === 0">正常</el-tag>
-                        <el-tag v-else-if="scope.row.status === -1" type="warning">已删除</el-tag>
+                        <el-tag v-if="scope.row.status === 0">{{ langText.normal }}</el-tag>
+                        <el-tag v-else-if="scope.row.status === -1" type="warning">{{ langText.deleted }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column fixed="right" label="操作" width="230">
+                <el-table-column fixed="right" :label="langText.operations" width="330">
                     <template #default="scope">
                         <div class="action_btn">
                             <template v-if="scope.row.status === 0">
                                 <el-button v-if="scope.row.menuType === 0 || scope.row.menuType === 1" type="primary"
-                                           plain @click="addMenuDialog(scope.row.menuId)">添加
+                                           plain @click="addMenuDialog(scope.row.menuId)">{{ langText.add }}
                                 </el-button>
-                                <el-button type="success" plain @click="editMenuDialog(scope.row)">编辑</el-button>
-                                <el-button type="danger" plain @click="deleteLogicMenuDialog(scope.row)">删除
+                                <el-button type="success" plain @click="editMenuDialog(scope.row)">{{ langText.edit }}</el-button>
+                                <el-button type="danger" plain @click="deleteLogicMenuDialog(scope.row)">{{ langText.delete }}
                                 </el-button>
                             </template>
                             <template v-if="scope.row.status === -1">
-                                <el-button type="warning" plain @click="restoreMenuDialog(scope.row)">恢复</el-button>
-                                <el-button type="info" plain @click="deleteMenuDialog(scope.row)">删除</el-button>
+                                <el-button type="warning" plain @click="restoreMenuDialog(scope.row)">{{ langText.restore }}</el-button>
+                                <el-button type="info" plain @click="deleteMenuDialog(scope.row)">{{ langText.delete }}</el-button>
                             </template>
                         </div>
                     </template>
                 </el-table-column>
                 <template #empty>
-                    <el-empty description="暂无数据"/>
+                    <el-empty :description="langText.noData"/>
                 </template>
             </el-table>
         </el-card>
         <!-- 添加菜单Dialog -->
-        <el-dialog class="add_menu_dialog" :close-on-click-modal="false" v-model="addMenuDialogVisible" title="添加菜单"
+        <el-dialog class="add_menu_dialog" :close-on-click-modal="false" v-model="addMenuDialogVisible" :title="langText.addMenuTitle"
                    @close="addMenuDialogClose" width="600">
             <div class="add_menu_form" v-loading="addMenuDialogIng">
                 <el-form :model="addMenuForm" ref="addFormRef" :rules="menuFormRules" label-width="100px">
-                    <el-form-item label="父菜单">
+                    <el-form-item :label="langText.parentMenu">
                         <el-cascader
                             :props="{expandTrigger:'hover',checkStrictly:true, value:'menuId', label:'menuName'}"
                             :options="availableMenuList"
                             size="default"
-                            v-model="addMenuForm.parentMenuId" placeholder="选择父类菜单" style="width: 300px"
+                            v-model="addMenuForm.parentMenuId" :placeholder="langText.selectParentMenu" style="width: 300px"
                             clearable/>
                     </el-form-item>
-                    <el-form-item label="场景类型" prop="sceneType">
-                        <el-select v-model="addMenuForm.sceneType" size="default" placeholder="选择菜单场景" clearable
+                    <el-form-item :label="langText.sceneType" prop="sceneType">
+                        <el-select v-model="addMenuForm.sceneType" size="default" :placeholder="langText.selectMenuScene" clearable
                                    style="width: 180px">
-                            <el-option label="主菜单" :value="0"/>
-                            <el-option label="普通页面" :value="1"/>
+                            <el-option :label="langText.mainMenu" :value="0"/>
+                            <el-option :label="langText.normalPage" :value="1"/>
                         </el-select>
                         <el-tooltip>
-                            <template #content>使用场景类型，<br/>【主菜单】为页面左侧的主菜单的页面；<br/>【普通页面】一般为非主菜单页面，如个人中心等。
-                            </template>
+                            <template #content v-html="langText.sceneTypeTooltip"></template>
                             <el-icon :size="18" color="#b1b3b8">
                                 <Warning/>
                             </el-icon>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="菜单名称" prop="menuName">
-                        <el-input v-model="addMenuForm.menuName" maxlength="10" placeholder="菜单名称"
+                    <el-form-item :label="langText.menuName" prop="menuName">
+                        <el-input v-model="addMenuForm.menuName" maxlength="10" :placeholder="langText.menuName"
                                   style="width: 200px" clearable/>
                     </el-form-item>
-                    <el-form-item label="排序" prop="orderIndex">
+                    <el-form-item :label="langText.sortOrder" prop="orderIndex">
                         <el-input-number v-model="addMenuForm.orderIndex" size="default" :min="1" :max="99"
                                          controls-position="right"/>
                     </el-form-item>
-                    <el-form-item label="图标">
+                    <el-form-item :label="langText.icon">
                         <el-tooltip class="choose_icon_class" trigger="click" effect="light">
                             <template #content>
                                 <div style="padding: 10px 5px 10px 10px">
@@ -467,88 +557,85 @@ const deleteMenu = () => {
                                 </div>
                             </template>
                             <el-input :prefix-icon="addMenuForm.icon" v-model="addMenuForm.icon" maxlength="50"
-                                      placeholder="点击选择图标" style="width: 250px" clearable/>
+                                      :placeholder="langText.selectIcon" style="width: 250px" clearable/>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="菜单类型" prop="menuType">
+                    <el-form-item :label="langText.menuType" prop="menuType">
                         <el-select v-model="addMenuForm.menuType" @change="menuTypeOnChange" size="default"
-                                   placeholder="选择菜单类型" clearable
+                                   :placeholder="langText.selectMenuType" clearable
                                    style="width: 180px">
-                            <el-option label="目录" :value="0"/>
-                            <el-option label="菜单" :value="1"/>
-                            <el-option label="按钮" :value="2"/>
+                            <el-option :label="langText.directory" :value="0"/>
+                            <el-option :label="langText.menu" :value="1"/>
+                            <el-option :label="langText.button" :value="2"/>
                         </el-select>
                         <el-tooltip>
-                            <template #content>菜单类型，<br/>【目录】为页面的父节点；<br/>【菜单】一般为页面；<br/>【按钮】一般为页面上的操作。
-                            </template>
+                            <template #content v-html="langText.menuTypeTooltip"></template>
                             <el-icon :size="18" color="#b1b3b8">
                                 <Warning/>
                             </el-icon>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="权限标识符" prop="permKey" v-if="addMenuForm.menuType === 2">
-                        <el-input v-model="addMenuForm.permKey" maxlength="50" placeholder="权限标识符"
+                    <el-form-item :label="langText.permissionKey" prop="permKey" v-if="addMenuForm.menuType === 2">
+                        <el-input v-model="addMenuForm.permKey" maxlength="50" :placeholder="langText.permissionKey"
                                   style="width: 300px" clearable/>
-                        <el-tooltip
-                            content="Shiro权限控制标识符，如：@RequiresPermissions('sys:menu:add')">
+                        <el-tooltip :content="langText.permKeyTooltip">
                             <el-icon :size="18" color="#b1b3b8">
                                 <Warning/>
                             </el-icon>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="页面路由" v-if="addMenuForm.menuType === 1">
-                        <el-input v-model="addMenuForm.route" maxlength="50" placeholder="页面路由" style="width: 300px"
+                    <el-form-item :label="langText.pageRoute" v-if="addMenuForm.menuType === 1">
+                        <el-input v-model="addMenuForm.route" maxlength="50" :placeholder="langText.pageRoute" style="width: 300px"
                                   clearable/>
                     </el-form-item>
-                    <el-form-item label="页面组件" v-if="addMenuForm.menuType === 1">
-                        <el-input v-model="addMenuForm.component" maxlength="50" placeholder="页面组件"
+                    <el-form-item :label="langText.pageComponent" v-if="addMenuForm.menuType === 1">
+                        <el-input v-model="addMenuForm.component" maxlength="50" :placeholder="langText.pageComponent"
                                   style="width: 300px" clearable/>
                     </el-form-item>
                 </el-form>
             </div>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="addMenuDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="addMenu" :loading="addMenuIng">确定</el-button>
+                    <el-button @click="addMenuDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="addMenu" :loading="addMenuIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 编辑菜单Dialog -->
         <el-dialog class="edit_menu_dialog" :close-on-click-modal="false" v-model="editMenuDialogVisible"
-                   title="编辑菜单" width="600">
+                   :title="langText.editMenuTitle" width="600">
             <div class="edit_menu_form" v-loading="editMenuDialogIng">
                 <el-form :model="updateForm" ref="editFormRef" :rules="menuFormRules" label-width="100px">
-                    <el-form-item label="父菜单">
+                    <el-form-item :label="langText.parentMenu">
                         <el-cascader
                             :props="{expandTrigger:'hover',checkStrictly:true, value:'menuId', label:'menuName'}"
                             :options="availableMenuList"
                             size="default"
-                            v-model="updateForm.parentMenuId" placeholder="选择父类菜单" style="width: 300px"
+                            v-model="updateForm.parentMenuId" :placeholder="langText.selectParentMenu" style="width: 300px"
                             clearable/>
                     </el-form-item>
-                    <el-form-item label="场景类型" prop="sceneType">
-                        <el-select v-model="updateForm.sceneType" size="default" placeholder="选择菜单场景" clearable
+                    <el-form-item :label="langText.sceneType" prop="sceneType">
+                        <el-select v-model="updateForm.sceneType" size="default" :placeholder="langText.selectMenuScene" clearable
                                    style="width: 180px">
-                            <el-option label="主菜单" :value="0"/>
-                            <el-option label="普通页面" :value="1"/>
+                            <el-option :label="langText.mainMenu" :value="0"/>
+                            <el-option :label="langText.normalPage" :value="1"/>
                         </el-select>
                         <el-tooltip>
-                            <template #content>使用场景类型，<br/>【主菜单】为页面左侧的主菜单的页面；<br/>【普通页面】一般为非主菜单页面，如个人中心等。
-                            </template>
+                            <template #content v-html="langText.sceneTypeTooltip"></template>
                             <el-icon :size="18" color="#b1b3b8">
                                 <Warning/>
                             </el-icon>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="菜单名称" prop="menuName">
-                        <el-input v-model="updateForm.menuName" maxlength="10" placeholder="菜单名称"
+                    <el-form-item :label="langText.menuName" prop="menuName">
+                        <el-input v-model="updateForm.menuName" maxlength="10" :placeholder="langText.menuName"
                                   style="width: 200px" clearable/>
                     </el-form-item>
-                    <el-form-item label="排序" prop="orderIndex">
+                    <el-form-item :label="langText.sortOrder" prop="orderIndex">
                         <el-input-number v-model="updateForm.orderIndex" size="default" :min="1" :max="99"
                                          controls-position="right"/>
                     </el-form-item>
-                    <el-form-item label="图标">
+                    <el-form-item :label="langText.icon">
                         <el-tooltip class="choose_icon_class" trigger="click" effect="light">
                             <template #content>
                                 <div style="padding: 10px 5px 10px 10px">
@@ -556,78 +643,76 @@ const deleteMenu = () => {
                                 </div>
                             </template>
                             <el-input :prefix-icon="updateForm.icon" v-model="updateForm.icon" maxlength="50"
-                                      placeholder="点击选择图标" style="width: 250px" clearable/>
+                                      :placeholder="langText.selectIcon" style="width: 250px" clearable/>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="菜单类型" prop="menuType">
-                        <el-select v-model="updateForm.menuType" size="default" placeholder="选择菜单类型" clearable
+                    <el-form-item :label="langText.menuType" prop="menuType">
+                        <el-select v-model="updateForm.menuType" size="default" :placeholder="langText.selectMenuType" clearable
                                    style="width: 180px">
-                            <el-option label="目录" :value="0"/>
-                            <el-option label="菜单" :value="1"/>
-                            <el-option label="按钮" :value="2"/>
+                            <el-option :label="langText.directory" :value="0"/>
+                            <el-option :label="langText.menu" :value="1"/>
+                            <el-option :label="langText.button" :value="2"/>
                         </el-select>
                         <el-tooltip>
-                            <template #content>菜单类型，<br/>【目录】为页面的父节点；<br/>【菜单】一般为页面；<br/>【按钮】一般为页面上的操作。
-                            </template>
+                            <template #content v-html="langText.menuTypeTooltip"></template>
                             <el-icon :size="18" color="#b1b3b8">
                                 <Warning/>
                             </el-icon>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="权限标识符" prop="permKey" v-if="updateForm.menuType === 2">
-                        <el-input v-model="updateForm.permKey" maxlength="50" placeholder="权限标识符"
+                    <el-form-item :label="langText.permissionKey" prop="permKey" v-if="updateForm.menuType === 2">
+                        <el-input v-model="updateForm.permKey" maxlength="50" :placeholder="langText.permissionKey"
                                   style="width: 300px" clearable/>
-                        <el-tooltip
-                            content="Shiro权限控制标识符，如：@RequiresPermissions('sys:menu:add')">
+                        <el-tooltip :content="langText.permKeyTooltip">
                             <el-icon :size="18" color="#b1b3b8">
                                 <Warning/>
                             </el-icon>
                         </el-tooltip>
                     </el-form-item>
-                    <el-form-item label="页面路由" v-if="updateForm.menuType === 1">
-                        <el-input v-model="updateForm.route" maxlength="50" placeholder="页面路由" style="width: 300px"
+                    <el-form-item :label="langText.pageRoute" v-if="updateForm.menuType === 1">
+                        <el-input v-model="updateForm.route" maxlength="50" :placeholder="langText.pageRoute" style="width: 300px"
                                   clearable/>
                     </el-form-item>
-                    <el-form-item label="页面组件" v-if="updateForm.menuType === 1">
-                        <el-input v-model="updateForm.component" maxlength="50" placeholder="页面组件"
+                    <el-form-item :label="langText.pageComponent" v-if="updateForm.menuType === 1">
+                        <el-input v-model="updateForm.component" maxlength="50" :placeholder="langText.pageComponent"
                                   style="width: 300px" clearable/>
                     </el-form-item>
                 </el-form>
             </div>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="editMenuDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="editMenu" :loading="editMenuIng">确定</el-button>
+                    <el-button @click="editMenuDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="editMenu" :loading="editMenuIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 逻辑删除菜单Dialog -->
-        <el-dialog v-model="deleteLogicDialogVisible" title="删除确认" width="500">
+        <el-dialog v-model="deleteLogicDialogVisible" :title="langText.deleteConfirmTitle" width="500">
             <span>{{ deleteLogicTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteLogicDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteLogicMenu" :loading="deleteLogicIng">确定</el-button>
+                    <el-button @click="deleteLogicDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteLogicMenu" :loading="deleteLogicIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 恢复菜单Dialog -->
-        <el-dialog v-model="restoreDialogVisible" title="恢复确认" width="500">
+        <el-dialog v-model="restoreDialogVisible" :title="langText.restoreConfirmTitle" width="500">
             <span>{{ restoreTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="restoreDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="restoreMenu" :loading="restoreIng">确定</el-button>
+                    <el-button @click="restoreDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="restoreMenu" :loading="restoreIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>
         <!-- 物理删除菜单Dialog -->
-        <el-dialog v-model="deleteDialogVisible" title="彻底删除" width="500">
+        <el-dialog v-model="deleteDialogVisible" :title="langText.permanentDeleteTitle" width="500">
             <span>{{ deleteTips }}</span>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="deleteDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="deleteMenu" :loading="deleteIng">确定</el-button>
+                    <el-button @click="deleteDialogVisible = false">{{ langText.cancel }}</el-button>
+                    <el-button type="primary" @click="deleteMenu" :loading="deleteIng">{{ langText.confirm }}</el-button>
                 </div>
             </template>
         </el-dialog>

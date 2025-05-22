@@ -115,4 +115,18 @@ public interface SysUserMapper {
      */
     @Select("SELECT * FROM sys_user WHERE userName LIKE CONCAT('%', #{query}, '%') OR REPLACE(userNick, ',', '') LIKE CONCAT('%', #{query}, '%') LIMIT 10")
     List<SysUserModel> searchUsersByNameOrNick(String query);
+
+    /**
+     * 获取所有非空且唯一的部门
+     * @return 唯一部门列表
+     */
+    @Select("SELECT DISTINCT department FROM sys_user WHERE department IS NOT NULL AND department != '' ORDER BY department")
+    List<String> getAllDistinctDepartments();
+
+    /**
+     * 获取所有非空且唯一的成本中心
+     * @return 唯一成本中心列表
+     */
+    @Select("SELECT DISTINCT costCenter FROM sys_user WHERE costCenter IS NOT NULL AND costCenter != '' ORDER BY costCenter")
+    List<String> getAllDistinctCostCenters();
 }

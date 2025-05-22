@@ -37,4 +37,12 @@ public interface SysApprovalFlowService {
      * @return 是否成功
      */
     boolean updateApprovalStatus(Long flowId, Long requestId, String status, String reason);
+    
+    /**
+     * 获取审批流数量
+     * @param approverId 审批人ID
+     * @param approvalType 审批类型（0：待处理，1：已处理）
+     * @return 审批流数量
+     */
+    int getApprovalFlowCountByApproverId(Long approverId, Long approvalType);
 }

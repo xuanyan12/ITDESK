@@ -1,70 +1,85 @@
 <script setup>
-import httpUtil from "@/utils/HttpUtil";
 import {useUserInfoStore} from "@/stores/_frame/userInfoStore";
-import {onMounted, ref} from "vue";
-import router from "@/router";
-import loginUtil from "@/utils/LoginUtil";
+import {onMounted, ref, computed} from "vue";
 import GenerateUtil from "../../utils/GenerateUtil";
-import {BASE_URL} from "@/utils/Constant.js";
-import {ElementPlus} from "@element-plus/icons-vue";
+import httpUtil from "@/utils/HttpUtil";
+import { Monitor, Refresh, House, Notebook, Collection, Operation, User, Bell, Calendar, Check } from '@element-plus/icons-vue';
+import { useLanguageStore } from '@/stores/_frame/languageStore';
+import { useRouter } from 'vue-router';
 
 const userInfoStore = useUserInfoStore()
+const languageStore = useLanguageStore();
+const currentLang = computed(() => languageStore.currentLang);
+const router = useRouter();
 
-/**
- * 打开页面
- * @param e 路由地址
- */
-const openPage = (e) => {
-    router.push(e)
-}
-
-/**
- * 退出登录
- */
-const logout = () => {
-    loginUtil.logout()
-    router.push("/login")
-}
+// Language text definitions
+const t = computed(() => ({
+  myDevices: currentLang.value === 'en' ? 'My Devices' : '我的设备',
+  deviceStatus: currentLang.value === 'en' ? 'Status:' : '设备状态:',
+  deviceType: currentLang.value === 'en' ? 'Type:' : '设备类型:',
+  unknown: currentLang.value === 'en' ? 'Unknown' : '未知',
+  noDevices: currentLang.value === 'en' ? 'No devices found' : '暂无设备信息',
+  
+  // Descriptions translations
+  model: currentLang.value === 'en' ? 'Model' : '型号',
+  cpu: currentLang.value === 'en' ? 'CPU' : 'CPU',
+  memory: currentLang.value === 'en' ? 'Memory' : '内存',
+  disk: currentLang.value === 'en' ? 'Disk' : '硬盘',
+  serialNumber: currentLang.value === 'en' ? 'Serial Number' : '序列号',
+  manufacturer: currentLang.value === 'en' ? 'Manufacturer' : '制造商',
+  productionDate: currentLang.value === 'en' ? 'Production Date' : '出厂日期',
+  hardwareStatus: currentLang.value === 'en' ? 'Hardware Status' : '硬件状态',
+  graphic: currentLang.value === 'en' ? 'Graphics Card' : '显卡',
+  ntAccount: currentLang.value === 'en' ? 'NT Account' : 'NT账号',
+  pcClass: currentLang.value === 'en' ? 'PC Classification' : '电脑归属',
+  comment: currentLang.value === 'en' ? 'Comment' : '备注',
+  department: currentLang.value === 'en' ? 'Department' : '部门',
+  yearsToDay: currentLang.value === 'en' ? 'Years in Use' : '使用年限',
+  purchaseInfo: currentLang.value === 'en' ? 'Purchase Info' : '采购信息',
+  pr: currentLang.value === 'en' ? 'PR' : '下单号',
+  po: currentLang.value === 'en' ? 'PO' : '订单号',
+  vendor: currentLang.value === 'en' ? 'Vendor' : '供应商',
+  company: currentLang.value === 'en' ? 'Company' : '公司',
+  wbsNumber: currentLang.value === 'en' ? 'WBS Number' : 'WBS号',
+  price: currentLang.value === 'en' ? 'Price' : '价格',
+  tempAssignment: currentLang.value === 'en' ? 'Temporary Assignment' : '临时分配',
+  yes: currentLang.value === 'en' ? 'Yes' : '是',
+  no: currentLang.value === 'en' ? 'No' : '否',
+  basicInfo: currentLang.value === 'en' ? 'Basic Information' : '基本信息',
+  hardwareInfo: currentLang.value === 'en' ? 'Hardware Information' : '硬件信息',
+  userInfo: currentLang.value === 'en' ? 'User Information' : '用户信息',
+  name: currentLang.value === 'en' ? 'Name' : '姓名',
+  costCenter: currentLang.value === 'en' ? 'Cost Center' : '成本中心',
+  email: currentLang.value === 'en' ? 'Email' : '邮箱',
+  phone: currentLang.value === 'en' ? 'Phone' : '联系电话',
+  commentTab: currentLang.value === 'en' ? 'Comment' : '备注',
+  approvalReminders: currentLang.value === 'en' ? 'Approval Reminders' : '待办提醒',
+  pendingApprovals: currentLang.value === 'en' ? 'You have {count} pending approvals' : '您有 {count} 条待处理的审批',
+  goToApprove: currentLang.value === 'en' ? 'Go to Approve' : '去审批',
+  allApproved: currentLang.value === 'en' ? 'Great! You have processed all approvals, with a total of {count} processed.' : '太棒了，你已经处理了所有审批流程，迄今共处理 {count} 条',
+  noPendingTasks: currentLang.value === 'en' ? 'No pending tasks today' : '今日暂无待办事项',
+  todayTasks: currentLang.value === 'en' ? 'Today\'s Tasks' : '今日任务'
+}));
 
 onMounted(() => {
     // 加载欢迎信息
     loadGreeting()
-    // 加载CPU信息
-    loadCpuInfo()
-    // 加载Disk信息
-    loadDiskInfo()
-    // 加载Memory信息
-    loadMemoryInfo()
-    // 加载服务器信息
-    loadServerInfo()
-    // 加载Jvm信息
-    loadJvmInfo()
-
-    // 嵌入式 AIBOT 组件
-    // const script = document.createElement('script');
-    // script.src = 'http://10.219.184.36:3101/embed/anythingllm-chat-widget.min.js';
-    // script.setAttribute('data-embed-id', '42f40229-230d-43a6-814b-8aa72018a0b3');
-    // script.setAttribute('data-base-api-url', 'http://10.219.184.36:3101/api/embed');
-    // script.async = true;
-    // document.body.appendChild(script);
-
-    // // 自定义属性
-    // script.setAttribute('data-username', 'embed-AIBOT');  // 设置聊天框名字
-    // script.setAttribute('data-chat-icon', 'chatBubble');  // 修改聊天图标
-    // script.setAttribute('data-brand-image-url', '/img/SEGIMAGE.jpg');  // 设置品牌图标URL
-    // script.setAttribute('data-greeting', 'Hi!我是SEG的AIBOT，欢迎向我提问！');  // 设置欢迎信息
-    // script.setAttribute('data-no-sponsor', 'true');  // 隐藏赞助商
-    // // script.setAttribute('data-sponsor-link', 'https://seg.org/');  // 修改赞助商链接
-    // // script.setAttribute('data-sponsor-text', 'Powered by SEG');  // 修改赞助商文本
-    // script.setAttribute('data-assistant-name', 'SEG-AIBOT');  // 修改助手名称
-    // script.setAttribute('data-assistant-icon', '/img/SEGIMAGE.jpg');  // 设置助手图标
-    // script.setAttribute('data-window-height', '550px');  // 设置聊天窗口高度
-    // script.setAttribute('data-window-width', '400px');  // 设置聊天窗口宽度
+    // 加载用户电脑信息
+    loadUserComputers()
+    // 加载审批信息
+    loadApprovalCounts()
 })
 
 // 欢迎
 const greeting = ref('')
 const welcomes = ref([])
+
+// 审批信息
+const approvalData = ref({
+    isApprover: false,
+    pendingCount: 0,
+    processedCount: 0
+});
 
 /**
  * 加载欢迎信息
@@ -74,427 +89,234 @@ const loadGreeting = () => {
     welcomes.value = GenerateUtil.getRandomTexts()
 }
 
-
-// CPU信息
-const cpuData = ref([])
-const cpuLoading = ref(true)
-const cpuMode = ref('')
-
 /**
- * 加载CPU信息
+ * 加载审批数量信息
  */
-const loadCpuInfo = () => {
-    cpuData.value = []
-    cpuLoading.value = true
-    httpUtil.get("/sysServer/cpu").then(res => {
-        // 解析数据
-        cpuData.value.push({
-            name: "核心数",
-            value: res.data.coreCount
-        }, {
-            name: "系统使用率",
-            value: res.data.sysUsageRate + '%'
-        }, {
-            name: "用户使用率",
-            value: res.data.userUsageRate + '%'
-        }, {
-            name: "空闲率",
-            value: res.data.idleRate + '%'
-        })
-        cpuMode.value = res.data.cpuMode
-    }).catch(error => {
-        console.error(error)
-    }).finally(() => {
-        cpuLoading.value = false
-    })
+const loadApprovalCounts = () => {
+    httpUtil.get("/sysApply/getApprovalCounts").then(res => {
+        if (res.data) {
+            approvalData.value = res.data;
+        }
+    }).catch(err => {
+        console.error("获取审批数量信息失败:", err);
+    });
 }
 
-// Disk信息
-const diskData = ref([])
-const diskLoading = ref(true)
-
 /**
- * 加载Disk信息
+ * 跳转到审批页面
  */
-const loadDiskInfo = () => {
-    diskData.value = []
-    diskLoading.value = true
-    httpUtil.get("/sysServer/disk").then(res => {
-        // 解析数据
-        diskData.value.push({
-            name: "磁盘总大小",
-            value: res.data.totalSize
-        }, {
-            name: "磁盘已用大小",
-            value: res.data.usedSize
-        }, {
-            name: "磁盘剩余大小",
-            value: res.data.freeSize
-        }, {
-            name: "磁盘使用率",
-            value: res.data.usageRate + '%'
-        })
-    }).catch(error => {
-        console.error(error)
-    }).finally(() => {
-        diskLoading.value = false
-    })
+const goToApprovalPage = () => {
+    router.push('/sys/device/approval');
 }
 
-// Memory信息
-const memoryData = ref([])
-const memoryLoading = ref(true)
+// 用户电脑信息
+const computerList = ref([])
+const loading = ref(false)
 
 /**
- * 加载Memory信息
+ * 格式化日期，移除T00:00部分
  */
-const loadMemoryInfo = () => {
-    memoryData.value = []
-    memoryLoading.value = true
-    httpUtil.get("/sysServer/memory").then(res => {
-        // 解析数据
-        memoryData.value.push({
-            name: "总大小",
-            memValue: res.data.totalSize,
-            jvmValue: res.data.jvmMaxMemory
-        }, {
-            name: "已用大小",
-            memValue: res.data.used,
-            jvmValue: res.data.jvmUsedMemory
-        }, {
-            name: "剩余大小",
-            memValue: res.data.free,
-            jvmValue: res.data.jvmUsableMemory
-        }, {
-            name: "内存使用率",
-            memValue: res.data.usedRate + '%',
-            jvmValue: res.data.jvmUsedRate + '%'
-        })
-    }).catch(error => {
-        console.error(error)
-    }).finally(() => {
-        memoryLoading.value = false
-    })
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    // 如果包含T，则去除T及之后的内容
+    if (dateString.includes('T')) {
+        return dateString.split('T')[0];
+    }
+    return dateString;
 }
-
-// 服务器信息
-const serverData = ref([])
-const serverLoading = ref(true)
 
 /**
- * 加载服务器信息
+ * 加载用户电脑信息
  */
-const loadServerInfo = () => {
-    serverData.value = []
-    serverLoading.value = true
-    httpUtil.get("/sysServer/server").then(res => {
-        // 解析数据
-        serverData.value.push({
-            col1: "服务器名称",
-            col2: res.data.serverName,
-            col3: "服务器IP",
-            col4: res.data.serverIp
-        }, {
-            col1: "操作系统",
-            col2: res.data.serverOs,
-            col3: "系统架构",
-            col4: res.data.serverOsArch
-        })
-    }).catch(error => {
-        console.error(error)
-    }).finally(() => {
-        serverLoading.value = false
+const loadUserComputers = () => {
+    loading.value = true
+    httpUtil.get("/sysControl/getComputerListByUserName", {
+        params: { userName: userInfoStore.userInfo.userName }
+    }).then(res => {
+        if (res.data && res.data.list) {
+            // 从服务器获取的是电脑名称列表，需要获取每台电脑的详细信息
+            const computerNames = res.data.list;
+            const promises = [];
+            
+            // 对每台电脑发送请求获取详细信息
+            for (const ciName of computerNames) {
+                if (typeof ciName === 'string') {
+                    const promise = httpUtil.get("/sysControl/getComputerInfoByCiName", {
+                        params: { ciName: ciName }
+                    });
+                    promises.push(promise);
+                }
+            }
+            
+            // 等待所有请求完成
+            Promise.all(promises)
+                .then(responses => {
+                    const computers = responses
+                        .filter(res => res && res.data)
+                        .map(res => {
+                            const computer = res.data;
+                            // 格式化日期
+                            if (computer.lifeCycleStart) {
+                                computer.lifeCycleStart = formatDate(computer.lifeCycleStart);
+                            }
+                            return computer;
+                        });
+                    
+                    computerList.value = computers;
+                })
+                .catch(err => {
+                    console.error("获取电脑详细信息失败:", err);
+                })
+                .finally(() => {
+                    loading.value = false;
+                });
+        } else {
+            computerList.value = [];
+            loading.value = false;
+        }
+    }).catch(err => {
+        console.error("获取用户电脑信息失败:", err);
+        loading.value = false;
     })
 }
-
-// JVM信息
-const jvmData = ref([])
-const jvmLoading = ref(true)
-
-/**
- * 加载JVM信息
- */
-const loadJvmInfo = () => {
-    jvmData.value = []
-    jvmLoading.value = true
-    httpUtil.get("/sysServer/jvm").then(res => {
-        // 解析数据
-        jvmData.value.push({
-            name: "Jvm名称",
-            value: res.data.javaName
-        }, {
-            name: "Jvm版本",
-            value: res.data.javaVersion
-        }, {
-            name: "Jvm路径",
-            value: res.data.javaHome
-        }, {
-            name: "Jvm启动时间",
-            value: res.data.javaStartTime
-        }, {
-            name: "Jvm运行时长",
-            value: res.data.javaRunTime
-        }, {
-            name: "项目路径",
-            value: res.data.projectDir
-        }, {
-            name: "启动参数",
-            value: res.data.javaRunParams
-        })
-    }).catch(error => {
-        console.error(error)
-    }).finally(() => {
-        jvmLoading.value = false
-    })
-}
-
 </script>
 
 <template>
     <div class="welcome_panel">
         <el-row>
             <el-col :span="24">
-                <el-card shadow="never" class="usr_el_card_override usr_el_card_introduce">
-                    <div class="introduce_avatar">
-                        <el-avatar :size="80" :src="BASE_URL + userInfoStore.userInfo.avatar"
-                                   style="background-color: #409eff; border: 2px solid #409EFF">
-                            <template #default>
-                                <el-icon :size="50">
-                                    <ElementPlus/>
-                                </el-icon>
-                            </template>
-                        </el-avatar>
+                <div class="tech-card">
+                    <div class="card-content">
+                        <div class="logo-container">
+                            <img src="/SEG-logo.png" alt="SEG Logo" class="seg-logo" />
+                        </div>
+                        <div class="greeting-container">
+                            <h2 class="greeting-text">
+                                {{ greeting }}，{{ userInfoStore.userInfo.userNick }}
+                                <el-button class="refresh-btn" @click="loadGreeting">
+                                    <el-icon :size="20">
+                                        <Refresh/>
+                                    </el-icon>
+                                </el-button>
+                            </h2>
+                            <div class="welcome-messages">
+                                <p v-for="text in welcomes" class="welcome-message">
+                                    {{ text }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="approval-reminders">
+                            <div class="reminders-header">
+                                <el-icon :size="20"><Calendar /></el-icon>
+                                <span>{{ t.todayTasks }}</span>
+                                <el-button 
+                                    type="text" 
+                                    class="refresh-approvals" 
+                                    @click="loadApprovalCounts" 
+                                    title="刷新">
+                                    <el-icon><Refresh /></el-icon>
+                                </el-button>
+                            </div>
+                            <div class="reminders-content">
+                                <div v-if="approvalData.isApprover && approvalData.pendingCount > 0" class="pending-approvals">
+                                    <div class="pending-badge">
+                                        <span class="badge-count">{{ approvalData.pendingCount }}</span>
+                                    </div>
+                                    <div class="pending-info">
+                                        <p>{{ t.pendingApprovals.replace('{count}', approvalData.pendingCount) }}</p>
+                                        <el-button type="primary" size="small" @click="goToApprovalPage" class="approve-btn">
+                                            <el-icon><Bell /></el-icon>
+                                            {{ t.goToApprove }}
+                                        </el-button>
+                                    </div>
+                                </div>
+                                <div v-else-if="approvalData.isApprover" class="all-approved">
+                                    <div class="approved-icon">
+                                        <el-icon :size="30"><Check /></el-icon>
+                                    </div>
+                                    <p>{{ t.allApproved.replace('{count}', approvalData.processedCount) }}</p>
+                                </div>
+                                <div v-else class="no-pending-tasks">
+                                    <div class="no-tasks-icon">
+                                        <el-icon :size="30"><Calendar /></el-icon>
+                                    </div>
+                                    <p>{{ t.noPendingTasks }}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="introduce_desc">
-                        <p class="tit">
-                            {{ greeting }}呀，{{ userInfoStore.userInfo.userNick }}，元气满满的一天！
-                            <el-button link @click="loadGreeting">
-                                <el-icon :size="20">
-                                    <Refresh/>
-                                </el-icon>
-                            </el-button>
-                        </p>
-                        <p class="tips">
-                            <p v-for="text in welcomes">
-                                {{ text }}
-                            </p>
-                        </p>
+                </div>
+            </el-col>
+        </el-row>
+
+        <!-- 用户电脑信息 -->
+        <el-row style="margin-top: 20px;">
+            <el-col :span="24">
+                <div class="computer-info-card">
+                        <div class="card-header">
+                        <h3 class="card-title">
+                            <el-icon :size="22" class="header-icon"><Monitor /></el-icon>
+                            {{ t.myDevices }}
+                        </h3>
+                        <el-button type="primary" circle size="small" @click="loadUserComputers" :loading="loading">
+                            <el-icon><Refresh /></el-icon>
+                        </el-button>
                     </div>
-                </el-card>
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/welcome')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#409eff'">
-                        <HomeFilled/>
-                    </el-icon>
-                    <p>首页</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/sys/user')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#17a997'">
-                        <User/>
-                    </el-icon>
-                    <p>用户管理</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/sys/role')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#60941f'">
-                        <UserFilled/>
-                    </el-icon>
-                    <p>角色管理</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/sys/menu')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#088f75'">
-                        <Menu/>
-                    </el-icon>
-                    <p>菜单管理</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/sys/log/login')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#cb8c1d'">
-                        <Tickets/>
-                    </el-icon>
-                    <p>登录日志</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/sys/log/operator')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#731f94'">
-                        <Files/>
-                    </el-icon>
-                    <p>操作日志</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="openPage('/profile/info')" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#1d310e'">
-                        <Avatar/>
-                    </el-icon>
-                    <p>个人中心</p>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="6" :lg="3" :xl="3">
-                <el-card body-class="card_hover" @click="logout" shadow="hover" class="usr_el_card_override usr_el_card_button">
-                    <el-icon :size="36" :color="'#b32eb6'">
-                        <SwitchButton/>
-                    </el-icon>
-                    <p>退出</p>
-                </el-card>
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
-                <el-card v-loading="cpuLoading" shadow="hover" class="usr_el_card_override">
-                    <template #header>
-                        <div class="card-header">
-                            <div class="usr_card_header_left">
-                                <el-icon :size="20">
-                                    <Cpu/>
+                    
+                    <div v-if="loading" class="loading-container">
+                        <el-skeleton :rows="3" animated />
+                    </div>
+                    
+                    <div v-else-if="computerList.length === 0" class="empty-container">
+                        <el-empty :description="t.noDevices" />
+                    </div>
+                    
+                    <div v-else class="computer-list">
+                        <div v-for="(computer, index) in computerList" :key="index" class="computer-item">
+                            <div class="computer-icon">
+                                <el-icon :size="36">
+                                    <component :is="computer.deviceClass === 'Laptop' ? 'Monitor' : 'Monitor'" />
                                 </el-icon>
-                                <span>CPU信息 <el-text type="info">{{ cpuMode }}</el-text></span>
                             </div>
-                            <div class="usr_card_header_right">
-                                <el-button link @click="loadCpuInfo">
-                                    <el-icon :size="20">
-                                        <Refresh/>
-                                    </el-icon>
-                                </el-button>
+                            <div class="computer-details">
+                                <div class="computer-header">
+                                    <div class="header-info">
+                                        <div class="computer-name">{{ computer.ciName }}</div>
+                                        <div class="user-device-info">
+                                            <span v-if="computer.firstName || computer.lastName" class="user-name">
+                                                <el-icon><User /></el-icon>
+                                                {{ computer.lastName }}{{ computer.firstName ? ' ' + computer.firstName : '' }}
+                                            </span>
+                                            <span v-if="computer.deviceClass" class="device-class">
+                                                <el-icon><Monitor /></el-icon>
+                                                {{ computer.deviceClass }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <el-tag :type="computer.pcStatus === 'In Use' ? 'success' : 'warning'" size="small">
+                                        {{ computer.pcStatus }}
+                                    </el-tag>
+                        </div>
+                                
+                                <el-descriptions :column="4" size="small" border class="mt-10">
+                                    <el-descriptions-item v-if="computer.modelOrVersion" :label="t.model">
+                                        <el-icon><House /></el-icon>
+                                        <span>{{ computer.modelOrVersion }}</span>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item v-if="computer.lifeCycleStart" :label="t.productionDate">
+                                        <span>{{ computer.lifeCycleStart }}</span>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item v-if="computer.manufacture" :label="t.manufacturer">
+                                        <span>{{ computer.manufacture }}</span>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item v-if="computer.pcClass" :label="t.pcClass">
+                                        <span>{{ computer.pcClass }}</span>
+                                    </el-descriptions-item>
+                                </el-descriptions>
                             </div>
                         </div>
-                    </template>
-                    <el-table :data="cpuData" :height="200">
-                        <el-table-column prop="name" label="属性"></el-table-column>
-                        <el-table-column label="值">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.value }}</el-text>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
-                <el-card shadow="hover" class="usr_el_card_override">
-                    <template #header>
-                        <div class="card-header">
-                            <div class="usr_card_header_left">
-                                <el-icon :size="20">
-                                    <Box/>
-                                </el-icon>
-                                <span>磁盘信息</span>
-                            </div>
-                            <div class="usr_card_header_right">
-                                <el-button link @click="loadDiskInfo">
-                                    <el-icon :size="20">
-                                        <Refresh/>
-                                    </el-icon>
-                                </el-button>
-                            </div>
-                        </div>
-                    </template>
-                    <el-table :data="diskData" :height="200">
-                        <el-table-column prop="name" label="属性"></el-table-column>
-                        <el-table-column label="值">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.value }}</el-text>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
-                <el-card v-loading="memoryLoading" shadow="hover" class="usr_el_card_override">
-                    <template #header>
-                        <div class="card-header">
-                            <div class="usr_card_header_left">
-                                <el-icon :size="20">
-                                    <Tickets/>
-                                </el-icon>
-                                <span>内存信息</span>
-                            </div>
-                            <div class="usr_card_header_right">
-                                <el-button @click="loadMemoryInfo" link>
-                                    <el-icon :size="20">
-                                        <Refresh/>
-                                    </el-icon>
-                                </el-button>
-                            </div>
-                        </div>
-                    </template>
-                    <el-table :data="memoryData" :height="200">
-                        <el-table-column prop="name" label="属性"></el-table-column>
-                        <el-table-column label="内存">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.memValue }}</el-text>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="JVM">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.jvmValue }}</el-text>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-col>
-                <el-card v-loading="serverLoading" shadow="hover" class="usr_el_card_override">
-                    <template #header>
-                        <div class="card-header">
-                            <div class="usr_card_header_left">
-                                <el-icon :size="20">
-                                    <Monitor/>
-                                </el-icon>
-                                <span>服务器信息</span>
-                            </div>
-                        </div>
-                    </template>
-                    <el-table :data="serverData" :show-header="false">
-                        <el-table-column prop="col1" :width="150"></el-table-column>
-                        <el-table-column label="值">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.col2 }}</el-text>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="col3" :width="150"></el-table-column>
-                        <el-table-column label="值">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.col4 }}</el-text>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-col>
-                <el-card v-loading="jvmLoading" shadow="hover" class="usr_el_card_override">
-                    <template #header>
-                        <div class="card-header">
-                            <div class="usr_card_header_left">
-                                <el-icon :size="20">
-                                    <CoffeeCup/>
-                                </el-icon>
-                                <span>Java虚拟机信息</span>
-                            </div>
-                        </div>
-                    </template>
-                    <el-table :data="jvmData" :show-header="false">
-                        <el-table-column :width="180" prop="name" label="名称"></el-table-column>
-                        <el-table-column label="值">
-                            <template #default="scope">
-                                <el-text type="info">{{ scope.row.value }}</el-text>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-card>
+                    </div>
+                </div>
             </el-col>
         </el-row>
     </div>
@@ -502,74 +324,676 @@ const loadJvmInfo = () => {
 
 <style scoped>
 .welcome_panel {
-    padding: 20px 0 0 20px;
+    padding: 20px;
 }
 
-:deep(.usr_el_card_override) .el-card__header {
-    padding-top: 15px;
-    padding-bottom: 15px;
+.tech-card {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff, #f0f5fa);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(10, 84, 139, 0.15);
+    overflow: hidden;
+    border-top: none;
+    padding: 30px;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
-:deep(.usr_el_card_introduce) .el-card__body {
+.tech-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgb(10, 84, 139), 
+        rgb(0, 150, 136), 
+        rgb(10, 84, 139), 
+        rgb(0, 150, 136));
+    background-size: 300% 100%;
+    z-index: 2;
+    animation: borderFlow 6s linear infinite;
+}
+
+@keyframes borderFlow {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 0%;
+    }
+}
+
+.tech-card:hover {
+    box-shadow: 0 12px 40px rgba(10, 84, 139, 0.25);
+}
+
+.tech-card:hover::before {
+    background: linear-gradient(90deg, rgb(0, 150, 136), rgb(10, 84, 139));
+}
+
+.card-content {
     display: flex;
-    flex-wrap: wrap;
+    z-index: 2;
+    position: relative;
 }
 
-.introduce_avatar {
-    width: 120px;
+.logo-container {
+    width: 180px;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding-right: 20px;
 }
 
-.introduce_desc {
+.seg-logo {
+    width: 160px;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+.greeting-container {
     flex: 1;
 }
 
-.introduce_desc .tit {
-    margin: 20px 0 15px 0;
-    color: #141b1e;
-    font-weight: 400;
-    font-size: 20px;
+.greeting-text {
+    color: rgb(10, 84, 139);
+    font-weight: 500;
+    font-size: 24px;
+    margin: 5px 0 20px 0;
+    display: flex;
+    align-items: center;
 }
 
-.introduce_desc .tips {
-    color: #808695;
+.refresh-btn {
+    margin-left: 10px;
+    color: rgb(10, 84, 139);
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    color: rgb(0, 150, 136);
+    transform: rotate(180deg);
+}
+
+.welcome-messages {
+    color: #2c3e50;
+}
+
+.welcome-message {
+    margin: 8px 0;
+    line-height: 1.5;
+    font-size: 15px;
+    position: relative;
+    padding-left: 15px;
+}
+
+.welcome-message::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    background: linear-gradient(135deg, rgb(10, 84, 139), rgb(0, 150, 136));
+    border-radius: 50%;
+}
+
+.tech-decoration {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    overflow: hidden;
+    opacity: 0.12;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.tech-card:hover .tech-decoration {
+    opacity: 0.18;
+}
+
+.tech-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+}
+
+.tech-circle::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, 
+        rgb(10, 84, 139), 
+        rgb(0, 150, 136), 
+        rgb(10, 84, 139));
+    background-size: 300% 100%;
+    z-index: -1;
+    animation: circleFlow 8s linear infinite;
+}
+
+@keyframes circleFlow {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 0%;
+    }
+}
+
+.circle-1 {
+    width: 80px;
+    height: 80px;
+    top: -40px;
+    right: 10%;
+}
+
+.circle-2 {
+    width: 150px;
+    height: 150px;
+    bottom: -60px;
+    right: -60px;
+}
+
+.circle-3 {
+    width: 40px;
+    height: 40px;
+    top: 30%;
+    left: 15%;
+    background: rgba(10, 84, 139, 0.2);
+    border: none;
+}
+
+.tech-line {
+    position: absolute;
+    background: linear-gradient(90deg, 
+        rgb(10, 84, 139), 
+        rgb(0, 150, 136),
+        rgb(10, 84, 139), 
+        rgb(0, 150, 136));
+    background-size: 300% 100%;
+    animation: lineFlow 4s linear infinite;
+}
+
+@keyframes lineFlow {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 0%;
+    }
+}
+
+.line-1 {
+    width: 120px;
+    height: 2px;
+    transform: rotate(45deg);
+    top: 20%;
+    left: -20px;
+}
+
+.line-2 {
+    width: 80px;
+    height: 2px;
+    transform: rotate(-30deg);
+    bottom: 30%;
+    right: 20%;
 }
 
 .el-row .el-col {
     padding-bottom: 20px;
-    padding-right: 20px;
 }
 
-.usr_el_card_override .card-header {
+@media (max-width: 768px) {
+    .card-content {
+        flex-direction: column;
+    }
+
+    .logo-container {
+        width: 100%;
+        margin-bottom: 20px;
+        padding-right: 0;
+    }
+
+    .greeting-text {
+        text-align: center;
+        justify-content: center;
+    }
+
+    .computer-item {
+        flex-direction: column;
+    }
+
+    .computer-icon {
+        margin-right: 0;
+        margin-bottom: 12px;
+        width: 100%;
+    }
+
+    .computer-meta {
+        flex-direction: column;
+    }
+
+    .meta-item {
+        margin-bottom: 8px;
+    }
+}
+
+/* Computer info card styles */
+.computer-info-card {
+    background: linear-gradient(135deg, #ffffff, #f0f5fa);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(10, 84, 139, 0.15);
+    overflow: hidden;
+    border-top: none;
+    padding: 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.computer-info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgb(0, 150, 136),
+        rgb(10, 84, 139),
+        rgb(0, 150, 136),
+        rgb(10, 84, 139));
+    background-size: 300% 100%;
+    z-index: 2;
+    animation: borderFlow 6s linear infinite;
+    animation-direction: reverse;
+}
+
+.card-header {
+    padding: 16px 20px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(10, 84, 139, 0.1);
 }
 
-.usr_el_card_override .usr_card_header_left {
+.card-title {
+    margin: 0;
+    color: rgb(10, 84, 139);
+    font-size: 18px;
     display: flex;
     align-items: center;
 }
 
-.usr_el_card_override .usr_card_header_left .el-icon {
+.header-icon {
+    margin-right: 8px;
+}
+
+.loading-container, .empty-container {
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.computer-list {
+    padding: 16px;
+}
+
+.computer-item {
+    display: flex;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(10, 84, 139, 0.08);
+    transition: all 0.2s ease;
+}
+
+.computer-item:hover {
+    box-shadow: 0 6px 16px rgba(10, 84, 139, 0.15);
+    transform: translateY(-2px);
+}
+
+.computer-item:last-child {
+    margin-bottom: 0;
+}
+
+.computer-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    margin-right: 16px;
+    background: linear-gradient(135deg, rgba(10, 84, 139, 0.1), rgba(0, 150, 136, 0.1));
+    color: rgb(10, 84, 139);
+}
+
+.computer-details {
+    flex: 1;
+}
+
+.computer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.header-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.computer-name {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgb(10, 84, 139);
+    margin-bottom: 4px;
+}
+
+.user-device-info {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #606266;
+}
+
+.user-name, .device-class {
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+}
+
+.user-name .el-icon, .device-class .el-icon {
+    margin-right: 4px;
+    font-size: 14px;
+}
+
+.user-name {
+    color: rgb(1, 149, 109);
+}
+
+.device-class {
+    color: #909399;
+}
+
+.computer-item .el-descriptions__title {
+    margin-top: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    margin-bottom: 8px !important;
+}
+
+.computer-meta, .meta-item, .meta-label, .computer-specs, .spec-item {
+    display: none; /* 不再使用的样式 */
+}
+
+.computer-item .el-tabs__header,
+.computer-item .el-tabs__item.is-active,
+.computer-item .el-tabs__active-bar,
+.computer-item .el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
+    display: none; /* 不再使用的tab样式 */
+}
+
+.mt-10 {
+    margin-top: 8px;
+}
+
+.el-descriptions-item__content {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px !important;
+}
+
+.el-descriptions-item__label {
+    padding: 6px 10px !important;
+    font-weight: normal;
+}
+
+.el-descriptions-item__content .el-icon {
+    margin-right: 5px;
+    color: rgb(0, 150, 136);
+}
+
+.approval-reminders {
+    width: 280px;
+    padding: 20px;
+    background: rgba(10, 84, 139, 0.05);
+    border-radius: 10px;
+    margin-left: 20px;
+    border-left: 1px solid rgba(10, 84, 139, 0.1);
+    position: relative;
+    box-shadow: 0 4px 12px rgba(10, 84, 139, 0.06);
+}
+
+.reminders-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    color: rgb(10, 84, 139);
+    font-weight: 500;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(10, 84, 139, 0.1);
+    padding-bottom: 10px;
+}
+
+.reminders-header .el-icon {
+    margin-right: 8px;
+    color: rgb(0, 150, 136);
+}
+
+.refresh-approvals {
+    margin-left: auto;
+    color: rgba(10, 84, 139, 0.6);
+    transition: all 0.3s ease;
+}
+
+.refresh-approvals:hover {
+    color: rgb(0, 150, 136);
+    transform: rotate(180deg);
+}
+
+.reminders-content {
+    color: #2c3e50;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 80px;
+}
+
+.pending-approvals {
+    display: flex;
+    align-items: center;
+    background: rgba(10, 84, 139, 0.08);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.pending-badge {
+    background: rgb(10, 84, 139);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(10, 84, 139, 0.2);
+}
+
+.badge-count {
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.pending-info {
+    flex: 1;
+}
+
+.pending-info p {
+    margin: 0 0 10px 0;
+    color: rgb(10, 84, 139);
+    font-weight: 500;
+}
+
+.approve-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 150, 136);
+    border-color: rgb(0, 150, 136);
+}
+
+.approve-btn:hover {
+    background-color: rgba(0, 150, 136, 0.8);
+    border-color: rgba(0, 150, 136, 0.8);
+}
+
+.approve-btn .el-icon {
     margin-right: 5px;
 }
 
-:deep(.usr_el_card_button) .card_hover:hover{
-  cursor: pointer;
+.all-approved, .no-pending-tasks {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
 }
 
-:deep(.usr_el_card_button) .el-card__body {
-    display: flex;
+.all-approved {
+    background: rgba(0, 150, 136, 0.08);
     flex-direction: column;
+}
+
+.no-pending-tasks {
+    background: rgba(10, 84, 139, 0.05);
+    flex-direction: column;
+}
+
+.approved-icon, .no-tasks-icon {
+    margin-bottom: 10px;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.approved-icon {
+    background: rgba(0, 150, 136, 0.15);
+    color: rgb(0, 150, 136);
+}
+
+.no-tasks-icon {
+    background: rgba(10, 84, 139, 0.1);
+    color: rgb(10, 84, 139);
+}
+
+.all-approved p, .no-pending-tasks p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.all-approved p {
+    color: rgb(0, 150, 136);
+}
+
+.no-pending-tasks p {
+    color: rgb(10, 84, 139);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .card-content {
+        flex-wrap: wrap;
+    }
+    
+    .approval-reminders {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 20px;
+        border-left: none;
+        border-top: 1px solid rgba(10, 84, 139, 0.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .card-content {
+        flex-direction: column;
+    }
+
+    .logo-container {
+        width: 100%;
+        margin-bottom: 20px;
+        padding-right: 0;
+    }
+
+    .greeting-text {
+        text-align: center;
+        justify-content: center;
+    }
+    
+    /* ... other existing responsive styles ... */
+}
+
+.device-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-top: 10px;
+    box-shadow: 0 1px 3px rgba(10, 84, 139, 0.08);
     align-items: center;
 }
 
-
-:deep(.usr_el_card_button) .el-card__body p {
-    padding-top: 15px;
+.device-info-item {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+    white-space: nowrap;
 }
 
+.info-label {
+    color: rgb(10, 84, 139);
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+.info-value {
+    color: #606266;
+    font-size: 14px;
+}
+
+/* Responsive adjustments for the device info row */
+@media (max-width: 768px) {
+    .device-info-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .device-info-item {
+        margin-right: 0;
+        margin-bottom: 8px;
+        width: 100%;
+    }
+}
 </style>

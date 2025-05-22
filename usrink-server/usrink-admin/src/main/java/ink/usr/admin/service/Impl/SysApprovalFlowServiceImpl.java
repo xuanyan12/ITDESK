@@ -15,6 +15,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ink.usr.admin.config.EmailConfig;
+import ink.usr.admin.service.SysUserService;
+import ink.usr.admin.service.SysApproverService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,6 +43,15 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
 
     @Autowired
     private SysControlAssignMapper sysControlAssignMapper;
+    
+    @Autowired
+    private EmailConfig emailConfig;
+    
+    @Autowired
+    private SysUserService sysUserService;
+    
+    @Autowired
+    private SysApproverService sysApproverService;
 
     @Override
     public List<SysApprovalFlowVO> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
@@ -209,9 +221,50 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                 // 发邮件给stage为2的审批人(IT)
                 // 1.获得当前审批请求的信息
                 SysApprovalRequestModel approvalRequestModel = applyMapper.getByApprovalId(requestId);
-                // 2.根据1中的信息构造邮件
-
-                // 3.发送邮件
+                
+                // 2.找到对应的二级审批流
+                SysApprovalFlowModel secondStageFlow = sysApprovalFlowMapper.getSecondStageFlowByApprovalId(requestId);
+                if (secondStageFlow != null) {
+                    // 获取二级审批人ID
+                    Long approver2Id = secondStageFlow.getApproverId();
+                    
+                    // 获取二级审批人的用户ID
+                    Long userApprover2Id = sysApproverService.getApproverInfoByApproverId(approver2Id);
+                    
+                    // 获取二级审批人的邮箱
+                    String approver2Email = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userApprover2Id)).getEmail();
+                    
+                    // 获取申请人姓名
+                    String applicantName = sysUserService.getUserNickNameByUserId(approvalRequestModel.getApplicant());
+                    applicantName = applicantName != null ? applicantName : "未知申请人";
+                    
+                    // 获取责任人姓名
+                    String responsibilityName = sysUserService.getUserNickNameByUserId(approvalRequestModel.getResponsibility());
+                    
+                    // 生成审批URL（包含flowId和token）
+                    // 确保二级审批流有可用的token
+                    String approvalUrl = generateSecondStageApprovalUrl(secondStageFlow.getFlowId());
+                    
+                    // 构建邮件内容和主题
+                    String emailContent = emailConfig.buildApplyEmailContent(
+                            applicantName,
+                            approvalRequestModel.getDeviceCategory(),
+                            approvalRequestModel.getDeviceType(),
+                            approvalRequestModel.getCostCenter(),
+                            approvalRequestModel.getCompany(),
+                            responsibilityName,
+                            approvalRequestModel.getDeviceSituation(),
+                            approvalRequestModel.getCompanySystem(),
+                            approvalRequestModel.getReason(),
+                            approvalRequestModel.getCiName(),
+                            approvalUrl
+                    );
+                    
+                    String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, approvalRequestModel.getDeviceCategory());
+                    
+                    // 发送邮件
+                    emailConfig.sendMail(approver2Email, emailSubject, emailContent);
+                }
             }
 
             if(stage==2){
@@ -244,5 +297,62 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
         } catch (Exception e) {
             throw new RuntimeException("更新审批状态失败", e);
         }
+    }
+
+    @Override
+    public int getApprovalFlowCountByApproverId(Long approverId, Long approvalType) {
+        try {
+            if (approvalType == 0) {
+                // 待处理审批数量
+                return sysApprovalFlowMapper.countPendingApprovalsByApproverId(approverId);
+            } else {
+                // 已处理审批数量
+                return sysApprovalFlowMapper.countProcessedApprovalsByApproverId(approverId);
+            }
+        } catch (Exception e) {
+            // 发生异常时返回0
+            return 0;
+        }
+    }
+
+    /**
+     * 生成二级审批流的审批URL
+     * @param flowId 审批流ID
+     * @return 审批URL
+     */
+    private String generateSecondStageApprovalUrl(Long flowId) {
+        // 从数据库查询现有有效token
+        String token;
+        try {
+            // 检查是否已有未使用的token
+            SysApprovalTokenModel tokenModel = sysApprovalFlowMapper.getActiveTokenByFlowId(flowId);
+            
+            if (tokenModel != null && tokenModel.getUsed() == 0) {
+                token = tokenModel.getToken();
+            } else {
+                // 生成新token并存储
+                token = UUID.randomUUID().toString().replace("-", "");
+                
+                // 设置过期时间为7天后
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String expireTime = LocalDateTime.now().plusDays(7).format(formatter);
+                
+                // 创建token模型
+                SysApprovalTokenModel newToken = new SysApprovalTokenModel();
+                newToken.setFlowId(flowId);
+                newToken.setToken(token);
+                newToken.setExpireTime(expireTime);
+                newToken.setUsed(0);
+                
+                // 保存到数据库
+                sysApprovalFlowMapper.insertApprovalToken(newToken);
+            }
+        } catch (Exception e) {
+            // 出现异常时生成一个临时token，但不保存到数据库
+            token = UUID.randomUUID().toString().replace("-", "");
+        }
+        
+        // 返回审批URL，包含flowId和token
+        return "http://seg-it.com/approval/temp?flowId=" + flowId + "&token=" + token;
     }
 }
