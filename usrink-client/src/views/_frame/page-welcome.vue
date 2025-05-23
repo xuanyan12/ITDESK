@@ -14,11 +14,16 @@ const router = useRouter();
 
 // Language text definitions
 const t = computed(() => ({
-  myDevices: currentLang.value === 'en' ? 'My Devices' : '我的设备',
+  myDevices: currentLang.value === 'en' ? 'My Computers' : '我的电脑',
+  managedDevices: currentLang.value === 'en' ? 'Cost Center Computers' : '成本中心电脑',
+  costCenterLabel: currentLang.value === 'en' ? 'Cost Center:' : '成本中心：',
+  costCenterFilter: currentLang.value === 'en' ? 'Filter by Cost Center' : '按成本中心筛选',
+  allCostCenters: currentLang.value === 'en' ? 'All Cost Centers' : '全部成本中心',
   deviceStatus: currentLang.value === 'en' ? 'Status:' : '设备状态:',
   deviceType: currentLang.value === 'en' ? 'Type:' : '设备类型:',
   unknown: currentLang.value === 'en' ? 'Unknown' : '未知',
-  noDevices: currentLang.value === 'en' ? 'No devices found' : '暂无设备信息',
+  noDevices: currentLang.value === 'en' ? 'No computers found' : '暂无电脑信息',
+  noManagedDevices: currentLang.value === 'en' ? 'No cost center computers found' : '暂无成本中心电脑',
   
   // Descriptions translations
   model: currentLang.value === 'en' ? 'Model' : '型号',
@@ -68,6 +73,8 @@ onMounted(() => {
     loadUserComputers()
     // 加载审批信息
     loadApprovalCounts()
+    // 加载审批人管理的设备信息
+    loadApproverManagedComputers()
 })
 
 // 欢迎
@@ -112,6 +119,18 @@ const goToApprovalPage = () => {
 // 用户电脑信息
 const computerList = ref([])
 const loading = ref(false)
+
+// 审批人管理的设备信息
+const approverComputers = ref([])
+const isApprover = ref(false)
+const approverCostCenters = ref([])
+const loadingApproverComputers = ref(false)
+const approverDevicesTotal = ref(0)
+const approverDevicesPageNum = ref(1)
+const approverDevicesPageSize = ref(5)
+
+// 成本中心筛选
+const selectedCostCenter = ref('')
 
 /**
  * 格式化日期，移除T00:00部分
@@ -178,6 +197,113 @@ const loadUserComputers = () => {
         console.error("获取用户电脑信息失败:", err);
         loading.value = false;
     })
+}
+
+/**
+ * 加载审批人管理的设备信息
+ */
+const loadApproverManagedComputers = () => {
+    loadingApproverComputers.value = true
+    const params = { 
+        userName: userInfoStore.userInfo.userName,
+        pageNum: approverDevicesPageNum.value,
+        pageSize: approverDevicesPageSize.value
+    };
+    
+    // 添加成本中心筛选参数
+    if (selectedCostCenter.value && selectedCostCenter.value !== 'all') {
+        params.costCenterFilter = selectedCostCenter.value;
+    }
+    
+    httpUtil.get("/sysControl/getApproverManagedComputers", {
+        params: params
+    }).then(res => {
+        if (res.data) {
+            isApprover.value = res.data.isApprover || false;
+            approverCostCenters.value = res.data.costCenters || [];
+            approverDevicesTotal.value = res.data.total || 0;
+            
+            if (res.data.managedComputers && res.data.managedComputers.length > 0) {
+                // 获取每台设备的详细信息
+                const promises = [];
+                
+                for (const item of res.data.managedComputers) {
+                    const computer = item.computer;
+                    const managedCostCenter = item.managedCostCenter;
+                    
+                    if (computer && computer.ciName) {
+                        const promise = httpUtil.get("/sysControl/getComputerInfoByCiName", {
+                            params: { ciName: computer.ciName }
+                        }).then(response => {
+                            if (response && response.data) {
+                                const computerDetail = response.data;
+                                // 格式化日期
+                                if (computerDetail.lifeCycleStart) {
+                                    computerDetail.lifeCycleStart = formatDate(computerDetail.lifeCycleStart);
+                                }
+                                // 添加管理的成本中心标识
+                                computerDetail.managedCostCenter = managedCostCenter;
+                                return computerDetail;
+                            }
+                            return null;
+                        });
+                        promises.push(promise);
+                    }
+                }
+                
+                // 等待所有请求完成
+                Promise.all(promises)
+                    .then(computers => {
+                        approverComputers.value = computers.filter(computer => computer !== null);
+                    })
+                    .catch(err => {
+                        console.error("获取审批人管理设备详细信息失败:", err);
+                    })
+                    .finally(() => {
+                        loadingApproverComputers.value = false;
+                    });
+            } else {
+                approverComputers.value = [];
+                loadingApproverComputers.value = false;
+            }
+        } else {
+            isApprover.value = false;
+            approverComputers.value = [];
+            approverDevicesTotal.value = 0;
+            loadingApproverComputers.value = false;
+        }
+    }).catch(err => {
+        console.error("获取审批人管理设备信息失败:", err);
+        isApprover.value = false;
+        approverComputers.value = [];
+        approverDevicesTotal.value = 0;
+        loadingApproverComputers.value = false;
+    })
+}
+
+/**
+ * 处理成本中心筛选变化
+ */
+const handleCostCenterFilterChange = () => {
+    approverDevicesPageNum.value = 1; // 重置到第一页
+    loadApproverManagedComputers();
+}
+
+/**
+ * 处理审批人设备分页变化
+ */
+const handleApproverDevicesPageChange = (page) => {
+    approverDevicesPageNum.value = page;
+    loadApproverManagedComputers();
+}
+
+/**
+ * 处理审批人设备每页大小变化
+ */
+const handleApproverDevicesPageSizeChange = (size) => {
+    approverDevicesPageSize.value = size;
+    approverDevicesPageNum.value = 1; // 重置到第一页
+    loadApproverManagedComputers();
 }
 </script>
 
@@ -249,11 +375,12 @@ const loadUserComputers = () => {
             </el-col>
         </el-row>
 
-        <!-- 用户电脑信息 -->
-        <el-row style="margin-top: 20px;">
-            <el-col :span="24">
+        <!-- 用户电脑信息和审批人管理的设备信息 -->
+        <el-row style="margin-top: 20px;" :gutter="20">
+            <!-- 用户电脑信息 -->
+            <el-col :span="isApprover ? 12 : 24" :xs="24" :sm="24" :md="isApprover ? 12 : 24">
                 <div class="computer-info-card">
-                        <div class="card-header">
+                    <div class="card-header">
                         <h3 class="card-title">
                             <el-icon :size="22" class="header-icon"><Monitor /></el-icon>
                             {{ t.myDevices }}
@@ -296,9 +423,9 @@ const loadUserComputers = () => {
                                     <el-tag :type="computer.pcStatus === 'In Use' ? 'success' : 'warning'" size="small">
                                         {{ computer.pcStatus }}
                                     </el-tag>
-                        </div>
-                                
-                                <el-descriptions :column="4" size="small" border class="mt-10">
+                                </div>
+                                        
+                                <el-descriptions :column="2" size="small" border class="mt-10">
                                     <el-descriptions-item v-if="computer.modelOrVersion" :label="t.model">
                                         <el-icon><House /></el-icon>
                                         <span>{{ computer.modelOrVersion }}</span>
@@ -314,6 +441,113 @@ const loadUserComputers = () => {
                                     </el-descriptions-item>
                                 </el-descriptions>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+
+            <!-- 审批人管理的设备信息 -->
+            <el-col v-if="isApprover" :span="12" :xs="24" :sm="24" :md="12" style="margin-top: 20px;" class="managed-devices-col">
+                <div class="computer-info-card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <el-icon :size="22" class="header-icon"><Collection /></el-icon>
+                            {{ t.managedDevices }}
+                        </h3>
+                        <div class="header-actions">
+                            <el-select 
+                                v-model="selectedCostCenter" 
+                                :placeholder="t.costCenterFilter" 
+                                size="small" 
+                                style="width: 180px; margin-right: 10px;"
+                                @change="handleCostCenterFilterChange"
+                                clearable>
+                                <el-option :label="t.allCostCenters" value="all"></el-option>
+                                <el-option 
+                                    v-for="costCenter in approverCostCenters" 
+                                    :key="costCenter" 
+                                    :label="costCenter" 
+                                    :value="costCenter">
+                                </el-option>
+                            </el-select>
+                            <el-button type="primary" circle size="small" @click="loadApproverManagedComputers" :loading="loadingApproverComputers">
+                                <el-icon><Refresh /></el-icon>
+                            </el-button>
+                        </div>
+                    </div>
+                    
+                    <div v-if="loadingApproverComputers" class="loading-container">
+                        <el-skeleton :rows="3" animated />
+                    </div>
+                    
+                    <div v-else-if="approverComputers.length === 0" class="empty-container">
+                        <el-empty :description="t.noManagedDevices" />
+                    </div>
+                    
+                    <div v-else>
+                        <div class="computer-list">
+                            <div v-for="(computer, index) in approverComputers" :key="index" class="computer-item">
+                                <div class="computer-icon">
+                                    <el-icon :size="36">
+                                        <component :is="computer.deviceClass === 'Laptop' ? 'Notebook' : 'Monitor'" />
+                                    </el-icon>
+                                </div>
+                                <div class="computer-details">
+                                    <div class="computer-header">
+                                        <div class="header-info">
+                                            <div class="computer-name">{{ computer.ciName }}</div>
+                                            <div class="user-device-info">
+                                                <span v-if="computer.firstName || computer.lastName" class="user-name">
+                                                    <el-icon><User /></el-icon>
+                                                    {{ computer.lastName }}{{ computer.firstName ? ' ' + computer.firstName : '' }}
+                                                </span>
+                                                <span v-if="computer.deviceClass" class="device-class">
+                                                    <el-icon><Monitor /></el-icon>
+                                                    {{ computer.deviceClass }}
+                                                </span>
+                                                <span v-if="computer.managedCostCenter" class="cost-center-tag">
+                                                    <el-icon><Operation /></el-icon>
+                                                    {{ t.costCenterLabel }} {{ computer.managedCostCenter }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <el-tag :type="computer.pcStatus === 'In Use' ? 'success' : 'warning'" size="small">
+                                            {{ computer.pcStatus }}
+                                        </el-tag>
+                                    </div>
+                                    
+                                    <el-descriptions :column="2" size="small" border class="mt-10">
+                                        <el-descriptions-item v-if="computer.modelOrVersion" :label="t.model">
+                                            <el-icon><House /></el-icon>
+                                            <span>{{ computer.modelOrVersion }}</span>
+                                        </el-descriptions-item>
+                                        <el-descriptions-item v-if="computer.lifeCycleStart" :label="t.productionDate">
+                                            <span>{{ computer.lifeCycleStart }}</span>
+                                        </el-descriptions-item>
+                                        <el-descriptions-item v-if="computer.manufacture" :label="t.manufacturer">
+                                            <span>{{ computer.manufacture }}</span>
+                                        </el-descriptions-item>
+                                        <el-descriptions-item v-if="computer.pcClass" :label="t.pcClass">
+                                            <span>{{ computer.pcClass }}</span>
+                                        </el-descriptions-item>
+                                    </el-descriptions>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 分页组件 -->
+                        <div class="pagination-container">
+                            <el-pagination
+                                v-model:current-page="approverDevicesPageNum"
+                                v-model:page-size="approverDevicesPageSize"
+                                :page-sizes="[5, 10, 20, 50]"
+                                :total="approverDevicesTotal"
+                                layout="total, sizes, prev, pager, next, jumper"
+                                @size-change="handleApproverDevicesPageSizeChange"
+                                @current-change="handleApproverDevicesPageChange"
+                                background
+                                small
+                            />
                         </div>
                     </div>
                 </div>
@@ -627,6 +861,11 @@ const loadUserComputers = () => {
     border-bottom: 1px solid rgba(10, 84, 139, 0.1);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+}
+
 .card-title {
     margin: 0;
     color: rgb(10, 84, 139);
@@ -728,6 +967,20 @@ const loadUserComputers = () => {
 
 .device-class {
     color: #909399;
+}
+
+.cost-center-tag {
+    color: rgb(10, 84, 139);
+    font-weight: 500;
+    background: rgba(10, 84, 139, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.cost-center-tag .el-icon {
+    margin-right: 4px;
+    font-size: 12px;
 }
 
 .computer-item .el-descriptions__title {
@@ -951,7 +1204,21 @@ const loadUserComputers = () => {
         justify-content: center;
     }
     
-    /* ... other existing responsive styles ... */
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-actions {
+        margin-top: 12px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .header-actions .el-select {
+        width: calc(100% - 50px) !important;
+        margin-right: 10px !important;
+    }
 }
 
 .device-info-row {
@@ -994,6 +1261,31 @@ const loadUserComputers = () => {
         margin-right: 0;
         margin-bottom: 8px;
         width: 100%;
+    }
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    border-top: 1px solid rgba(10, 84, 139, 0.1);
+    margin-top: 16px;
+}
+
+.pagination-container .el-pagination {
+    justify-content: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+    .managed-devices-col {
+        margin-top: 20px !important;
+    }
+}
+
+@media (min-width: 993px) {
+    .managed-devices-col {
+        margin-top: 0 !important;
     }
 }
 </style>

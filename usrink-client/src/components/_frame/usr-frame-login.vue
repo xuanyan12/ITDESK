@@ -54,7 +54,9 @@ const submitLogin = () => {
 
     loading.value = true
     // 发送登录请求 - 不再加密密码
-    httpUtil.post('/login', {...loginForm.value}).then(async res => {
+    httpUtil.post('/login', {...loginForm.value}, {
+        timeout: 120000  // 设置超时时间为120秒
+    }).then(async res => {
         // 缓存用户信息
         loginUtil.cacheUserInfo(res.data)
         // 模拟登录耗时操作
@@ -77,7 +79,9 @@ const getTempPassword = () => {
         return
     }
     
-    httpUtil.get(`/sysUser/getTempPassword?userName=${loginForm.value.userName}`).then(res => {
+    httpUtil.get(`/sysUser/getTempPassword?userName=${loginForm.value.userName}`, {
+        timeout: 120000  // 设置超时时间为120秒
+    }).then(res => {
         ElMessage({
             type: 'success',
             message: res.msg

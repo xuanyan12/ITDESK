@@ -53,7 +53,7 @@
               <div class="user-input-container">
                 <el-input 
                   v-model="applicationForm.user" 
-                  :placeholder="t('请输入使用人')" 
+                  :placeholder="t('请输入使用人的NT账号或姓名')" 
                   style="width: 100%"
                   clearable
                   @input="handleUserInput"
@@ -620,7 +620,10 @@ export default {
       "共": { en: "Total", zh: "共" },
       "条": { en: "items", zh: "条" },
       "更新时间": { en: "Update Time", zh: "更新时间" },
-      "审批理由": { en: "Approval Reason", zh: "审批理由" }
+      "审批理由": { en: "Approval Reason", zh: "审批理由" },
+      "使用人": { en: "User", zh: "使用人" },
+      "请输入使用人的NT账号或姓名": { en: "Enter user's NT account or name", zh: "请输入使用人的NT账号或姓名" },
+      "未找到相关用户": { en: "No users found", zh: "未找到相关用户" }
     };
 
     // Get current user info
@@ -2219,12 +2222,259 @@ export default {
 </script>
 
 <style scoped>
-.application-form {
-  margin-top: 20px;
-}
-
+/* 科技风格卡片基础样式 */
 .usr_card_override {
   margin-bottom: 20px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 83, 137, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 83, 137, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.usr_card_override::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #005389, #029165, #005389);
+  background-size: 200% auto;
+  animation: gradientShift 3s ease infinite;
+}
+
+.usr_card_override:hover {
+  border-color: rgba(0, 83, 137, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 83, 137, 0.15);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
+/* 卡片标题样式 */
+.usr_card_override h3 {
+  font-weight: 600 !important;
+  font-size: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.section-title {
+  font-weight: 600 !important;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 卡片内容区域 */
+.usr_card_override :deep(.el-card__body) {
+  padding: 24px;
+  position: relative;
+}
+
+/* 表单科技风格 */
+.application-form :deep(.el-form-item__label) {
+  font-weight: 500;
+}
+
+.application-form :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 83, 137, 0.2);
+  transition: all 0.3s ease;
+}
+
+.application-form :deep(.el-input__wrapper:hover) {
+  border-color: rgba(0, 83, 137, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 83, 137, 0.1);
+}
+
+.application-form :deep(.el-input__wrapper.is-focus) {
+  border-color: #005389;
+  box-shadow: 0 0 0 2px rgba(0, 83, 137, 0.2);
+}
+
+.application-form :deep(.el-select .el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 83, 137, 0.2);
+  transition: all 0.3s ease;
+}
+
+.application-form :deep(.el-select .el-input__wrapper:hover) {
+  border-color: rgba(0, 83, 137, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 83, 137, 0.1);
+}
+
+.application-form :deep(.el-select .el-input__wrapper.is-focus) {
+  border-color: #005389;
+  box-shadow: 0 0 0 2px rgba(0, 83, 137, 0.2);
+}
+
+.application-form :deep(.el-textarea__inner) {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 83, 137, 0.2);
+  transition: all 0.3s ease;
+}
+
+.application-form :deep(.el-textarea__inner:hover) {
+  border-color: rgba(0, 83, 137, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 83, 137, 0.1);
+}
+
+.application-form :deep(.el-textarea__inner:focus) {
+  border-color: #005389;
+  box-shadow: 0 0 0 2px rgba(0, 83, 137, 0.2);
+}
+
+/* Radio组件蓝绿色主题 */
+.application-form :deep(.el-radio__input.is-checked .el-radio__inner) {
+  background-color: #005389;
+  border-color: #005389;
+}
+
+.application-form :deep(.el-radio__input.is-checked + .el-radio__label) {
+  color: #005389;
+}
+
+.application-form :deep(.el-radio:hover .el-radio__inner) {
+  border-color: #005389;
+}
+
+/* 科技风格按钮 */
+.application-form :deep(.el-button--primary) {
+  background: linear-gradient(135deg, #005389, #029165);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 83, 137, 0.2);
+  transition: all 0.3s ease;
+}
+
+.application-form :deep(.el-button--primary:hover) {
+  background: linear-gradient(135deg, #0068ab, #02a674);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 83, 137, 0.3);
+}
+
+.application-form :deep(.el-button--default) {
+  border: 1px solid rgba(0, 83, 137, 0.3);
+  color: #005389;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.application-form :deep(.el-button--default:hover) {
+  border-color: #005389;
+  color: #005389;
+  background-color: rgba(0, 83, 137, 0.05);
+}
+
+/* 我的电脑描述表格样式 */
+.elegant-descriptions :deep(.el-descriptions__label) {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  color: #005389;
+  font-weight: bold;
+  background: linear-gradient(135deg, rgba(0, 83, 137, 0.1), rgba(2, 145, 101, 0.1));
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.elegant-descriptions :deep(.el-descriptions__content) {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  word-break: break-all;
+  width: 200px;
+  min-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: 2px solid rgba(0, 83, 137, 0.1);
+}
+
+.elegant-descriptions :deep(.el-descriptions__body) {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 83, 137, 0.1);
+  overflow: hidden;
+}
+
+/* 标题和选择器容器 */
+.title-with-select {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(0, 83, 137, 0.1);
+}
+
+.title-with-select h3 {
+  margin: 0;
+}
+
+.title-with-select :deep(.el-select .el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 83, 137, 0.2);
+  transition: all 0.3s ease;
+}
+
+.title-with-select :deep(.el-select .el-input__wrapper:hover) {
+  border-color: rgba(0, 83, 137, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 83, 137, 0.1);
+}
+
+/* 刷新按钮科技风格 */
+.table-header .el-button--primary {
+  background: linear-gradient(135deg, #005389, #029165);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 83, 137, 0.2);
+  transition: all 0.3s ease;
+}
+
+.table-header .el-button--primary:hover {
+  background: linear-gradient(135deg, #0068ab, #02a674);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 83, 137, 0.3);
+}
+
+/* 分页组件蓝绿色主题 */
+.pagination-container :deep(.el-pagination .el-pager li.is-active) {
+  background: linear-gradient(135deg, #005389, #029165) !important;
+  color: #ffffff !important;
+  font-weight: normal !important;
+  border-color: #005389 !important;
+}
+
+.pagination-container :deep(.el-pagination .el-pager li.is-active:hover) {
+  background: linear-gradient(135deg, #005389, #029165) !important;
+  color: #ffffff !important;
+}
+
+.pagination-container :deep(.el-pagination .btn-prev:hover),
+.pagination-container :deep(.el-pagination .btn-next:hover) {
+  color: #005389;
+}
+
+.pagination-container :deep(.el-pagination .el-pager li:hover) {
+  color: #005389;
+}
+
+.pagination-container :deep(.el-pagination .el-select .el-input.is-focus .el-input__wrapper) {
+  border-color: #005389;
+  box-shadow: 0 0 0 1px rgba(0, 83, 137, 0.2);
+}
+
+.pagination-container :deep(.el-pagination .el-input__wrapper:hover) {
+  border-color: rgba(0, 83, 137, 0.4);
+}
+
+.application-form {
+  margin-top: 20px;
 }
 
 .top {
