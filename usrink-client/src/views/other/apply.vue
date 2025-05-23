@@ -1285,6 +1285,20 @@ export default {
     // Get my computer information
     const myComputer = ref(null);
     
+    // Get IT cost center based on company
+    const getITCostCenter = (company) => {
+      switch (company) {
+        case 'SGCS':
+          return '69F105';
+        case 'SGCC':
+          return '69D163';
+        case 'SES':
+          return '80A105';
+        default:
+          return '69F105'; // Default to SGCS IT cost center
+      }
+    };
+    
     const fetchMyComputer = (userName) => {
       if (!userName) return Promise.reject(new Error('用户名为空'));
       
@@ -1488,7 +1502,7 @@ export default {
             return;
           } else {
             // Meet conditions, set corresponding form fields
-            applicationForm.costCenter = '69F105';
+            applicationForm.costCenter = getITCostCenter(applicationForm.company);
             applicationForm.computerCondition = '新电脑';
             applicationForm.reason = '办公电脑超六年换新';
           }
@@ -1529,7 +1543,7 @@ export default {
               });
             } else {
               // Used computer
-              applicationForm.costCenter = '69F105';
+              applicationForm.costCenter = getITCostCenter(applicationForm.company);
               applicationForm.computerCondition = '库存旧电脑';
               applicationForm.reason = '办公电脑未超六年换旧';
             }
@@ -1539,19 +1553,19 @@ export default {
         // Handle logic for other application types
         switch (selectedType) {
           case 'secretaryNewEmployee':
-            applicationForm.costCenter = '69F105';
+            applicationForm.costCenter = getITCostCenter(applicationForm.company);
             applicationForm.computerCondition = '新电脑';
             applicationForm.reason = '秘书代申请新岗位员工电脑';
             break;
             
           case 'secretaryReplacement':
-            applicationForm.costCenter = '69F105';
+            applicationForm.costCenter = getITCostCenter(applicationForm.company);
             applicationForm.computerCondition = '库存旧电脑';
             applicationForm.reason = '秘书代申请替代岗位员工电脑';
             break;
             
           case 'secretaryIntern':
-            applicationForm.costCenter = '69F105';
+            applicationForm.costCenter = getITCostCenter(applicationForm.company);
             applicationForm.computerCondition = '库存旧电脑';
             applicationForm.reason = '秘书代申请新实习生/外服电脑';
             break;

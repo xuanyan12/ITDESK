@@ -444,8 +444,8 @@ public class SysLadpServiceImpl implements SysLadpService {
                 toUpdate.size(), toInsert.size(), toDelete.size());
         //新增代码
 
-        // 更新user表： XJU1CS,TII2CS,YSG1CNG,YIL2CS,PEV2CS -> role = 1 (加if条件,存在时才进行修改)
-        String[] arr = {"XJU1CS", "TII2CS", "YSG1CNG", "YIL2CS", "PEV2CS"};
+        // 更新user表： XJU1CS,TII2CS,YSG1CNG,YIL2CS,PEV2CS,HWE1CS,NYO2CC -> role = 1 (加if条件,存在时才进行修改)
+        String[] arr = {"XJU1CS", "TII2CS", "YSG1CNG", "YIL2CS", "PEV2CS", "HWE1CS", "NYO2CC"};
         for(String singleArr : arr){
             SysUserModel user4Approver = sysUserMapper.getUserInfoByUserName(singleArr);
             // 用户非空时role=1(admin权限)
