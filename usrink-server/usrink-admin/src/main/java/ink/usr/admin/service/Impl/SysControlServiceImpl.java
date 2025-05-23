@@ -5,12 +5,14 @@ import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.dao.DTO.SysControlRecordDTO;
 import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
 import ink.usr.admin.mapper.SysApplyMapper;
+import ink.usr.admin.mapper.SysApproverMapper;
 import ink.usr.admin.mapper.SysControlAssignMapper;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysControlService;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
+import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import ink.usr.common.model.mysql.SysUserModel;
@@ -21,7 +23,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SysControlServiceImpl implements SysControlService {
@@ -34,6 +38,8 @@ public class SysControlServiceImpl implements SysControlService {
     private SysControlAssignMapper sysControlAssignMapper;
     @Autowired
     private SysApplyMapper sysApplyMapper;
+    @Autowired
+    private SysApproverMapper sysApproverMapper;
 
     public List<SysControlModel> selectSysControlList(SysControlModel sysControlModel) {
         List<SysControlModel> controlList = sysControlMapper.selectSysControlList(sysControlModel);
@@ -270,5 +276,103 @@ public class SysControlServiceImpl implements SysControlService {
             .set("pageNum", queryDTO.getPageNum() / queryDTO.getPageSize() + 1);
             
         return result;
+    }
+
+    @Override
+    public List<SysControlModel> getComputerListByCostCenter(String costCenter) {
+        return sysControlMapper.getComputerListByCostCenter(costCenter);
+    }
+
+    @Override
+    public Dict getApproverManagedComputers(String userName, int pageNum, int pageSize, String costCenterFilter) {
+        try {
+            // 1. 根据用户名获取用户ID
+            SysUserModel user = sysUserMapper.getUserInfoByUserName(userName);
+            if (user == null) {
+                return Dict.create()
+                    .set("managedComputers", new ArrayList<>())
+                    .set("isApprover", false)
+                    .set("total", 0)
+                    .set("pageNum", pageNum)
+                    .set("pageSize", pageSize);
+            }
+
+            // 2. 根据用户ID查询该用户是否为审批人
+            List<Long> approverIds = sysApproverMapper.getApproverIdListBySingleApproverId(user.getUserId());
+            if (approverIds == null || approverIds.isEmpty()) {
+                return Dict.create()
+                    .set("managedComputers", new ArrayList<>())
+                    .set("isApprover", false)
+                    .set("total", 0)
+                    .set("pageNum", pageNum)
+                    .set("pageSize", pageSize);
+            }
+
+            // 3. 获取该用户作为审批人负责的所有成本中心
+            List<String> costCenters = new ArrayList<>();
+            for (Long approverId : approverIds) {
+                SysApproverModel approver = sysApproverMapper.getApproverInfoByApproverId(approverId);
+                if (approver != null && approver.getCostCenter() != null) {
+                    costCenters.add(approver.getCostCenter());
+                }
+            }
+
+            if (costCenters.isEmpty()) {
+                return Dict.create()
+                    .set("managedComputers", new ArrayList<>())
+                    .set("isApprover", true)
+                    .set("total", 0)
+                    .set("pageNum", pageNum)
+                    .set("pageSize", pageSize)
+                    .set("costCenters", costCenters);
+            }
+
+            // 4. 根据成本中心筛选条件过滤成本中心列表
+            List<String> filteredCostCenters = costCenters;
+            if (costCenterFilter != null && !costCenterFilter.trim().isEmpty() && !costCenterFilter.equals("all")) {
+                filteredCostCenters = costCenters.stream()
+                    .filter(cc -> cc.equals(costCenterFilter))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+
+            // 5. 根据筛选后的成本中心获取设备列表，并标注成本中心信息
+            List<Map<String, Object>> allManagedComputers = new ArrayList<>();
+            for (String costCenter : filteredCostCenters) {
+                List<SysControlModel> computers = sysControlMapper.getComputerListByCostCenter(costCenter);
+                for (SysControlModel computer : computers) {
+                    Map<String, Object> computerWithCostCenter = new HashMap<>();
+                    computerWithCostCenter.put("computer", computer);
+                    computerWithCostCenter.put("managedCostCenter", costCenter);
+                    allManagedComputers.add(computerWithCostCenter);
+                }
+            }
+
+            // 6. 手动实现分页
+            int total = allManagedComputers.size();
+            int startIndex = (pageNum - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, total);
+            
+            List<Map<String, Object>> paginatedComputers = new ArrayList<>();
+            if (startIndex < total) {
+                paginatedComputers = allManagedComputers.subList(startIndex, endIndex);
+            }
+
+            return Dict.create()
+                .set("managedComputers", paginatedComputers)
+                .set("isApprover", true)
+                .set("costCenters", costCenters)  // 返回所有成本中心用于筛选下拉框
+                .set("total", total)
+                .set("pageNum", pageNum)
+                .set("pageSize", pageSize);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Dict.create()
+                .set("managedComputers", new ArrayList<>())
+                .set("isApprover", false)
+                .set("total", 0)
+                .set("pageNum", pageNum)
+                .set("pageSize", pageSize);
+        }
     }
 }

@@ -37,6 +37,9 @@ public interface SysControlMapper {
     @Select("select * from sys_control where ciName = #{ciName} and pcStatus != 'Scrapped'")
     List<SysControlModel> selectNonScrappedComputersByCiName(String ciName);
 
+    @Select("SELECT * FROM sys_control WHERE costCenter = #{costCenter} AND pcStatus = 'In Use'")
+    List<SysControlModel> getComputerListByCostCenter(String costCenter);
+
     boolean insertSysControl(SysControlModel sysControlModel);
 
     List<SysControlModel> getComputerByInfo(SysControlAssignDTO sysControlAssignModel);

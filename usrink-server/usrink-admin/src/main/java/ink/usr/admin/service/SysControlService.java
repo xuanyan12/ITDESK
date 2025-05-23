@@ -32,6 +32,23 @@ public interface SysControlService {
     List<SysControlModel> selectNonScrappedComputersByCiName(String ciName);
     
     /**
+     * 根据成本中心获取设备列表
+     * @param costCenter 成本中心
+     * @return 设备列表
+     */
+    List<SysControlModel> getComputerListByCostCenter(String costCenter);
+    
+    /**
+     * 获取审批人管理的所有设备列表（基于其负责的成本中心）
+     * @param userName 用户名
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @param costCenterFilter 成本中心筛选条件（可选）
+     * @return 包含设备信息和成本中心标识的字典
+     */
+    Dict getApproverManagedComputers(String userName, int pageNum, int pageSize, String costCenterFilter);
+    
+    /**
      * 插入新的电脑记录
      * @param sysControlModel 电脑信息
      * @return 插入是否成功

@@ -138,6 +138,28 @@ public class SysControlController {
     }
 
     /**
+     * 获取审批人管理的所有设备信息（基于其负责的成本中心）
+     * @param userName 用户名
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @param costCenterFilter 成本中心筛选条件
+     * @return 包含设备信息和成本中心标识的结果
+     */
+    @GetMapping("/getApproverManagedComputers")
+    public Res getApproverManagedComputers(
+            @RequestParam("userName") String userName,
+            @RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+            @RequestParam(value = "costCenterFilter", required = false) String costCenterFilter) throws Exception {
+        try {
+            Dict result = sysControlService.getApproverManagedComputers(userName, pageNum, pageSize, costCenterFilter);
+            return Res.success(result);
+        } catch (Exception e) {
+            throw new Exception("获取审批人管理设备失败", e);
+        }
+    }
+
+    /**
      * 通过电脑名获取电脑信息
      * @param ciName
      * @return
