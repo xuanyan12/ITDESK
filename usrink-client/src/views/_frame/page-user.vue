@@ -219,11 +219,24 @@ const updateAdUsersLoading = ref(false)
  */
 const updateAdUsers = () => {
     updateAdUsersLoading.value = true
-    httpUtil.get("/sysLadp/linkLDAPRefreshAllInfo").then(res => {
+    httpUtil.get("/sysLadp/linkLDAPRefreshAllInfo", {
+        timeout: 120000  // 设置超时时间为120秒
+    }).then(res => {
+        // 显示成功消息
+        if (res.msg) {
+            ElMessage.success(res.msg)
+        } else if (res.data) {
+            ElMessage.success(res.data)
+        } else {
+            ElMessage.success(currentLang.value === 'zh' ? 'AD域用户更新成功' : 'AD users updated successfully')
+        }
         // 刷新用户列表
         selectUserListData()
     }).catch(err => {
         console.error(err)
+        // 显示错误消息
+        const errorMsg = err.response?.data?.msg || err.message || (currentLang.value === 'zh' ? 'AD域用户更新失败' : 'Failed to update AD users')
+        ElMessage.error(errorMsg)
     }).finally(() => {
         updateAdUsersLoading.value = false
     })

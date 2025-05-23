@@ -85,7 +85,7 @@ public class SysLadpServiceImpl implements SysLadpService {
         Hashtable<String,String> HashEnv = new Hashtable<String,String>();
         HashEnv.put(Context.SECURITY_AUTHENTICATION, "simple"); 							// LDAP访问安全级别(none,simple,strong)
         HashEnv.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.ldap.LdapCtxFactory"); 	// LDAP工厂类
-        HashEnv.put("com.sun.jndi.ldap.connect.timeout", "20000");							// 连接超时设置为10秒
+        HashEnv.put("com.sun.jndi.ldap.connect.timeout", "120000");							// 连接超时设置为120秒
         HashEnv.put(Context.PROVIDER_URL, ldapConfig.getLaps());			                                // AD域服务器地址
         HashEnv.put(Context.SECURITY_PRINCIPAL, "SG\\"+username); 								    // AD的用户名
         HashEnv.put(Context.SECURITY_CREDENTIALS, password);
