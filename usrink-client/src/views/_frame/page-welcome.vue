@@ -377,10 +377,10 @@ const handleApproverDevicesPageSizeChange = (size) => {
 
         <!-- 用户电脑信息和审批人管理的设备信息 -->
         <el-row style="margin-top: 20px;" :gutter="20">
-            <!-- 用户电脑信息 -->
+        <!-- 用户电脑信息 -->
             <el-col :span="isApprover ? 12 : 24" :xs="24" :sm="24" :md="isApprover ? 12 : 24">
                 <div class="computer-info-card">
-                    <div class="card-header">
+                        <div class="card-header">
                         <h3 class="card-title">
                             <el-icon :size="22" class="header-icon"><Monitor /></el-icon>
                             {{ t.myDevices }}
@@ -423,8 +423,8 @@ const handleApproverDevicesPageSizeChange = (size) => {
                                     <el-tag :type="computer.pcStatus === 'In Use' ? 'success' : 'warning'" size="small">
                                         {{ computer.pcStatus }}
                                     </el-tag>
-                                </div>
-                                        
+                        </div>
+                                
                                 <el-descriptions :column="2" size="small" border class="mt-10">
                                     <el-descriptions-item v-if="computer.modelOrVersion" :label="t.model">
                                         <el-icon><House /></el-icon>

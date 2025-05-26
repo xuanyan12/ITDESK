@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ink.usr.admin.config.EmailConfig;
 import ink.usr.admin.service.SysUserService;
 import ink.usr.admin.service.SysApproverService;
+import ink.usr.common.model.mysql.SysUserModel;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
 
@@ -190,6 +193,43 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
             // 更新token状态
             int tokenResult = sysTokenMapper.updateTokenByFlowId(flowId);
 
+            // 如果审批不通过，发送拒绝邮件给申请人
+            if ("审批不通过".equals(status)) {
+                try {
+                    // 获取申请详情
+                    SysApprovalRequestModel approvalRequestModel = applyMapper.getByApprovalId(requestId);
+                    if (approvalRequestModel != null) {
+                        // 获取申请人信息
+                        String applicantName = sysUserService.getUserNickNameByUserId(approvalRequestModel.getApplicant());
+                        applicantName = applicantName != null ? applicantName : "未知申请人";
+                        
+                        // 获取申请人邮箱
+                        String applicantUserName = sysUserService.getNameByUserId(approvalRequestModel.getApplicant());
+                        SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(applicantUserName);
+                        String applicantEmail = applicantUserInfo != null ? applicantUserInfo.getEmail() : null;
+                        
+                        if (applicantEmail != null && !applicantEmail.isEmpty()) {
+                            // 构建邮件内容
+                            String emailContent = emailConfig.buildRejectionEmailContent(
+                                    applicantName,
+                                    approvalRequestModel.getDeviceCategory(),
+                                    approvalRequestModel.getCreatedAt(),
+                                    reason,
+                                    approveTime
+                            );
+                            
+                            String emailSubject = emailConfig.buildRejectionEmailSubject();
+                            
+                            // 发送邮件
+                            emailConfig.sendMail(applicantEmail, emailSubject, emailContent);
+                        }
+                    }
+                } catch (Exception e) {
+                    // 记录日志但不影响主流程
+                    log.error("发送拒绝邮件失败", e);
+                }
+            }
+
             // 如果审批流的stage为1，需要发送邮件给stage为2的审批人
             SysApprovalFlowModel approvalFlow = sysApprovalFlowMapper.getApprovalFlowById(flowId);
             int stage = approvalFlow.getStage();
@@ -238,6 +278,11 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                     String applicantName = sysUserService.getUserNickNameByUserId(approvalRequestModel.getApplicant());
                     applicantName = applicantName != null ? applicantName : "未知申请人";
                     
+                    // 获取申请人部门信息
+                    String applicantUserName = sysUserService.getNameByUserId(approvalRequestModel.getApplicant());
+                    SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(applicantUserName);
+                    String applicantDepartment = applicantUserInfo != null ? applicantUserInfo.getDepartment() : "";
+                    
                     // 获取责任人姓名
                     String responsibilityName = sysUserService.getUserNickNameByUserId(approvalRequestModel.getResponsibility());
                     
@@ -248,6 +293,7 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                     // 构建邮件内容和主题
                     String emailContent = emailConfig.buildApplyEmailContent(
                             applicantName,
+                            applicantDepartment,
                             approvalRequestModel.getDeviceCategory(),
                             approvalRequestModel.getDeviceType(),
                             approvalRequestModel.getCostCenter(),
@@ -257,10 +303,11 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                             approvalRequestModel.getCompanySystem(),
                             approvalRequestModel.getReason(),
                             approvalRequestModel.getCiName(),
-                            approvalUrl
+                            approvalUrl,
+                            approvalRequestModel.getCreatedAt()
                     );
                     
-                    String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, approvalRequestModel.getDeviceCategory());
+                    String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, applicantDepartment, approvalRequestModel.getDeviceCategory());
                     
                     // 发送邮件
                     emailConfig.sendMail(approver2Email, emailSubject, emailContent);
@@ -289,6 +336,36 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     sysControlAssignModel.setStartTime(df.format(LocalDateTime.now()));
                     sysControlAssignMapper.addAssignInfo(sysControlAssignModel);
+                    
+                    // 发送审批通过邮件给申请人
+                    try {
+                        // 获取申请人信息
+                        String applicantName = sysUserService.getUserNickNameByUserId(approvalRequestModel.getApplicant());
+                        applicantName = applicantName != null ? applicantName : "未知申请人";
+                        
+                        // 获取申请人邮箱
+                        String applicantUserName = sysUserService.getNameByUserId(approvalRequestModel.getApplicant());
+                        SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(applicantUserName);
+                        String applicantEmail = applicantUserInfo != null ? applicantUserInfo.getEmail() : null;
+                        String applicantDepartment = applicantUserInfo != null ? applicantUserInfo.getDepartment() : "";
+                        
+                        if (applicantEmail != null && !applicantEmail.isEmpty()) {
+                            // 构建邮件内容
+                            String emailContent = emailConfig.buildApprovalPassedEmailContent(
+                                    applicantName,
+                                    applicantDepartment,
+                                    approveTime
+                            );
+                            
+                            String emailSubject = emailConfig.buildApprovalPassedEmailSubject();
+                            
+                            // 发送邮件
+                            emailConfig.sendMail(applicantEmail, emailSubject, emailContent);
+                        }
+                    } catch (Exception e) {
+                        // 记录日志但不影响主流程
+                        log.error("发送审批通过邮件失败", e);
+                    }
                 }
 
                 return result > 0 && flowResult > 0 && tokenResult>0;

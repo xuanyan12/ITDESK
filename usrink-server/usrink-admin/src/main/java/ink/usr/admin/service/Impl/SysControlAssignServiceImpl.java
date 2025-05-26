@@ -5,10 +5,14 @@ import ink.usr.admin.mapper.SysControlAssignMapper;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysControlAssignService;
+import ink.usr.admin.service.SysUserService;
+import ink.usr.admin.config.EmailConfig;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
+import ink.usr.common.model.mysql.SysUserModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @Service
 public class SysControlAssignServiceImpl implements SysControlAssignService {
     @Autowired
@@ -24,6 +29,10 @@ public class SysControlAssignServiceImpl implements SysControlAssignService {
     private SysControlMapper sysControlMapper;
     @Autowired
     private SysUserMapper sysUserMapper;
+    @Autowired
+    private SysUserService sysUserService;
+    @Autowired
+    private EmailConfig emailConfig;
 
     @Override
     public List<SysControlAssignModel> getControlAssignList() {
@@ -80,6 +89,59 @@ public class SysControlAssignServiceImpl implements SysControlAssignService {
             String localTime = df.format(time);
             controlAssign.setAssignTime(localTime);
             boolean flag = sysControlAssignMapper.updateControlAssign(controlAssign);
+            
+            // 如果分配完成或暂分配，发送邮件通知申请人
+            if (flag && ("分配完成".equals(controlAssign.getAssignStatus()) || "暂分配".equals(controlAssign.getAssignStatus()))) {
+                try {
+                    // 获取申请人信息
+                    String applicantName = sysUserService.getUserNickNameByUserId(controlAssign.getApplicant());
+                    applicantName = applicantName != null ? applicantName : "未知申请人";
+                    
+                    // 获取申请人邮箱和部门
+                    String applicantUserName = sysUserService.getNameByUserId(controlAssign.getApplicant());
+                    SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(applicantUserName);
+                    String applicantEmail = applicantUserInfo != null ? applicantUserInfo.getEmail() : null;
+                    String applicantDepartment = applicantUserInfo != null ? applicantUserInfo.getDepartment() : "";
+                    
+                    if (applicantEmail != null && !applicantEmail.isEmpty()) {
+                        // 获取分配的电脑信息
+                        String computerName = controlAssign.getCiName();
+                        String computerType = controlAssign.getDeviceType();
+                        boolean isTemporary = "暂分配".equals(controlAssign.getAssignStatus());
+                        
+                        // 通过电脑名获取电脑型号
+                        String computerModel = "";
+                        if (computerName != null && !computerName.isEmpty()) {
+                            SysControlModel computerInfo = sysControlMapper.getComputerInfoByCiName(computerName);
+                            if (computerInfo != null) {
+                                computerModel = computerInfo.getModelOrVersion();
+                            }
+                        }
+                        
+                        // 构建邮件内容
+                        String emailContent = emailConfig.buildAssignmentCompletedEmailContent(
+                                applicantName,
+                                applicantDepartment,
+                                localTime,
+                                computerName,
+                                computerModel,
+                                computerType,
+                                isTemporary
+                        );
+                        
+                        String emailSubject = isTemporary ? 
+                            emailConfig.buildTempAssignmentEmailSubject() : 
+                            emailConfig.buildAssignmentCompletedEmailSubject();
+                        
+                        // 发送邮件
+                        emailConfig.sendMail(applicantEmail, emailSubject, emailContent);
+                    }
+                } catch (Exception e) {
+                    // 记录日志但不影响主流程
+                    log.error("发送分配邮件失败", e);
+                }
+            }
+            
             return flag;
         }
 

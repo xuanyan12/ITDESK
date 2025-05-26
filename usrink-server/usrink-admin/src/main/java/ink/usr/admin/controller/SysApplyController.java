@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @Slf4j
@@ -95,7 +97,15 @@ public class SysApplyController {
     public Res submitApply(@RequestBody SysApplyRequestDTO sysApplyRequestDTO){
         try {
             //  1.先创建一个request,并创建一个属于部门leader的一级工作流与二级工作流,获得带有唯一标识的url
-            String url = sysApplyService.addApply(sysApplyRequestDTO);
+            String result = sysApplyService.addApply(sysApplyRequestDTO);
+            
+            // 检查是否为自动审批通过的情况
+            if ("申请已自动审批通过，已进入分配流程".equals(result)) {
+                return Res.success(result);
+            }
+            
+            // 需要审批的情况：发送邮件给一级审批人
+            String url = result;
             
             // 获取申请人姓名
             String applicantName = sysUserService.getUserNickNameByUserId(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()));
@@ -112,9 +122,18 @@ public class SysApplyController {
             Long userApproverId = sysApproverService.getApproverInfoByApproverId(approverId);
             String approverEmail = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userApproverId)).getEmail();
             
+            // 获取申请人部门信息
+            SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(sysApplyRequestDTO.getUserName());
+            String applicantDepartment = applicantUserInfo != null ? applicantUserInfo.getDepartment() : "";
+            
+            // 获取申请时间（当前时间）
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String applyTime = LocalDateTime.now().format(formatter);
+            
             // 使用EmailConfig构建和发送邮件
             String emailContent = emailConfig.buildApplyEmailContent(
                     applicantName,
+                    applicantDepartment,
                     sysApplyRequestDTO.getDeviceCategory(),
                     sysApplyRequestDTO.getDeviceType(),
                     sysApplyRequestDTO.getCostCenter(),
@@ -124,10 +143,11 @@ public class SysApplyController {
                     sysApplyRequestDTO.getCompanySystem(),
                     sysApplyRequestDTO.getReason(),
                     sysApplyRequestDTO.getCiName(),
-                    url
+                    url,
+                    applyTime
             );
             
-            String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, sysApplyRequestDTO.getDeviceCategory());
+            String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, applicantDepartment, sysApplyRequestDTO.getDeviceCategory());
             
             // 发送邮件
             emailConfig.sendMail(approverEmail, emailSubject, emailContent);
