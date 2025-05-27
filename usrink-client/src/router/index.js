@@ -5,6 +5,7 @@ import usrFrameNotfound from "@/components/_frame/usr-frame-notfound.vue"
 import usrFrameForbidden from "@/components/_frame/usr-frame-forbidden.vue";
 import publicApproval from "@/views/public/public-approval.vue" // 添加公开审批页面引入
 import segOnelink from "@/views/public/seg-onelink.vue" // 添加SEG ONELINK页面引入
+import segAnalytics from "@/views/public/seg-analytics.vue" // 添加SEG ONELINK数据统计页面引入
 import {createRouter, createWebHistory} from 'vue-router'
 import NProgress from 'nprogress'
 import loginUtil from "@/utils/LoginUtil";
@@ -33,6 +34,7 @@ const routes = [
     // 公开页面
     {path: '/public-page', component: publicApproval},
     {path: '/seg-onelink', component: segOnelink}, // 添加SEG ONELINK路由
+    {path: '/seg-analytics', component: segAnalytics}, // 添加SEG ONELINK数据统计路由
     // 404 Notfound
     // 理论上，这里应该永远匹配不到，因为路由守卫前置拦截会把将要访问的路由重定向的对应的路由上
     // 比如访问了`/aaa`一个不存在的路由，
@@ -65,7 +67,7 @@ router.beforeEach(async (to) => {
     let isAuth = loginUtil.isAuthenticated()
 
     // 添加不需要登录验证的白名单路径
-    const whiteList = ['/login', '/register', '/forget-password', '/public-page', '/seg-onelink']
+    const whiteList = ['/login', '/register', '/forget-password', '/public-page', '/seg-onelink', '/seg-analytics']
     
     // 判断是否在白名单中，如果是，直接放行
     if (whiteList.includes(to.path)) {

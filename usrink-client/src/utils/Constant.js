@@ -1,5 +1,8 @@
-// 服务器开发地址
-const HTTP_BASE_URL = "http://10.161.68.46:9999"
+// 服务器开发地址，部署前修改！！！
+// seg-it管理系统
+const HTTP_BASE_URL = "http://cngvwms01:9999"
+// seg-onelink
+// const HTTP_BASE_URL = "http://CSVVM09:9999"
 // 服务器生产地址
 const HTTP_BASE_URL_DEV = "http://localhost:9999"
 
