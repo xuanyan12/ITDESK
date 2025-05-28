@@ -13,6 +13,7 @@ import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ink.usr.admin.config.EmailConfig;
@@ -55,6 +56,9 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
     
     @Autowired
     private SysApproverService sysApproverService;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Override
     public List<SysApprovalFlowVO> getApprovalFlowListByApproverId(Long approverId, Long approvalType) {
@@ -430,6 +434,6 @@ public class SysApprovalFlowServiceImpl implements SysApprovalFlowService {
         }
         
         // 返回审批URL，包含flowId和token
-        return "http://seg-it.com/approval/temp?flowId=" + flowId + "&token=" + token;
+        return frontendUrl + "/public-page?flowId=" + flowId + "&token=" + token;
     }
 }

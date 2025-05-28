@@ -49,7 +49,7 @@ instance.interceptors.response.use((response) => {
         loginUtil.logout()
         router.push('/login')
     } else if (res.statusCode === RES_STATUS_CODE.FORBIDDEN) {
-        ElMessage.error("没有权限，请联系管理员！");
+        ElMessage.error("没有权限，请联系IT部门！");
     } else if (res.code === RES_STATUS_CODE.NOT_FOUND) {
         ElMessage.error("请求地址不存在！");
     } else {
@@ -61,7 +61,7 @@ instance.interceptors.response.use((response) => {
     ElMessage({
         dangerouslyUseHTMLString: true,
         type: 'error',
-        message: '操作失败，请刷新浏览器再次尝试，或联系管理员。&nbsp;&nbsp;微信：<strong><i>xjxjxjxj2001</i></strong>',
+        message: '操作失败，请刷新浏览器再次尝试，或联系IT部门。',
     })
     return Promise.reject(error);
 });

@@ -170,7 +170,7 @@ public class SysApplyController {
         // 通过userId获得approverId
 
         String costCenter = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userId)).getCostCenter();
-        Long approverId = sysApproverService.getApproverId(userId, costCenter);
+        Long approverId = sysApproverService.getApproverIdUseCostCenter(userId, costCenter);
         // 通过approverId找到该用户所有的审批流
         Page<Object> pages = PageUtil.startPage();
         List<SysApprovalFlowVO> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);

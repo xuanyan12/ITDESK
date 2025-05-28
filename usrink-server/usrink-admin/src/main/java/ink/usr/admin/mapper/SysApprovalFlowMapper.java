@@ -48,7 +48,7 @@ public interface SysApprovalFlowMapper {
      * @param flowId 流程ID
      * @return token信息
      */
-    @Select("select * from sys_approval_token where flowId = #{flowId} and used = 0 order by createTime desc limit 1")
+    @Select("select * from sys_approval_token where flowId = #{flowId} and used = 0 order by createdAt desc limit 1")
     SysApprovalTokenModel getActiveTokenByFlowId(@Param("flowId") Long flowId);
     
     /**

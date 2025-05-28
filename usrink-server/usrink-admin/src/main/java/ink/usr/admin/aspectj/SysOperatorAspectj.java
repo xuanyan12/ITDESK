@@ -119,7 +119,9 @@ public class SysOperatorAspectj {
         sysLogOperatorModel.setReqUrl(requestURI);
         
         // 检查是否是白名单路径，如果是临时审批相关接口则不记录用户信息
-        if (requestURI.contains("/sysApply/tempApproval") || requestURI.contains("/sysApply/submitTempApproval")) {
+        if (requestURI.contains("/sysApply/tempApproval") || 
+            requestURI.contains("/sysApply/submitTempApproval") ||
+            requestURI.contains("/sysOnelinkSystem/")) {
             // 公开接口不记录用户信息
             sysLogOperatorModel.setUserName("anonymous");
             sysLogOperatorModel.setUserRoleName("匿名访问");

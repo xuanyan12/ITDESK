@@ -44,4 +44,16 @@ public class PageUtil {
         return PageHelper.startPage(pageNumInt, pageSizeInt);
     }
 
+    /**
+     * 开始分页（直接传递参数）
+     *
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @param <E> 分页对象
+     * @return 分页对象
+     */
+    public static <E> Page<E> startPage(int pageNum, int pageSize) {
+        return PageHelper.startPage(pageNum, pageSize);
+    }
+
 }
