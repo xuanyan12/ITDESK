@@ -942,12 +942,6 @@ export default {
         if (valid) {
           loading.value = true;
           
-          // Check if need to append computer ownership information to application reason
-          if (myComputer.value && myComputer.value.pcClass) {
-            // Append computer ownership information to application reason
-            applicationForm.reason = `${applicationForm.reason}\n${t('电脑归属情况')}：${myComputer.value.pcClass}`;
-          }
-          
           // Convert English application type to Chinese - Keep this to ensure we send Chinese values
           const deviceCategoryText = getApplicationTypeName(applicationForm.applicationType);
           

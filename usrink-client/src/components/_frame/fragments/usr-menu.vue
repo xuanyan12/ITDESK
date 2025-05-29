@@ -79,7 +79,7 @@ const translateMenuItem = (label) => {
         '数据导出': 'Data Export',
         '网络管理': 'Network',
         '通知公告': 'Announcements',
-        'IT系统中心': 'IT Center',
+        'IT管理系统': 'IT Mgt System',
         '电脑管理系统': 'PC',
         '电脑管理': 'PC Management',
         '电脑申请': 'PC Request',

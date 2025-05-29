@@ -4,11 +4,12 @@ import {useCollapseStateStore} from "@/stores/_frame/collapseStateStore";
 import {useNavStore} from "@/stores/_frame/navStore";
 import {useUserInfoStore} from "@/stores/_frame/userInfoStore";
 import {useLanguageStore} from "@/stores/_frame/languageStore";
-import {computed} from "vue";
+import {computed, ref} from "vue";
 import loginUtil from "@/utils/LoginUtil";
 import screenUtil from "@/utils/ScreenUtil";
 import {BASE_URL} from "@/utils/Constant.js";
-import {ElementPlus} from "@element-plus/icons-vue";
+import {ElementPlus, QuestionFilled} from "@element-plus/icons-vue";
+import qaPage from "@/views/public/qa-page.vue";
 
 const router = useRouter()
 const navStore = useNavStore()
@@ -67,7 +68,7 @@ const translateBreadcrumb = (label) => {
         '网络管理': 'Network',
         '通知公告': 'Announcements',
         '无权访问页面': 'Access Denied',
-        'IT系统中心': 'IT Center',
+        'IT管理系统': 'IT Mgt System',
         '电脑管理系统': 'PC',
         '电脑管理': 'PC Management',
         '电脑申请': 'PC Request',
@@ -111,14 +112,28 @@ const handleLanguageChange = (command) => {
     languageStore.setLanguage(command)
 }
 
+// QA页面显示状态
+const showQaPage = ref(false)
+
 // 多语言文本
 const langText = computed(() => {
     return {
         collapse: currentLang.value === 'zh' ? '折叠菜单' : 'Collapse Menu',
         logout: currentLang.value === 'zh' ? '退出' : 'Logout',
-        fullscreen: currentLang.value === 'zh' ? '全屏' : 'Fullscreen'
+        fullscreen: currentLang.value === 'zh' ? '全屏' : 'Fullscreen',
+        qa: currentLang.value === 'zh' ? 'FAQ' : 'FAQ'
     }
 })
+
+// 显示QA页面
+const showQA = () => {
+    showQaPage.value = true
+}
+
+// 关闭QA页面
+const closeQA = () => {
+    showQaPage.value = false
+}
 
 </script>
 
@@ -143,6 +158,14 @@ const langText = computed(() => {
             </div>
         </div>
         <div class="usr_container_header_menu_right">
+            <div 
+                @click="showQA"
+                class="usr_header_item usr_container_header_menu_right_qa">
+                <el-icon :size="18">
+                    <QuestionFilled/>
+                </el-icon>
+                <span class="qa-text">{{ langText.qa }}</span>
+            </div>
             <div class="usr_header_item usr_container_header_menu_right_language">
                 <el-dropdown @command="handleLanguageChange">
                     <span class="language-dropdown-link">
@@ -185,6 +208,9 @@ const langText = computed(() => {
             </div>
         </div>
     </section>
+    
+    <!-- QA页面弹窗 -->
+    <qa-page v-if="showQaPage" @close="closeQA" />
 </template>
 
 <style scoped>
@@ -222,6 +248,25 @@ const langText = computed(() => {
     cursor: pointer;
     font-weight: 500;
     transition: all 0.3s ease;
+}
+
+/* QA按钮样式 */
+.usr_container_header_menu_right_qa {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.usr_container_header_menu_right_qa:hover {
+    background-color: #F2F6FC !important;
+    color: #409EFF;
+}
+
+.qa-text {
+    font-size: 14px;
+    font-weight: 500;
 }
 
 :deep(.active-lang) {

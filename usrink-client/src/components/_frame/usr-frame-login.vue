@@ -4,9 +4,12 @@ import loginUtil from "@/utils/LoginUtil";
 import httpUtil from "@/utils/HttpUtil";
 import {useRouter} from 'vue-router'
 import {ElMessage} from "element-plus";
-import { ArrowDown } from '@element-plus/icons-vue';
+import { ArrowDown, QuestionFilled } from '@element-plus/icons-vue';
+import qaPage from "@/views/public/qa-page.vue";
+import {useLanguageStore} from "@/stores/_frame/languageStore";
 
 const router = useRouter()
+const languageStore = useLanguageStore()
 
 // 登录按钮Loading状态
 const loading = ref(false)
@@ -17,18 +20,21 @@ const loginForm = ref({
     password: ''
 })
 
-// 当前语言: 'zh' 中文, 'en' 英文
-const currentLang = ref('zh')
+// 使用全局语言状态
+const currentLang = computed(() => languageStore.currentLang)
 
-// 语言切换处理函数
+// QA页面显示状态
+const showQaPage = ref(false)
+
+// 语言切换处理函数 - 使用全局方法
 const handleLangChange = (command) => {
-    currentLang.value = command
+    languageStore.setLanguage(command)
 }
 
 // 多语言文本
 const langText = computed(() => {
     return {
-        title: currentLang.value === 'zh' ? 'SEG IT管理系统' : 'SEG IT Management',
+        title: currentLang.value === 'zh' ? 'SEG IT管理系统' : 'SEG IT Mgt System',
         systemLogin: currentLang.value === 'zh' ? '系统登录' : 'System Login',
         username: currentLang.value === 'zh' ? '用户名' : 'Username',
         password: currentLang.value === 'zh' ? '密码' : 'Password',
@@ -36,7 +42,8 @@ const langText = computed(() => {
         footer: currentLang.value === 'zh' ? 'Copyright © 2025 SEG IT 部门. 保留所有权利' : 'Copyright © 2025 SEG IT Department. All Rights Reserved',
         usernameRequired: currentLang.value === 'zh' ? '用户名不能为空，请输入用户名！' : 'Username cannot be empty!',
         passwordRequired: currentLang.value === 'zh' ? '密码不能为空，请输入密码！' : 'Password cannot be empty!',
-        getTempPassword: currentLang.value === 'zh' ? '获取临时密码' : 'Get Temporary Password'
+        getTempPassword: currentLang.value === 'zh' ? '获取临时密码' : 'Get Temporary Password',
+        qa: currentLang.value === 'zh' ? 'FAQ' : 'FAQ'
     }
 })
 
@@ -90,6 +97,16 @@ const getTempPassword = () => {
         console.error(err)
     })
 }
+
+// 显示QA页面
+const showQA = () => {
+    showQaPage.value = true
+}
+
+// 关闭QA页面
+const closeQA = () => {
+    showQaPage.value = false
+}
 </script>
 
 <template>
@@ -103,6 +120,12 @@ const getTempPassword = () => {
 
         <!-- 语言切换下拉框 - 移到屏幕右上角 -->
         <div class="lang-dropdown">
+            <div class="qa-btn" @click="showQA">
+                <el-icon :size="18">
+                    <QuestionFilled/>
+                </el-icon>
+                <span class="qa-text">{{ langText.qa }}</span>
+            </div>
             <el-dropdown @command="handleLangChange">
                 <span class="lang-dropdown-link">
                     {{ currentLang === 'zh' ? 'ZH' : 'EN' }}
@@ -182,6 +205,9 @@ const getTempPassword = () => {
             <div class="tech-footer">
             <span>{{ langText.footer }}</span>
         </div>
+        
+        <!-- QA页面弹窗 -->
+        <qa-page v-if="showQaPage" @close="closeQA" />
     </section>
 </template>
 
@@ -271,6 +297,35 @@ const getTempPassword = () => {
     top: 20px;
     right: 20px;
     z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.qa-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 5px 12px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    background: rgba(0, 83, 137, 0.4);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.qa-btn:hover {
+    background: rgba(0, 83, 137, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.qa-text {
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .lang-dropdown-link {
