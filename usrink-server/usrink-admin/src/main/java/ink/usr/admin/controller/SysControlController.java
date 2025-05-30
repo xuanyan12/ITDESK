@@ -394,15 +394,6 @@ public class SysControlController {
                         }
                     } else {
                         // 不存在记录，执行插入操作
-                        // 首先检查pcStatus是否为Scrapped，如果是则跳过
-                        String pcStatus = computerModel.getPcStatus();
-                        if (pcStatus != null && "Scrapped".equalsIgnoreCase(pcStatus)) {
-                            log.info("第 {} 行: ciName={}, pcStatus为Scrapped，跳过插入", i + 1, ciName);
-                            skipCount++;
-                            continue;
-                        }
-                        
-                        // 执行插入操作
                         boolean insertResult = sysControlService.insertSysControl(computerModel);
                         if (insertResult) {
                             insertCount++;
@@ -530,13 +521,13 @@ public class SysControlController {
                 case "邮箱地址":
                     model.setEmailAddress(value);
                     break;
-                case "department":
-                case "所属部门":
-                    model.setDepartment(value);
-                    break;
                 case "telephone":
                 case "电话号码":
                     model.setTelephone(value);
+                    break;
+                case "department":
+                case "所属部门":
+                    model.setDepartment(value);
                     break;
                 case "costcenter":
                 case "成本中心":
@@ -544,6 +535,7 @@ public class SysControlController {
                     break;
                 case "lifecyclestart":
                 case "出厂时间":
+                case "manufacture date":
                     model.setLifeCycleStart(value);
                     break;
                 case "cpu":
@@ -581,8 +573,9 @@ public class SysControlController {
                 case "公司":
                     model.setCompany(value);
                     break;
-                case "assetsno":
+                case "wbsnum":
                 case "wbs号":
+                case "资产号":
                     model.setWbsNum(value);
                     break;
                 case "price":

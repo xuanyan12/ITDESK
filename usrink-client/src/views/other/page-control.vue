@@ -173,7 +173,7 @@ const langText = computed(() => {
         manufactureDate: currentLang.value === 'zh' ? '出厂时间' : 'Manufacture Date',
         costCenter: currentLang.value === 'zh' ? '成本中心' : 'Cost Center',
         search: currentLang.value === 'zh' ? '查询' : 'Search',
-        computerUpdate: currentLang.value === 'zh' ? '电脑更新' : 'Update Data',
+        computerUpdate: currentLang.value === 'zh' ? '电脑导入' : 'Import Data',
         exportData: currentLang.value === 'zh' ? '导出数据' : 'Export Data',
         
         // 表格列标题
@@ -229,7 +229,7 @@ const langText = computed(() => {
         orderInfo: currentLang.value === 'zh' ? '订单信息' : 'Order Info',
         
         // 文件上传相关
-        batchUpdate: currentLang.value === 'zh' ? '批量更新电脑信息' : 'Batch Update Computer Information',
+        batchUpdate: currentLang.value === 'zh' ? '批量导入电脑信息' : 'Batch Import Computer Information',
         uploadTemplate: currentLang.value === 'zh' ? '请上传符合模板格式的Excel文件' : 'Please upload an Excel file in the correct format',
         templateTip: currentLang.value === 'zh' ? '首次使用请先下载模板，按格式填写' : 'First time users: download template first',
         downloadTemplate: currentLang.value === 'zh' ? '下载模板' : 'Download Template',
@@ -746,36 +746,39 @@ const formatDataForExport = (data) => {
     // 创建一个新对象，只包含我们需要导出的字段，使用当前语言的字段名
     const exportObj = {};
     
+    // 获取当前语言文本对象
+    const currentLangText = langText.value;
+    
     // 根据当前语言分配字段名
-    exportObj[langText.pcStatus] = item.pcStatus || '';
-    exportObj[langText.ciName] = item.ciName || '';
-    exportObj[langText.deviceClass] = item.deviceClass || '';
-    exportObj[langText.serialNumber] = item.serialNumber || '';
-    exportObj[langText.manufacture] = item.manufacture || '';
-    exportObj[langText.modelOrVersion] = item.modelOrVersion || '';
-    exportObj[langText.ntAccount] = item.ntAccount || '';
-    exportObj[langText.pcClass] = item.pcClass || '';
-    exportObj[langText.comment] = item.comment || '';
-    exportObj[langText.lastName] = item.lastName || '';
-    exportObj[langText.firstName] = item.firstName || '';
-    exportObj[langText.emailAddress] = item.emailAddress || '';
-    exportObj[langText.telephone] = item.telephone || '';
-    exportObj[langText.departmentCol] = item.department || '';
-    exportObj[langText.costCenterCol] = item.costCenter || '';
-    exportObj[langText.lifeCycleStart] = formatDate(item.lifeCycleStart) || '';
-    exportObj[langText.yrsToDay] = calculateYearsToToday(item.lifeCycleStart) + ' ' + langText.year;
-    exportObj[langText.cpu] = item.cpu || '';
-    exportObj[langText.memory] = item.memory || '';
-    exportObj[langText.disk] = item.disk || '';
-    exportObj[langText.graphic] = item.graphic || '';
-    exportObj[langText.hardwareStatus] = item.hardwareStatus || '';
-    exportObj[langText.pr] = item.pr || '';
-    exportObj[langText.po] = item.po || '';
-    exportObj[langText.vendor] = item.vendor || '';
-    exportObj[langText.company] = item.company || '';
-    exportObj[langText.wbsNum] = item.wbsNum || '';
-    exportObj[langText.temp] = item.temp === 1 ? langText.yes : langText.no;
-    exportObj['Price'] = item.price || '';
+    exportObj[currentLangText.pcStatus] = item.pcStatus || '';
+    exportObj[currentLangText.ciName] = item.ciName || '';
+    exportObj[currentLangText.deviceClass] = item.deviceClass || '';
+    exportObj[currentLangText.serialNumber] = item.serialNumber || '';
+    exportObj[currentLangText.manufacture] = item.manufacture || '';
+    exportObj[currentLangText.modelOrVersion] = item.modelOrVersion || '';
+    exportObj[currentLangText.ntAccount] = item.ntAccount || '';
+    exportObj[currentLangText.pcClass] = item.pcClass || '';
+    exportObj[currentLangText.comment] = item.comment || '';
+    exportObj[currentLangText.lastName] = item.lastName || '';
+    exportObj[currentLangText.firstName] = item.firstName || '';
+    exportObj[currentLangText.emailAddress] = item.emailAddress || '';
+    exportObj[currentLangText.telephone] = item.telephone || '';
+    exportObj[currentLangText.departmentCol] = item.department || '';
+    exportObj[currentLangText.costCenterCol] = item.costCenter || '';
+    exportObj[currentLangText.lifeCycleStart] = formatDate(item.lifeCycleStart) || '';
+    exportObj[currentLangText.yrsToDay] = calculateYearsToToday(item.lifeCycleStart) + ' ' + currentLangText.year;
+    exportObj[currentLangText.cpu] = item.cpu || '';
+    exportObj[currentLangText.memory] = item.memory || '';
+    exportObj[currentLangText.disk] = item.disk || '';
+    exportObj[currentLangText.graphic] = item.graphic || '';
+    exportObj[currentLangText.hardwareStatus] = item.hardwareStatus || '';
+    exportObj[currentLangText.pr] = item.pr || '';
+    exportObj[currentLangText.po] = item.po || '';
+    exportObj[currentLangText.vendor] = item.vendor || '';
+    exportObj[currentLangText.company] = item.company || '';
+    exportObj[currentLangText.wbsNum] = item.wbsNum || '';
+    exportObj[currentLangText.temp] = item.temp === 1 ? currentLangText.yes : currentLangText.no;
+    exportObj[currentLang.value === 'zh' ? '价格' : 'Price'] = item.price || '';
     
     return exportObj;
   });

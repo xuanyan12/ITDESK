@@ -10,9 +10,9 @@
         <where>
             <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
             <if test="costCenter!=null and costCenter!=''">AND LOWER(costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')</if>
-            <if test="pcClass!=null and pcClass!=''">AND LOWER(pcClass) LIKE CONCAT('%', LOWER(#{pcClass}), '%')</if>
+            <if test="pcClass!=null and pcClass!=''">AND pcClass = #{pcClass}</if>
             <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
-            <if test="pcStatus!=null and pcStatus!=''">AND LOWER(pcStatus) LIKE CONCAT('%', LOWER(#{pcStatus}), '%')</if>
+            <if test="pcStatus!=null and pcStatus!=''">AND pcStatus = #{pcStatus}</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
         </where>
         Limit #{pageNum}, #{pageSize}
@@ -25,9 +25,9 @@
         <where>
             <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
             <if test="costCenter!=null and costCenter!=''">AND LOWER(costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')</if>
-            <if test="pcClass!=null and pcClass!=''">AND LOWER(pcClass) LIKE CONCAT('%', LOWER(#{pcClass}), '%')</if>
+            <if test="pcClass!=null and pcClass!=''">AND pcClass = #{pcClass}</if>
             <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
-            <if test="pcStatus!=null and pcStatus!=''">AND LOWER(pcStatus) LIKE CONCAT('%', LOWER(#{pcStatus}), '%')</if>
+            <if test="pcStatus!=null and pcStatus!=''">AND pcStatus = #{pcStatus}</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
         </where>
     </select>
