@@ -81,7 +81,13 @@
 
           <el-col :span="12">
             <el-form-item :label="t('成本中心')" prop="costCenter">
-              <el-select v-model="applicationForm.costCenter" :placeholder="t('请选择成本中心')" style="width: 100%" :disabled="isCostCenterDisabled">
+              <el-select 
+                v-model="applicationForm.costCenter" 
+                :placeholder="t('请选择成本中心')" 
+                style="width: 100%" 
+                :disabled="isCostCenterDisabled"
+                filterable
+                clearable>
                 <el-option v-for="item in costCenters" :key="item" :label="item" :value="item"></el-option>
               </el-select>
             </el-form-item>

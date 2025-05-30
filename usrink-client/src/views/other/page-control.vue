@@ -1140,7 +1140,7 @@ const loadDepartmentAndCostCenterOptions = () => {
 
         
         <!-- 电脑列表 -->
-        <div style="overflow-x: auto; width: 100%; max-width: 100%;">
+        <div class="usr_card_override table-container" style="overflow-x: auto; width: 100%; max-width: 100%; background: #fff; padding: 24px; border-radius: 12px;">
             
             <el-table :data="partList" :loading="loading" style="width: 100%;" >
                 <!-- 电脑状态 -->
@@ -2035,6 +2035,75 @@ const loadDepartmentAndCostCenterOptions = () => {
 
 <style scoped>
 /* Add your styles here */
+
+/* 科技风格卡片基础样式 */
+.usr_card_override {
+  margin-bottom: 20px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 83, 137, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 83, 137, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.usr_card_override::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #005389, #029165, #005389);
+  background-size: 200% auto;
+  animation: gradientShift 3s ease infinite;
+  z-index: 1;
+}
+
+.usr_card_override:hover {
+  border-color: rgba(0, 83, 137, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 83, 137, 0.15);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
+/* 分页组件蓝绿色主题 */
+:deep(.el-pagination .el-pager li.is-active) {
+  background: linear-gradient(135deg, #005389, #029165) !important;
+  color: #ffffff !important;
+  font-weight: normal !important;
+  border-color: #005389 !important;
+}
+
+:deep(.el-pagination .el-pager li.is-active:hover) {
+  background: linear-gradient(135deg, #005389, #029165) !important;
+  color: #ffffff !important;
+}
+
+:deep(.el-pagination .btn-prev:hover),
+:deep(.el-pagination .btn-next:hover) {
+  color: #005389;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
+  color: #005389;
+}
+
+:deep(.el-pagination .el-select .el-input.is-focus .el-input__wrapper) {
+  border-color: #005389;
+  box-shadow: 0 0 0 1px rgba(0, 83, 137, 0.2);
+}
+
+:deep(.el-pagination .el-input__wrapper:hover) {
+  border-color: rgba(0, 83, 137, 0.4);
+}
+
 /* 添加文本溢出省略号样式 */
 .text-ellipsis {
     white-space: nowrap;          /* 防止文本换行 */
@@ -3521,4 +3590,11 @@ const loadDepartmentAndCostCenterOptions = () => {
   position: relative;
   z-index: 20; /* 确保表单项在更高层级 */
 }
+
+/* 电脑列表容器样式 */
+.table-container {
+  box-sizing: border-box;
+}
+
+/* 添加文本溢出省略号样式 */
 </style>

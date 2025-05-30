@@ -69,7 +69,7 @@ const translateBreadcrumb = (label) => {
         '通知公告': 'Announcements',
         '无权访问页面': 'Access Denied',
         'IT管理系统': 'IT Mgt System',
-        '电脑管理系统': 'PC',
+        '电脑管理系统': 'PC Manager',
         '电脑管理': 'PC Management',
         '电脑申请': 'PC Request',
         '电脑审批': 'PC Approval',

@@ -36,8 +36,8 @@ const langText = computed(() => {
     return {
         title: currentLang.value === 'zh' ? 'SEG IT管理系统' : 'SEG IT Mgt System',
         systemLogin: currentLang.value === 'zh' ? '系统登录' : 'System Login',
-        username: currentLang.value === 'zh' ? '用户名' : 'Username',
-        password: currentLang.value === 'zh' ? '密码' : 'Password',
+        username: currentLang.value === 'zh' ? '输入NT账号（电脑开机账号）' : 'Enter NT account (computer login account)',
+        password: currentLang.value === 'zh' ? '输入开机密码' : 'Enter login password',
         login: currentLang.value === 'zh' ? '登录' : 'Login',
         footer: currentLang.value === 'zh' ? 'Copyright © 2025 SEG IT 部门. 保留所有权利' : 'Copyright © 2025 SEG IT Department. All Rights Reserved',
         usernameRequired: currentLang.value === 'zh' ? '用户名不能为空，请输入用户名！' : 'Username cannot be empty!',

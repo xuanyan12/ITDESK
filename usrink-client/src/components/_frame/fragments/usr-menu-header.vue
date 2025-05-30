@@ -9,7 +9,7 @@ const collapseState = computed(() => collapseStateStore.collapseState)
 // Logo 高度
 const height = computed(() => collapseStateStore.collapseState ? '60px' : '135px')
 // Logo size
-const logoSize = computed(() => collapseStateStore.collapseState ? 30 : 200)
+const logoSize = computed(() => collapseStateStore.collapseState ? 25 : 180)
 // Logo MarginBottom
 const marginBottom = computed(() => collapseStateStore.collapseState ? '0px' : '10px')
 // Logo font 高度
@@ -19,7 +19,7 @@ const fontHeight = computed(() => collapseStateStore.collapseState ? '0px' : '24
 const showLogoName = ref(true)
 
 // Logo 图片路径（public 目录下）
-const logoSrc = '/seglogo-01.png';
+const logoSrc = '/SEG-logo.png';
 
 onMounted(() => {
     // 初始化时，根据菜单折叠状态，设置Logo名称显示状态

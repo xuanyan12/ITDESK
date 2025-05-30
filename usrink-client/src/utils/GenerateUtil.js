@@ -4,13 +4,23 @@
 const greeting = () => {
     const currentTime = new Date();
     const currentHour = currentTime.getHours();
-    if (currentHour >= 6 && currentHour < 9) {
-        return "早上好";
-    } else if (currentHour >= 9 && currentHour < 12) {
+    const currentMinute = currentTime.getMinutes();
+    
+    // 将当前时间转换为分钟数，便于比较
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
+    
+    // 时间界定（以分钟为单位）
+    const morningStart = 6 * 60; // 6:00
+    const morningEnd = 11 * 60 + 45; // 11:45
+    const noonEnd = 13 * 60; // 13:00
+    const afternoonEnd = 17 * 60 + 45; // 17:45
+    const nightEnd = 6 * 60; // 次日6:00
+    
+    if (currentTotalMinutes >= morningStart && currentTotalMinutes < morningEnd) {
         return "上午好";
-    } else if (currentHour >= 12 && currentHour < 14) {
+    } else if (currentTotalMinutes >= morningEnd && currentTotalMinutes < noonEnd) {
         return "中午好";
-    } else if (currentHour >= 14 && currentHour < 17) {
+    } else if (currentTotalMinutes >= noonEnd && currentTotalMinutes < afternoonEnd) {
         return "下午好";
     } else {
         return "晚上好";

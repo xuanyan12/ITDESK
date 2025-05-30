@@ -93,7 +93,9 @@ const approvalData = ref({
  */
 const loadGreeting = () => {
     greeting.value = GenerateUtil.greeting()
-    welcomes.value = GenerateUtil.getRandomTexts()
+    const allWelcomes = GenerateUtil.getRandomTexts()
+    // 只取第一段话
+    welcomes.value = allWelcomes.length > 0 ? [allWelcomes[0]] : []
 }
 
 /**
@@ -611,6 +613,8 @@ const handleApproverDevicesPageSizeChange = (size) => {
     display: flex;
     z-index: 2;
     position: relative;
+    justify-content: center;
+    align-items: center;
 }
 
 .logo-container {
@@ -618,24 +622,27 @@ const handleApproverDevicesPageSizeChange = (size) => {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding-right: 20px;
+    padding-right: 30px;
 }
 
 .seg-logo {
-    width: 160px;
-    max-height: 120px;
+    width: 200px;
+    max-height: 140px;
     object-fit: contain;
 }
 
 .greeting-container {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .greeting-text {
     color: rgb(10, 84, 139);
-    font-weight: 500;
-    font-size: 24px;
-    margin: 5px 0 20px 0;
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0 0 10px 0;
     display: flex;
     align-items: center;
 }
@@ -653,25 +660,19 @@ const handleApproverDevicesPageSizeChange = (size) => {
 
 .welcome-messages {
     color: #2c3e50;
+    margin: 0;
 }
 
 .welcome-message {
-    margin: 8px 0;
+    margin: 0;
     line-height: 1.5;
-    font-size: 15px;
+    font-size: 22px;
     position: relative;
-    padding-left: 15px;
+    padding-left: 0;
 }
 
 .welcome-message::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 8px;
-    width: 6px;
-    height: 6px;
-    background: linear-gradient(135deg, rgb(10, 84, 139), rgb(0, 150, 136));
-    border-radius: 50%;
+    display: none;
 }
 
 .tech-decoration {
