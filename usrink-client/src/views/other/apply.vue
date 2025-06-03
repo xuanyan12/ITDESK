@@ -1537,10 +1537,10 @@ export default {
                   type: 'warning',
                 }
               ).then(() => {
-                // After user confirms, set form fields
-                applicationForm.costCenter = myComputer.value.costCenter || ''; // Use user's own cost center
+                // 用户确认后，设置表单字段
+                applicationForm.costCenter = myComputer.value.costCenter || ''; // 使用用户自己的成本中心
                 applicationForm.computerCondition = '新电脑';
-                applicationForm.reason = '办公电脑未超六年换新';
+                applicationForm.reason = ''; // 置空，让用户自己填写申请理由
               }).catch(() => {
                 // User cancels, no changes are made
               });
@@ -2003,7 +2003,7 @@ export default {
     // Add computed property in setup function
     const isReasonDisabled = computed(() => {
       const appType = applicationForm.applicationType;
-      return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYears', 'pcRenewalUnderSixYearsOld', 
+      return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYearsOld', 
               'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern', 'publicComputer'].includes(appType);
     });
 
