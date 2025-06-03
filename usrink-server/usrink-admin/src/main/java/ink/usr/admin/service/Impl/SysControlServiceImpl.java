@@ -223,7 +223,13 @@ public class SysControlServiceImpl implements SysControlService {
                         // 1.先将老归属情况赋值给新电脑
                         String pcClass = computerInfo.getPcClass();
                         if(pcClass!=null){
-                            sysControlModel.setPcClass(pcClass);
+                            // 如果原电脑的归属情况已经是"Waiting for Return"，说明之前已经被分配过
+                            // 这种情况下应该使用"Internal User"作为新电脑的归属情况，而不是继承"Waiting for Return"
+                            if("Waiting for Return".equals(pcClass)) {
+                                sysControlModel.setPcClass("Internal User");
+                            } else {
+                                sysControlModel.setPcClass(pcClass);
+                            }
                         }
                         // 2.再将原电脑使用状态为In Use且电脑归属情况为Internal User的电脑设置为Waiting for Return
                         if("In Use".equals(computerInfo.getPcStatus()) && "Internal User".equals(pcClass)){
@@ -246,6 +252,32 @@ public class SysControlServiceImpl implements SysControlService {
                     sysControlMapper.updateSysControl(computerInfo);
                 }
             }
+            
+            // 处理二次分配时的暂分配电脑：将用户当前使用的临时分配电脑设置为Waiting for Return
+            if(sysAllocateDeviceDTO.getIsTemp() != null && sysAllocateDeviceDTO.getIsTemp() == 0) {
+                // 只在正式分配（非暂分配）时执行
+                if(userNtAccount != null) {
+                    List<SysControlModel> userCurrentComputers = sysControlMapper.getComputerListByUserName(userNtAccount);
+                    for(SysControlModel computer : userCurrentComputers) {
+                        // 找到用户当前使用的临时分配电脑（temp=1且状态为In Use）
+                        if(computer.getTemp() == 1 && "In Use".equals(computer.getPcStatus())) {
+                            // 记录原数据
+                            SysControlModel originalTempComputer = new SysControlModel();
+                            BeanUtils.copyProperties(computer, originalTempComputer);
+                            SysControlRecordDTO tempComputerRecord = new SysControlRecordDTO();
+                            BeanUtils.copyProperties(originalTempComputer, tempComputerRecord);
+                            tempComputerRecord.setUpdateTime(formattedTime);
+                            sysControlMapper.updateSysControlRecord(tempComputerRecord);
+                            
+                            // 更新暂分配电脑状态
+                            computer.setPcClass("Waiting for Return");
+                            computer.setTemp(0); // 将temp重置为0
+                            sysControlMapper.updateSysControl(computer);
+                        }
+                    }
+                }
+            }
+            
             SysControlRecordDTO sysControlRecordDTO2 = new SysControlRecordDTO();
             BeanUtils.copyProperties(originalSysControlModel, sysControlRecordDTO2);
             sysControlRecordDTO2.setUpdateTime(formattedTime);

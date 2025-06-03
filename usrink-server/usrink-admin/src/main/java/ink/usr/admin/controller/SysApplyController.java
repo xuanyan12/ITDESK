@@ -101,6 +101,40 @@ public class SysApplyController {
             
             // 检查是否为自动审批通过的情况
             if ("申请已自动审批通过，已进入分配流程".equals(result)) {
+                // 发送审批通过邮件给申请人
+                try {
+                    // 获取申请人姓名
+                    String applicantName = sysUserService.getUserNickNameByUserId(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()));
+                    applicantName = applicantName != null ? applicantName : "未知申请人";
+                    
+                    // 获取申请人邮箱和部门
+                    String applicantUserName = sysApplyRequestDTO.getUserName();
+                    SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(applicantUserName);
+                    String applicantEmail = applicantUserInfo != null ? applicantUserInfo.getEmail() : null;
+                    String applicantDepartment = applicantUserInfo != null ? applicantUserInfo.getDepartment() : "";
+                    
+                    if (applicantEmail != null && !applicantEmail.isEmpty()) {
+                        // 获取当前时间
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        String approvalTime = LocalDateTime.now().format(formatter);
+                        
+                        // 构建邮件内容
+                        String emailContent = emailConfig.buildApprovalPassedEmailContent(
+                                applicantName,
+                                applicantDepartment,
+                                approvalTime
+                        );
+                        
+                        String emailSubject = emailConfig.buildApprovalPassedEmailSubject();
+                        
+                        // 发送邮件
+                        emailConfig.sendMail(applicantEmail, emailSubject, emailContent);
+                    }
+                } catch (Exception e) {
+                    // 记录日志但不影响主流程
+                    log.error("发送自动审批通过邮件失败", e);
+                }
+                
                 return Res.success(result);
             }
             
