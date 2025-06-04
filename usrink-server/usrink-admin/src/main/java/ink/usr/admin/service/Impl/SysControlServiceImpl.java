@@ -11,6 +11,7 @@ import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysControlService;
 import ink.usr.common.core.domain.Dict;
+import ink.usr.common.core.utils.PageUtil;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
 import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysControlAssignModel;
@@ -19,6 +20,8 @@ import ink.usr.common.model.mysql.SysUserModel;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import com.github.pagehelper.Page;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class SysControlServiceImpl implements SysControlService {
 
@@ -290,23 +294,12 @@ public class SysControlServiceImpl implements SysControlService {
 
     @Override
     public Dict getControlRecordList(SysControlRecordQueryDTO queryDTO) {
-        // 检查并设置分页偏移量
-        long offset = (queryDTO.getPageNum() - 1) * queryDTO.getPageSize();
-        queryDTO.setPageNum(offset);
-        
-        // 获取记录列表
+        Page<Object> pages = PageUtil.startPage();
         List<SysControlRecordDTO> recordList = sysControlMapper.getControlRecordList(queryDTO);
         
-        // 获取记录总数
-        int totalCount = sysControlMapper.getControlRecordCount(queryDTO);
-        
-        // 构建返回对象
         Dict result = Dict.create()
-            .set("list", recordList)
-            .set("total", totalCount)
-            .set("pageSize", queryDTO.getPageSize())
-            .set("pageNum", queryDTO.getPageNum() / queryDTO.getPageSize() + 1);
-            
+                .set("list", recordList)
+                .set("total", pages.getTotal());
         return result;
     }
 
@@ -405,6 +398,81 @@ public class SysControlServiceImpl implements SysControlService {
                 .set("total", 0)
                 .set("pageNum", pageNum)
                 .set("pageSize", pageSize);
+        }
+    }
+
+    @Override
+    public boolean updateComputerOwnership(String ciName, String pcClass) {
+        try {
+            // 根据电脑名获取电脑信息
+            SysControlModel computer = sysControlMapper.getComputerInfoByCiName(ciName);
+            if (computer != null) {
+                // 更新电脑归属情况
+                computer.setPcClass(pcClass);
+                
+                // 调用更新方法
+                boolean result = updateSysControl(computer);
+                
+                if (result) {
+                    log.info("电脑 {} 归属情况更新成功，新归属情况: {}", ciName, pcClass);
+                } else {
+                    log.error("电脑 {} 归属情况更新失败", ciName);
+                }
+                
+                return result;
+            } else {
+                log.warn("未找到电脑名为 {} 的记录", ciName);
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("更新电脑归属情况失败: ciName={}, pcClass={}", ciName, pcClass, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateComputerStatusAndOwnership(String ciName, String pcStatus, String pcClass) {
+        try {
+            // 根据电脑名获取电脑信息
+            SysControlModel computer = sysControlMapper.getComputerInfoByCiName(ciName);
+            if (computer != null) {
+                // 记录原始数据用于记录变更历史
+                SysControlModel originalComputer = new SysControlModel();
+                BeanUtils.copyProperties(computer, originalComputer);
+                
+                // 更新电脑状态和归属情况
+                computer.setPcStatus(pcStatus);
+                computer.setPcClass(pcClass);
+                
+                // 生成更新时间
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String formattedTime = LocalDateTime.now().format(formatter);
+                
+                // 1. 记录原数据到变更历史表
+                SysControlRecordDTO sysControlRecordDTO = new SysControlRecordDTO();
+                BeanUtils.copyProperties(originalComputer, sysControlRecordDTO);
+                sysControlRecordDTO.setUpdateTime(formattedTime);
+                sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
+                
+                // 2. 更新电脑信息
+                boolean result = sysControlMapper.updateSysControl(computer);
+                
+                if (result) {
+                    log.info("电脑 {} 状态和归属情况更新成功，新状态: {}，新归属情况: {}", 
+                            ciName, pcStatus, pcClass);
+                } else {
+                    log.error("电脑 {} 状态和归属情况更新失败", ciName);
+                }
+                
+                return result;
+            } else {
+                log.warn("未找到电脑名为 {} 的记录", ciName);
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("更新电脑状态和归属情况失败: ciName={}, pcStatus={}, pcClass={}", 
+                    ciName, pcStatus, pcClass, e);
+            return false;
         }
     }
 }

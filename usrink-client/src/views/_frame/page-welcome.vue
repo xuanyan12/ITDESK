@@ -422,7 +422,7 @@ const handleApproverDevicesPageSizeChange = (size) => {
                                             </span>
                                         </div>
                                     </div>
-                                    <el-tag :type="computer.pcStatus === 'In Use' ? 'success' : 'warning'" size="small">
+                                    <el-tag :type="computer.pcClass === 'Internal User' ? 'success' : 'warning'" size="small">
                                         {{ computer.pcStatus }}
                                     </el-tag>
                         </div>
@@ -513,7 +513,7 @@ const handleApproverDevicesPageSizeChange = (size) => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <el-tag :type="computer.pcStatus === 'In Use' ? 'success' : 'warning'" size="small">
+                                        <el-tag :type="computer.pcClass === 'Internal User' ? 'success' : 'warning'" size="small">
                                             {{ computer.pcStatus }}
                                         </el-tag>
                                     </div>

@@ -18,4 +18,7 @@ public class SysAllocateDeviceDTO extends SysControlModel {
 
     // 订单号
     private Long approvalId;
+    
+    // 电脑归属情况（用于设备领取）
+    private String pcClass;
 }

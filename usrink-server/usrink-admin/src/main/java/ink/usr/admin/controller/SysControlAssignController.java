@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -104,5 +105,94 @@ public class SysControlAssignController {
             return Res.success();
         }
         return Res.error();
+    }
+
+    /**
+     * 设备领取
+     * @param sysAllocateDeviceDTO
+     * @return
+     */
+    @RequestMapping("/receiveDevice")
+    @Transactional
+    public Res receiveDevice(@RequestBody SysAllocateDeviceDTO sysAllocateDeviceDTO){
+        log.info("设备领取请求, 订单号: {}, 电脑归属情况: {}", 
+                sysAllocateDeviceDTO.getApprovalId(), 
+                sysAllocateDeviceDTO.getPcClass());
+
+        // 1. 更新订单表状态为已领取
+        boolean controlAssignFlag = sysControlAssignService.receiveDevice(sysAllocateDeviceDTO);
+        
+        // 2. 更新电脑表的归属情况
+        boolean controlFlag = true;
+        if (sysAllocateDeviceDTO.getCiName() != null && sysAllocateDeviceDTO.getPcClass() != null) {
+            controlFlag = sysControlService.updateComputerOwnership(
+                sysAllocateDeviceDTO.getCiName(), 
+                sysAllocateDeviceDTO.getPcClass()
+            );
+        }
+
+        if(controlFlag && controlAssignFlag){
+            log.info("设备领取成功, 订单号: {}", sysAllocateDeviceDTO.getApprovalId());
+            return Res.success("设备领取成功");
+        } else {
+            log.error("设备领取失败, 订单号: {}", sysAllocateDeviceDTO.getApprovalId());
+            return Res.error("设备领取失败");
+        }
+    }
+
+    /**
+     * 删除订单（设置状态为已关闭）
+     * @param request
+     * @return
+     */
+    @RequestMapping("/deleteOrder")
+    @Transactional
+    public Res deleteOrder(@RequestBody Map<String, Object> request){
+        Long approvalId = Long.valueOf(request.get("approvalId").toString());
+        log.info("删除订单请求, 订单号: {}", approvalId);
+
+        boolean flag = sysControlAssignService.deleteOrder(approvalId);
+
+        if(flag){
+            log.info("订单删除成功, 订单号: {}", approvalId);
+            return Res.success("订单删除成功");
+        } else {
+            log.error("订单删除失败, 订单号: {}", approvalId);
+            return Res.error("订单删除失败");
+        }
+    }
+
+    /**
+     * 关闭分配完成状态的订单并更新电脑状态
+     * @param request
+     * @return
+     */
+    @RequestMapping("/deleteOrderWithComputerUpdate")
+    @Transactional
+    public Res deleteOrderWithComputerUpdate(@RequestBody Map<String, Object> request){
+        Long approvalId = Long.valueOf(request.get("approvalId").toString());
+        String ciName = (String) request.get("ciName");
+        String pcStatus = (String) request.get("pcStatus");
+        String pcClass = (String) request.get("pcClass");
+        
+        log.info("关闭订单并更新电脑状态请求, 订单号: {}, 电脑名: {}, 电脑状态: {}, 电脑归属: {}", 
+                approvalId, ciName, pcStatus, pcClass);
+
+        // 1. 关闭订单
+        boolean deleteFlag = sysControlAssignService.deleteOrder(approvalId);
+        
+        // 2. 更新电脑状态和归属情况
+        boolean updateFlag = true;
+        if (ciName != null && pcStatus != null && pcClass != null) {
+            updateFlag = sysControlService.updateComputerStatusAndOwnership(ciName, pcStatus, pcClass);
+        }
+
+        if(deleteFlag && updateFlag){
+            log.info("订单关闭并电脑状态更新成功, 订单号: {}", approvalId);
+            return Res.success("订单关闭成功，电脑状态已更新");
+        } else {
+            log.error("订单关闭或电脑状态更新失败, 订单号: {}", approvalId);
+            return Res.error("订单关闭失败");
+        }
     }
 }

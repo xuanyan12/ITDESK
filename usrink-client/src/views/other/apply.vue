@@ -1786,8 +1786,8 @@ export default {
         if (response.data && response.data.list && response.data.list.length > 0) {
           // Use returned string array directly
           computerList.value = response.data.list;
-          // If there's a computer list, default to select the first one
-          if (response.data.list.length > 0) {
+          // If there's a computer list and no computer is currently selected, default to select the first one
+          if (response.data.list.length > 0 && !selectedComputer.value) {
             selectedComputer.value = response.data.list[0];
             applicationForm.ciName = response.data.list[0]; // Set computer name in application form
           }
@@ -2043,6 +2043,8 @@ export default {
         case '分配完成': return 'success';
         case '暂分配': return 'warning';
         case '分配中': return 'primary';
+        case '已领取': return 'success';
+        case '已关闭': return 'info';
         default: return 'primary';
       }
     };
@@ -2055,7 +2057,7 @@ export default {
       let steps = [];
       let activeStep = 0;
       
-      // Default two nodes: assigning and completed
+      // Default steps: assigning, completed, received
       steps = [
         { 
           title: '分配中',
@@ -2064,10 +2066,14 @@ export default {
         { 
           title: '分配完成', 
           description: '设备已完成分配',
+        },
+        {
+          title: '已领取',
+          description: '设备已被用户领取',
         }
       ];
       
-      // If status is temporarily assigned, insert temporarily assigned node in the middle
+      // If status is temporarily assigned, insert temporarily assigned node
       if (row.assignStatus === '暂分配') {
         steps.splice(1, 0, {
           title: '暂分配',
@@ -2076,7 +2082,23 @@ export default {
         activeStep = 1; // Current in temporarily assigned stage
       } else if (row.assignStatus === '分配完成') {
         // If status is completed
+        activeStep = 1;
+      } else if (row.assignStatus === '已领取') {
+        // If status is received
         activeStep = steps.length - 1;
+      } else if (row.assignStatus === '已关闭') {
+        // If status is closed, show different steps
+        steps = [
+          { 
+            title: '分配中',
+            description: '设备正在分配中',
+          },
+          {
+            title: '已关闭',
+            description: '订单已关闭',
+          }
+        ];
+        activeStep = 1;
       } else {
         // Assigning status
         activeStep = 0;
@@ -2091,10 +2113,12 @@ export default {
     const getAssignProcessStatus = () => {
       const status = currentApplication.value?.assignStatus || '';
       
-      if (status === '分配完成') {
+      if (status === '分配完成' || status === '已领取') {
         return 'success';
       } else if (status === '暂分配') {
         return 'warning';
+      } else if (status === '已关闭') {
+        return 'error';
       } else {
         return 'process';
       }
@@ -2123,9 +2147,12 @@ export default {
     const getAssignStatusClass = (status) => {
       switch (status) {
         case '分配完成':
+        case '已领取':
           return 'status-success';
         case '暂分配':
           return 'status-process';
+        case '已关闭':
+          return 'status-error';
         case '分配中':
         default:
           return 'status-info';
@@ -2137,8 +2164,12 @@ export default {
       switch (status) {
         case '分配完成':
           return 'el-icon-check-circle';
+        case '已领取':
+          return 'el-icon-success';
         case '暂分配':
           return 'el-icon-warning';
+        case '已关闭':
+          return 'el-icon-close-circle';
         case '分配中':
         default:
           return 'el-icon-loading';
@@ -3752,3 +3783,4 @@ html[lang="en"] .pagination-container:deep(.el-pagination__jump) {
   color: #ffffff !important;
 }
 </style>
+

@@ -60,6 +60,23 @@ public interface SysControlService {
     boolean allocateDevice(SysAllocateDeviceDTO sysAllocateDeviceDTO);
     
     /**
+     * 更新电脑归属情况
+     * @param ciName 电脑名
+     * @param pcClass 电脑归属情况
+     * @return 是否成功
+     */
+    boolean updateComputerOwnership(String ciName, String pcClass);
+    
+    /**
+     * 更新电脑状态和归属情况
+     * @param ciName 电脑名
+     * @param pcStatus 电脑状态
+     * @param pcClass 电脑归属情况
+     * @return 是否成功
+     */
+    boolean updateComputerStatusAndOwnership(String ciName, String pcStatus, String pcClass);
+    
+    /**
      * 获取电脑修改记录列表
      * @param queryDTO 查询条件
      * @return 记录列表和分页信息

@@ -16,4 +16,18 @@ public interface SysControlAssignService {
     List<SysControlAssignModel> getControlAssignList(SysControlAssignModel queryModel);
 
     boolean allocateDevice(SysAllocateDeviceDTO sysAllocateDeviceDTO);
+    
+    /**
+     * 设备领取
+     * @param receiveDeviceDTO 设备领取信息
+     * @return 是否成功
+     */
+    boolean receiveDevice(SysAllocateDeviceDTO receiveDeviceDTO);
+    
+    /**
+     * 删除订单（将状态改为已关闭）
+     * @param approvalId 订单号
+     * @return 是否成功
+     */
+    boolean deleteOrder(Long approvalId);
 }
