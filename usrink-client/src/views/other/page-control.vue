@@ -1479,8 +1479,8 @@ const loadDepartmentAndCostCenterOptions = () => {
                                         <el-col :span="8">
                                             <el-form-item :label="langText.pcStatus" prop="pcStatus" :rules="[{ required: true, message: langText.selectComputerStatus, trigger: 'blur' }]">
                                                 <el-select v-model="editPartForm.pcStatus" style="width: 100%">
-                                                    <el-option :label="langText.toBeAssigned" value="TO BE ASSIGNED"></el-option>
-                                                    <el-option :label="langText.inUse" value="IN USE"></el-option>
+                                                    <el-option :label="langText.toBeAssigned" value="To be assigned"></el-option>
+                                                    <el-option :label="langText.inUse" value="In Use"></el-option>
                                                     <el-option :label="langText.shareNoteBook" value="ShareNoteBook"></el-option>
                                                     <el-option :label="langText.scrapped" value="Scrapped"></el-option>
                                                     <el-option :label="langText.toBeScrapped" value="To be scrapped"></el-option>
