@@ -10,6 +10,7 @@ import ink.usr.admin.utils.LdapUserUtil;
 import ink.usr.common.core.constants.Constants;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.core.utils.Md5Util;
+import ink.usr.common.core.utils.AESUtil;
 import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysLadpUserModel;
 import ink.usr.common.model.mysql.SysUserModel;
@@ -138,19 +139,26 @@ public class SysLadpServiceImpl implements SysLadpService {
                 
                 // 尝试使用备用密码验证
                 if (user.getUserPassword() != null) {
-                    // 直接比较输入的密码与存储的UUID
-                    if (user.getUserPassword().equals(password)) {
-                        // 密码匹配，构造返回对象
-                        SysLadpUserModel backupUser = new SysLadpUserModel();
-                        backupUser.setName(user.getUserName());
-                        backupUser.setDisplayName(user.getUserNick());
-                        backupUser.setMail(user.getEmail());
-                        backupUser.setDepartment(user.getDepartment());
-                        backupUser.setDescription(user.getCostCenter());
-                        // 其他必要字段...
-                        
-                        log.info("用户 {} 使用备用密码认证成功", loginName);
-                        return backupUser;
+                    try {
+                        // 解密存储的UUID密码
+                        String decryptedUuid = AESUtil.decrypt(user.getUserPassword());
+                        // 比较输入的密码与解密后的UUID
+                        if (decryptedUuid.equals(password)) {
+                            // 密码匹配，构造返回对象
+                            SysLadpUserModel backupUser = new SysLadpUserModel();
+                            backupUser.setName(user.getUserName());
+                            backupUser.setDisplayName(user.getUserNick());
+                            backupUser.setMail(user.getEmail());
+                            backupUser.setDepartment(user.getDepartment());
+                            backupUser.setDescription(user.getCostCenter());
+                            // 其他必要字段...
+                            
+                            log.info("用户 {} 使用备用密码认证成功", loginName);
+                            return backupUser;
+                        }
+                    } catch (Exception decryptException) {
+                        log.warn("解密用户 {} 的备用密码失败: {}", loginName, decryptException.getMessage());
+                        // 解密失败，继续后续的异常处理
                     }
                 }
                 
@@ -254,11 +262,12 @@ public class SysLadpServiceImpl implements SysLadpService {
             
             // 为每个用户生成一个唯一的UUID作为备用密码
             String uuid = generateUuidForUser();
-            // 直接将UUID设置为密码，不进行加密
-            sysUserModel.setUserPassword(uuid);
+            // 将UUID进行AES加密后存储到数据库
+            String encryptedUuid = AESUtil.encrypt(uuid);
+            sysUserModel.setUserPassword(encryptedUuid);
             
-            // 记录日志，便于管理员查看用户的UUID
-            log.info("为用户 {} 生成备用密码 UUID: {}", singleLadpUserModel.getName(), uuid);
+            // 记录日志，便于管理员查看用户的UUID（记录明文用于调试，实际存储为密文）
+            log.info("为用户 {} 生成备用密码 UUID: {}，加密存储", singleLadpUserModel.getName(), uuid);
             
             // 添加逻辑：所有审批人表中的数据角色不能被设置为2
             sysUserModel.setUserRoleId(2L); // 设置初始用户角色（与用户能看到的内容有关）
@@ -861,15 +870,16 @@ public class SysLadpServiceImpl implements SysLadpService {
             // 生成新的UUID备用密码
             String uuid = generateUuidForUser();
             
-            // 直接保存UUID为密码，不进行加密
+            // 将UUID进行AES加密后存储到数据库
+            String encryptedUuid = AESUtil.encrypt(uuid);
             
             // 更新用户密码
             SysUserModel user = sysUserMapper.getUserInfoByUserName(userName);
             if (user != null) {
-                user.setUserPassword(uuid);
+                user.setUserPassword(encryptedUuid);
                 sysUserMapper.updateSysUserPassword(user);
                 
-                // 返回UUID
+                // 返回明文UUID供管理员使用
                 return uuid;
             }
             return null;

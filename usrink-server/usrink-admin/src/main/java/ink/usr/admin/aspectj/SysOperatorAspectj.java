@@ -50,7 +50,8 @@ public class SysOperatorAspectj {
      */
     @Before("operatorPoint()")
     public void doBeforeOperator() {
-        Operator_use_time.set(System.currentTimeMillis());
+        // 停止操作日志记录 - 数据量太大
+        // Operator_use_time.set(System.currentTimeMillis());
     }
 
     /**
@@ -61,6 +62,10 @@ public class SysOperatorAspectj {
      */
     @AfterReturning(pointcut = "operatorPoint()", returning = "result")
     public void doAfterOperator(JoinPoint joinPoint, Object result) {
+        // 停止操作日志记录 - 数据量太大，直接返回
+        return;
+        
+        /*
         long useTime = System.currentTimeMillis() - Operator_use_time.get();
         Operator_use_time.remove();
 
@@ -68,6 +73,7 @@ public class SysOperatorAspectj {
         jsonResult = StringUtil.subString(jsonResult, 0, 1000);
 
         recordOperatorInfo(joinPoint, useTime, 0, jsonResult);
+        */
     }
 
     /**
@@ -78,6 +84,10 @@ public class SysOperatorAspectj {
      */
     @AfterThrowing(pointcut = "operatorPoint()", throwing = "e")
     public void doAfterThrowingOperator(JoinPoint joinPoint, Throwable e) {
+        // 停止操作日志记录 - 数据量太大，直接返回
+        return;
+        
+        /*
         long useTime = System.currentTimeMillis() - Operator_use_time.get();
         Operator_use_time.remove();
 
@@ -85,6 +95,7 @@ public class SysOperatorAspectj {
         result = StringUtil.subString(result, 0, 1000);
 
         recordOperatorInfo(joinPoint, useTime, -1, result);
+        */
     }
 
     /**
@@ -96,6 +107,10 @@ public class SysOperatorAspectj {
      * @param result    操作结果
      */
     protected void recordOperatorInfo(JoinPoint joinPoint, long costTime, int status, String result) {
+        // 停止操作日志记录 - 数据量太大，直接返回
+        return;
+        
+        /*
         SysLogOperatorModel sysLogOperatorModel = new SysLogOperatorModel();
         // 接口耗时
         sysLogOperatorModel.setCostTime(costTime);
@@ -180,5 +195,6 @@ public class SysOperatorAspectj {
             // 保存登录日志
             SpringBeanUtil.getBean(ISysLogOperatorService.class).insertSysLogOperator(sysLogOperatorModel);
         });
+        */
     }
 }

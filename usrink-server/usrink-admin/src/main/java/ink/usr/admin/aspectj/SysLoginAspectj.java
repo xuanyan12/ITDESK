@@ -9,6 +9,7 @@ import org.aspectj.lang.annotation.*;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -102,9 +103,15 @@ public class SysLoginAspectj {
         sysLogLoginModel.setReqType(request.getMethod());
         // 请求URI
         sysLogLoginModel.setReqUrl(request.getRequestURI());
-        // 请求参数
+        
+        // 请求参数 - 过滤敏感信息
         Map<String, Object> parameterMap = ServletUtil.getAllParameters();
-        sysLogLoginModel.setReqParam(JsonUtil.toJson(parameterMap));
+        // 创建新的Map来存储过滤后的参数
+        Map<String, Object> filteredParams = new HashMap<>(parameterMap);
+        // 移除密码字段，避免在日志中泄露敏感信息
+        filteredParams.remove("password");
+        sysLogLoginModel.setReqParam(JsonUtil.toJson(filteredParams));
+        
         // 登录账号
         sysLogLoginModel.setUserName(ServletUtil.getParameter("userName"));
 

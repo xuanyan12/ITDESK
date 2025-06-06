@@ -316,9 +316,18 @@ public class SysUserController {
             return Res.error("该用户未设置邮箱，请联系IT进行处理");
         }
         
+        // 解密UUID密码用于邮件发送
+        String decryptedPassword;
+        try {
+            decryptedPassword = AESUtil.decrypt(sysUserModel.getUserPassword());
+        } catch (Exception e) {
+            log.error("解密用户密码失败，用户名: {}", userName, e);
+            return Res.error("获取临时密码失败，请联系IT进行处理");
+        }
+        
         // 发送邮件
         String emailSubject = emailConfig.buildTempPasswordEmailSubject();
-        String emailContent = emailConfig.buildTempPasswordEmailContent(userName, sysUserModel.getUserPassword());
+        String emailContent = emailConfig.buildTempPasswordEmailContent(userName, decryptedPassword);
         emailConfig.sendMail(sysUserModel.getEmail(), emailSubject, emailContent);
         
         return Res.success("临时密码已发送到您的邮箱，请查收");
