@@ -294,13 +294,34 @@ public class SysControlServiceImpl implements SysControlService {
 
     @Override
     public Dict getControlRecordList(SysControlRecordQueryDTO queryDTO) {
-        Page<Object> pages = PageUtil.startPage();
-        List<SysControlRecordDTO> recordList = sysControlMapper.getControlRecordList(queryDTO);
+        log.info("查询电脑修改记录，参数: {}", queryDTO);
         
-        Dict result = Dict.create()
-                .set("list", recordList)
-                .set("total", pages.getTotal());
-        return result;
+        // 设置分页参数
+        if (queryDTO.getPageNum() <= 0) {
+            queryDTO.setPageNum(1);
+        }
+        if (queryDTO.getPageSize() <= 0) {
+            queryDTO.setPageSize(10);
+        }
+        
+        // 使用PageHelper进行分页
+        Page<Object> pages = PageUtil.startPage((int)queryDTO.getPageNum(), (int)queryDTO.getPageSize());
+        
+        try {
+            List<SysControlRecordDTO> recordList = sysControlMapper.getControlRecordList(queryDTO);
+            log.info("查询到记录数量: {}, 总记录数: {}", recordList.size(), pages.getTotal());
+            
+            Dict result = Dict.create()
+                    .set("list", recordList)
+                    .set("total", pages.getTotal())
+                    .set("pageNum", queryDTO.getPageNum())
+                    .set("pageSize", queryDTO.getPageSize());
+            
+            return result;
+        } catch (Exception e) {
+            log.error("查询电脑修改记录失败", e);
+            throw new RuntimeException("查询电脑修改记录失败: " + e.getMessage());
+        }
     }
 
     @Override

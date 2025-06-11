@@ -305,17 +305,16 @@
         FROM sys_control_record
         <where>
             <if test="ciName != null and ciName != ''">
-                AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+                AND LOWER(ciName) LIKE LOWER(#{ciName})
             </if>
             <if test="startTime != null and startTime != ''">
-                <![CDATA[ AND updateTime >= #{startTime} ]]>
+                <![CDATA[ AND DATE(updateTime) >= #{startTime} ]]>
             </if>
             <if test="endTime != null and endTime != ''">
-                <![CDATA[ AND updateTime <= CONCAT(#{endTime}, ' 23:59:59') ]]>
+                <![CDATA[ AND DATE(updateTime) <= #{endTime} ]]>
             </if>
         </where>
         ORDER BY updateTime DESC
-        LIMIT #{pageNum}, #{pageSize}
     </select>
 
     <!-- 添加查询电脑修改记录总数的SQL -->
@@ -324,13 +323,13 @@
         FROM sys_control_record
         <where>
             <if test="ciName != null and ciName != ''">
-                AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+                AND LOWER(ciName) LIKE LOWER(#{ciName})
             </if>
             <if test="startTime != null and startTime != ''">
-                <![CDATA[ AND updateTime >= #{startTime} ]]>
+                <![CDATA[ AND DATE(updateTime) >= #{startTime} ]]>
             </if>
             <if test="endTime != null and endTime != ''">
-                <![CDATA[ AND updateTime <= CONCAT(#{endTime}, ' 23:59:59') ]]>
+                <![CDATA[ AND DATE(updateTime) <= #{endTime} ]]>
             </if>
         </where>
     </select>
