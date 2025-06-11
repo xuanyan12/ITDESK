@@ -1,0 +1,1 @@
+const n=l=>{let e={},r=[];return l.forEach(t=>{t.children=[],e[t.menuId]=t}),l.forEach(t=>{let c=e[t.parentMenuId];c?c.children.push(t):r.push(t)}),r},h=l=>{let e=[];return l.forEach(r=>{e.push(r),r.children&&r.children.length>0&&(e=e.concat(h(r.children)))}),e},a={buildMenuTree:n,treeToFlat:h};export{a as T};

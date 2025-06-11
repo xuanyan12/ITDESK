@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@vueuse/core": "^13.1.0",
+    "ag-grid-community": "^33.3.0",
+    "ag-grid-vue3": "^33.3.0",
+    "file-saver": "^2.0.5",
+    "jspreadsheet-ce": "^5.0.1",
+    "xlsx": "^0.18.5"
+  }
+}

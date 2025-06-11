@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysAnalyticsLogMapper">
+
+    <!-- 插入分析日志 -->
+    <insert id="insertAnalyticsLog" parameterType="ink.usr.common.model.mysql.SysAnalyticsLogModel">
+        INSERT INTO sys_analytics_log (
+            sessionId, ipAddress, userAgent, eventType, 
+            systemName, systemUrl, createTime
+        ) VALUES (
+            #{sessionId}, #{ipAddress}, #{userAgent}, #{eventType},
+            #{systemName}, #{systemUrl}, #{createTime}
+        )
+    </insert>
+
+    <!-- 获取页面浏览量统计 -->
+    <select id="getPageViewCount" resultType="java.lang.Long">
+        SELECT COUNT(*) 
+        FROM sys_analytics_log 
+        WHERE eventType = 'page_view'
+        <if test="startDate != null">
+            AND createTime >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND createTime &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        </if>
+    </select>
+
+    <!-- 获取系统点击量统计 -->
+    <select id="getSystemClickCount" resultType="java.lang.Long">
+        SELECT COUNT(*) 
+        FROM sys_analytics_log 
+        WHERE eventType = 'system_click'
+        <if test="startDate != null">
+            AND createTime >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND createTime &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        </if>
+    </select>
+
+    <!-- 获取热门系统点击排行 -->
+    <select id="getPopularSystemsRanking" resultType="java.util.Map">
+        SELECT 
+            systemName,
+            systemUrl,
+            COUNT(*) as clickCount
+        FROM sys_analytics_log 
+        WHERE eventType = 'system_click' 
+        AND systemName IS NOT NULL
+        <if test="startDate != null">
+            AND createTime >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND createTime &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        </if>
+        GROUP BY systemName, systemUrl
+        ORDER BY clickCount DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取访问IP统计 -->
+    <select id="getUniqueVisitorCount" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT ipAddress) 
+        FROM sys_analytics_log 
+        WHERE eventType = 'page_view'
+        <if test="startDate != null">
+            AND createTime >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND createTime &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        </if>
+    </select>
+
+    <!-- 获取日访问量趋势 -->
+    <select id="getDailyTrend" resultType="java.util.Map">
+        SELECT 
+            DATE(createTime) as date,
+            COUNT(*) as count
+        FROM sys_analytics_log 
+        WHERE 1=1
+        <if test="startDate != null">
+            AND createTime >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND createTime &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        </if>
+        GROUP BY DATE(createTime)
+        ORDER BY date ASC
+    </select>
+
+    <!-- 获取系统点击分布 -->
+    <select id="getSystemDistribution" resultType="java.util.Map">
+        SELECT 
+            systemName,
+            COUNT(*) as clickCount
+        FROM sys_analytics_log 
+        WHERE eventType = 'system_click' 
+        AND systemName IS NOT NULL
+        <if test="startDate != null">
+            AND createTime >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND createTime &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+        </if>
+        GROUP BY systemName
+        ORDER BY clickCount DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+</mapper> 

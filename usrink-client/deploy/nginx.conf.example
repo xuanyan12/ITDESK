@@ -1,0 +1,24 @@
+
+# Nginx配置示例
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /path/to/deploy;
+    index index.html;
+
+    # seg-analytics页面
+    location /seg-analytics {
+        try_files $uri $uri/ /seg-analytics/index.html;
+    }
+
+    # seg-onelink页面  
+    location /seg-onelink {
+        try_files $uri $uri/ /seg-onelink/index.html;
+    }
+
+    # 静态资源
+    location /assets {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
