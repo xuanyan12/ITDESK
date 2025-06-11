@@ -34,6 +34,7 @@
         <pagehelper.version>2.1.0</pagehelper.version>
         <poi.version>5.2.3</poi.version>
         <poi-ooxml.version>5.2.3</poi-ooxml.version>
+        <springdoc.version>1.7.0</springdoc.version>
     </properties>
 
     <!-- 仓库 -->
@@ -181,6 +182,12 @@
                 <version>${poi-ooxml.version}</version>
             </dependency>
 
+            <!-- SpringDoc OpenAPI UI -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>

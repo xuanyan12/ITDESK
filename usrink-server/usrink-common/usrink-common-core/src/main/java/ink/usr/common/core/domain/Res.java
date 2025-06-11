@@ -7,25 +7,31 @@ import lombok.Getter;
 
 import java.io.Serializable;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * 接口数据返回对象
  */
+@Schema(description = "统一响应结果")
 @Getter
 public class Res implements Serializable {
 
     /**
      * 接口返回状态码
      */
+    @Schema(description = "响应状态码", example = "200")
     private int code;
 
     /**
      * 接口返回信息
      */
+    @Schema(description = "响应消息", example = "操作成功！")
     private String msg;
 
     /**
      * 接口返回数据
      */
+    @Schema(description = "响应数据")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Object data;
 

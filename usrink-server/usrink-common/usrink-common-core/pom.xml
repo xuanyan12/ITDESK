@@ -79,6 +79,12 @@
             <artifactId>pagehelper-spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- SpringDoc OpenAPI UI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

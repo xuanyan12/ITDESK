@@ -25,7 +25,14 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
+@Tag(name = "系统登录接口", description = "用户登录认证相关接口")
 @RestController
 @CrossOrigin
 public class SysLoginController {
@@ -48,8 +55,16 @@ public class SysLoginController {
      * @param userName 用户名
      * @param password 密码
      */
+    @Operation(summary = "用户登录", description = "用户登录认证接口，支持LDAP和本地认证")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "登录成功"),
+        @ApiResponse(responseCode = "400", description = "用户名或密码错误"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     @RequestMapping(value = "/login")
-    public Res login(String userName, String password) {
+    public Res login(
+        @Parameter(description = "用户名", required = true) String userName, 
+        @Parameter(description = "密码", required = true) String password) {
         // 先尝试使用LDAP认证
         SysLadpUserModel ladpUserModel = null;
         SysUserModel sysUserModel = null;
@@ -161,6 +176,13 @@ public class SysLoginController {
     /**
      * 查询用户菜单列表
      */
+    @Operation(summary = "查询用户菜单", description = "获取当前登录用户的菜单权限列表")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "查询成功"),
+        @ApiResponse(responseCode = "401", description = "未授权访问"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @SecurityRequirement(name = "Bearer")
     @Log("查询用户的菜单列表")
     @RequestMapping(value = "/userMenu")
     public Res selectUserMenuList() {
@@ -179,9 +201,18 @@ public class SysLoginController {
      * 为指定用户生成备用密码
      * 仅供管理员使用
      */
+    @Operation(summary = "生成备用密码", description = "为指定用户生成备用密码，仅管理员可用")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "生成成功"),
+        @ApiResponse(responseCode = "403", description = "权限不足"),
+        @ApiResponse(responseCode = "400", description = "用户不存在"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @SecurityRequirement(name = "Bearer")
     @Log("生成用户备用密码")
     @RequestMapping(value = "/generateBackupPassword")
-    public Res generateBackupPassword(String userName) {
+    public Res generateBackupPassword(
+        @Parameter(description = "用户名", required = true) String userName) {
         try {
             // 验证当前用户是否为管理员
             ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
