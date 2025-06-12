@@ -47,6 +47,8 @@ public class SysLoginController {
     private ShiroService shiroService;
     @Autowired
     private SysLadpService sysLadpService;
+    @Autowired
+    private ink.usr.admin.service.ITempPasswordService tempPasswordService;
 
 
     /**
@@ -167,7 +169,50 @@ public class SysLoginController {
                 
                 return Res.success(result);
             } catch (Exception e) {
-                return Res.error("用户名或密码错误");
+                // Shiro认证失败，尝试临时密码验证
+                if (tempPasswordService.validateTempPassword(userName, password)) {
+                    // 临时密码验证成功，获取用户信息并登录
+                    sysUserModel = sysUserService.getUserInfoByUserName(userName);
+                    if (sysUserModel == null) {
+                        return Res.error("用户不存在，请联系IT进行处理");
+                    }
+                    
+                    // 获取用户的Shiro信息，仅用于后续操作
+                    ShiroUserInfo shiroUserInfo = shiroService.selectSysUserForLogin(sysUserModel.getUserName());
+                    
+                    if (shiroUserInfo == null) {
+                        return Res.error("用户认证信息获取失败");
+                    }
+                    
+                    // 不返回密码
+                    sysUserModel.setUserPassword(null);
+                    
+                    // 查询用户角色
+                    SysRoleModel sysRoleModel = sysRoleService.selectRoleInfo(sysUserModel.getUserRoleId());
+                    
+                    // 查询用户拥有的菜单
+                    SysUserMenus userMenus = sysLoginService.selectUserMenuList(sysRoleModel.getRoleMenuIds());
+                    
+                    // 生成Token令牌
+                    String tokenString = JwtUtil.createToken(
+                            shiroUserInfo.getUserName(),
+                            shiroUserInfo.getUserId(),
+                            shiroUserInfo.getUserPassword());
+                    
+                    // 返回登录结果
+                    Dict result = Dict.create()
+                            .set("token", tokenString)
+                            .set("userInfo", sysUserModel)
+                            .set("roleInfo", sysRoleModel)
+                            .set("userMenus", userMenus);
+                    
+                    // 保存用户角色缓存
+                    shiroService.updateUserRoleCache(shiroUserInfo.getUserId(), sysRoleModel);
+                    
+                    return Res.success(result);
+                } else {
+                    return Res.error("用户名或密码错误");
+                }
             }
         }
     }
