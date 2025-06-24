@@ -56,29 +56,26 @@ public class SysControlAssignController {
         queryModel.setDeviceSituation(sysControlAssignVO.getDeviceSituation());
         queryModel.setCompany(sysControlAssignVO.getCompany());
         queryModel.setAssignStatus(sysControlAssignVO.getAssignStatus());
-        
+        queryModel.setDeviceCategory(sysControlAssignVO.getDeviceCategory());
+        queryModel.setReason(sysControlAssignVO.getReason());
         // 设置NT账号，但需要使用setLastLeastUserNtAccount
         if (sysControlAssignVO.getNtAccount() != null) {
             queryModel.setLastLeastUserNtAccount(sysControlAssignVO.getNtAccount());
         }
         
         // 调用服务层的查询方法
-        List<SysControlAssignModel> sysControlAssignModelList = sysControlAssignService.getControlAssignList(queryModel);
-        List<SysControlAssignListVO> sysControlAssignListVOList = new ArrayList<SysControlAssignListVO>();
-        for(SysControlAssignModel singleVO : sysControlAssignModelList){
-            SysControlAssignListVO sysControlAssignListVO = new SysControlAssignListVO();
-            BeanUtils.copyProperties(singleVO, sysControlAssignListVO);
+        List<SysControlAssignListVO> sysControlAssignListVOList = sysControlAssignService.getControlAssignListWithApprovalInfo(queryModel);
+        for(SysControlAssignListVO singleVO : sysControlAssignListVOList){
             if(singleVO.getApplicant() != null){
-                sysControlAssignListVO.setUser(sysUserMapper.getUserNickNameByUserId(singleVO.getApplicant()));
+                singleVO.setUser(sysUserMapper.getUserNickNameByUserId(singleVO.getApplicant()));
             }
             if(singleVO.getLastLeastUserNtAccount() != null){
-                sysControlAssignListVO.setLastLeastUser(sysUserMapper.getUserInfoByUserName(singleVO.getLastLeastUserNtAccount()).getUserNick());
+                singleVO.setLastLeastUser(sysUserMapper.getUserInfoByUserName(singleVO.getLastLeastUserNtAccount()).getUserNick());
             }
 
             if(singleVO.getAssignor() != null){
-                sysControlAssignListVO.setAssigner(sysUserMapper.getUserInfoByUserName(singleVO.getAssignor()).getUserNick());
+                singleVO.setAssigner(sysUserMapper.getUserInfoByUserName(singleVO.getAssignor()).getUserNick());
             }
-            sysControlAssignListVOList.add(sysControlAssignListVO);
         }
         Dict result = Dict.create()
                 .set("list", sysControlAssignListVOList)

@@ -54,9 +54,40 @@
         where approvalId = #{approvalId}
     </update>
 
-    <!-- 条件查询分配信息 -->
-    <select id="getControlAssignListWithConditions" parameterType="ink.usr.common.model.mysql.SysControlAssignModel" resultType="ink.usr.common.model.mysql.SysControlAssignModel">
-        select a.* from sys_control_assign a
+<!--    &lt;!&ndash; 条件查询分配信息 &ndash;&gt;-->
+<!--    <select id="getControlAssignListWithConditions" parameterType="ink.usr.common.model.mysql.SysControlAssignModel" resultType="ink.usr.common.model.mysql.SysControlAssignModel">-->
+<!--        select a.*-->
+<!--               from sys_control_assign a-->
+<!--        <where>-->
+<!--            <if test="ciName != null and ciName != ''">-->
+<!--                and a.ciName like concat('%', #{ciName}, '%')-->
+<!--            </if>-->
+<!--            <if test="deviceType != null and deviceType != ''">-->
+<!--                and a.deviceType = #{deviceType}-->
+<!--            </if>-->
+<!--            <if test="deviceSituation != null and deviceSituation != ''">-->
+<!--                and a.deviceSituation = #{deviceSituation}-->
+<!--            </if>-->
+<!--            <if test="company != null and company != ''">-->
+<!--                and a.company = #{company}-->
+<!--            </if>-->
+<!--            <if test="assignStatus != null and assignStatus != ''">-->
+<!--                and a.assignStatus = #{assignStatus}-->
+<!--            </if>-->
+<!--        </where>-->
+<!--        order by a.id desc-->
+<!--    </select>-->
+
+    <!-- 关联查询分配信息和申请信息 -->
+    <select id="getControlAssignListWithApprovalInfo"
+            parameterType="ink.usr.common.model.mysql.SysControlAssignModel"
+            resultType="ink.usr.admin.dao.VO.SysControlAssignListVO">
+        select
+        a.*,
+        r.deviceCategory,
+        r.reason
+        from sys_control_assign a
+        left join sys_approval_request r on a.approvalId = r.approvalId
         <where>
             <if test="ciName != null and ciName != ''">
                 and a.ciName like concat('%', #{ciName}, '%')
@@ -72,6 +103,12 @@
             </if>
             <if test="assignStatus != null and assignStatus != ''">
                 and a.assignStatus = #{assignStatus}
+            </if>
+            <if test="deviceCategory != null and deviceCategory != ''">
+                and r.deviceCategory = #{deviceCategory}
+            </if>
+            <if test="reason != null and reason != ''">
+                and r.reason like concat('%', #{reason}, '%')
             </if>
         </where>
         order by a.id desc

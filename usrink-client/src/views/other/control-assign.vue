@@ -46,6 +46,21 @@
             <el-option :label="t('已关闭')" value="已关闭" />
           </el-select>
         </el-form-item>
+        <el-form-item :label="t('申请类别')">
+          <el-select v-model="queryForm.deviceCategory" :placeholder="t('选择申请类别')" clearable style="width: 200px;">
+            <el-option :label="t('全部')" value="" />
+            <el-option label="办公电脑超六年换新" value="办公电脑超六年换新" />
+            <el-option label="办公电脑未超六年换新" value="办公电脑未超六年换新" />
+            <el-option label="办公电脑未超六年换旧" value="办公电脑未超六年换旧" />
+            <el-option label="秘书代申请新岗位员工电脑" value="秘书代申请新岗位员工电脑" />
+            <el-option label="秘书代申请替代岗位员工电脑" value="秘书代申请替代岗位员工电脑" />
+            <el-option label="秘书代申请新实习生/外服电脑" value="秘书代申请新实习生/外服电脑" />
+            <el-option label="其他用途电脑申请" value="其他用途电脑申请" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="t('申请理由')">
+          <el-input v-model="queryForm.reason" :placeholder="t('输入申请理由关键词')" clearable style="width: 200px;" />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="fetchAssignmentList">{{ t('搜索') }}</el-button>
           <el-button @click="resetForm">{{ t('重置') }}</el-button>
@@ -66,6 +81,8 @@
         <el-table-column prop="deviceSituation" :label="t('电脑情形')" width="180" />
         <el-table-column prop="approvalId" :label="t('订单号')" width="150" />
         <el-table-column prop="company" :label="t('公司')" width="120" />
+        <el-table-column prop="deviceCategory" :label="t('申请类别')" width="180" />
+        <el-table-column prop="reason" :label="t('申请理由')" width="200" show-overflow-tooltip />
         <el-table-column prop="user" :label="t('使用人')" width="250" />
         <el-table-column prop="lastLeastUser" :label="t('上一个使用者')" width="250" />
         <el-table-column prop="assigner" :label="t('分配人')" width="250" />
@@ -513,6 +530,10 @@ const translations = {
   "库存旧电脑": { en: "Inventory Old Computer", zh: "库存旧电脑" },
   "公司": { en: "Company", zh: "公司" },
   "选择公司": { en: "Select Company", zh: "选择公司" },
+  "申请类别": { en: "Application Type", zh: "申请类别" },
+  "选择申请类别": { en: "Select Application Type", zh: "选择申请类别" },
+  "申请理由": { en: "Application Reason", zh: "申请理由" },
+  "输入申请理由关键词": { en: "Enter reason keyword", zh: "输入申请理由关键词" },
   "分配状态": { en: "Assignment Status", zh: "分配状态" },
   "选择分配状态": { en: "Select Assignment Status", zh: "选择分配状态" },
   "分配中": { en: "Assigning", zh: "分配中" },
@@ -629,6 +650,8 @@ const queryForm = ref({
   deviceSituation: '',
   company: '',
   assignStatus: '',
+  deviceCategory: '',
+  reason: '',
   pageNum: 1,
   pageSize: 10
 })
@@ -676,7 +699,9 @@ const fetchAssignmentList = () => {
     deviceType: queryForm.value.deviceType || null,
     deviceSituation: queryForm.value.deviceSituation || null,
     company: queryForm.value.company || null,
-    assignStatus: queryForm.value.assignStatus || null
+    assignStatus: queryForm.value.assignStatus || null,
+    deviceCategory: queryForm.value.deviceCategory || null,
+    reason: queryForm.value.reason || null
   }
   
   // 将分页参数添加到URL中
@@ -716,6 +741,8 @@ const resetForm = () => {
   queryForm.value.deviceSituation = ''
   queryForm.value.company = ''
   queryForm.value.assignStatus = ''
+  queryForm.value.deviceCategory = ''
+  queryForm.value.reason = ''
   pageNum.value = 1
   queryForm.value.pageNum = 1
   fetchAssignmentList()

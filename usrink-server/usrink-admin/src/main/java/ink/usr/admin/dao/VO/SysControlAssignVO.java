@@ -27,5 +27,9 @@ public class SysControlAssignVO {
     // 电脑情形
     private String deviceSituation;
 
+    // 申请类别
+    private String deviceCategory;
 
+    // 申请理由
+    private String reason;
 }

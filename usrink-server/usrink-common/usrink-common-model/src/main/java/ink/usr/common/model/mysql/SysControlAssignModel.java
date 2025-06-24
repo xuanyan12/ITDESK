@@ -34,5 +34,8 @@ public class SysControlAssignModel {
     private String assignStatus;
     // 订单创建时间
     private String startTime;
-
+    // 申请类别
+    private String deviceCategory;
+    // 申请理由
+    private String reason;
 }

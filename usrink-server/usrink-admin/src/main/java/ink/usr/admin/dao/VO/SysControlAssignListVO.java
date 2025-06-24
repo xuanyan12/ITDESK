@@ -15,5 +15,4 @@ public class SysControlAssignListVO extends SysControlAssignModel {
     private String lastLeastUser;
     // 分配人
     private String assigner;
-
 }

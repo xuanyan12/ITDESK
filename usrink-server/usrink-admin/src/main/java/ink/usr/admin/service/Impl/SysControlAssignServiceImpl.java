@@ -1,6 +1,7 @@
 package ink.usr.admin.service.Impl;
 
 import ink.usr.admin.dao.DTO.SysAllocateDeviceDTO;
+import ink.usr.admin.dao.VO.SysControlAssignListVO;
 import ink.usr.admin.mapper.SysControlAssignMapper;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.mapper.SysUserMapper;
@@ -35,22 +36,25 @@ public class SysControlAssignServiceImpl implements SysControlAssignService {
     private EmailConfig emailConfig;
 
     @Override
-    public List<SysControlAssignModel> getControlAssignList() {
-        List<SysControlAssignModel> sysControlAssignModel = sysControlAssignMapper.getControlAssignList();
-        return sysControlAssignModel;
-    }
-    
-    @Override
-    public List<SysControlAssignModel> getControlAssignList(SysControlAssignModel queryModel) {
+    public List<SysControlAssignListVO> getControlAssignListWithApprovalInfo(SysControlAssignModel queryModel) {
         if (queryModel == null) {
-            // 如果查询模型为空，返回所有记录
-            return sysControlAssignMapper.getControlAssignList();
-        } else {
-            // 否则根据条件进行查询
-            return sysControlAssignMapper.getControlAssignListWithConditions(queryModel);
+            queryModel = new SysControlAssignModel();
         }
+        // 直接调用关联查询方法
+        return sysControlAssignMapper.getControlAssignListWithApprovalInfo(queryModel);
     }
 
+
+//    @Override
+//    public List<SysControlAssignModel> getControlAssignList(SysControlAssignModel queryModel) {
+//        if (queryModel == null) {
+//            // 如果查询模型为空，返回所有记录
+//            return sysControlAssignMapper.getControlAssignList();
+//        } else {
+//            // 否则根据条件进行查询
+//            return sysControlAssignMapper.getControlAssignListWithConditions(queryModel);
+//        }
+//    }
     @Override
     public boolean allocateDevice(SysAllocateDeviceDTO sysAllocateDeviceDTO) {
 
