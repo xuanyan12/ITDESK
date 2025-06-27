@@ -38,4 +38,6 @@ public class SysControlAssignModel {
     private String deviceCategory;
     // 申请理由
     private String reason;
+    // 成本中心
+    private String costCenter;
 }

@@ -128,6 +128,11 @@ const searchTimeout = ref(null); // 搜索防抖定时器
 // 定义输入框引用
 const userInputRef = ref(null);
 
+// 添加编辑表单用户搜索相关的变量
+const editUserSearchResults = ref([]); // 编辑表单用户查询结果
+const showEditUserResults = ref(false); // 是否显示编辑表单用户查询结果
+const editSearchTimeout = ref(null); // 编辑表单搜索防抖定时器
+
 // Add new variables for department and cost center options
 const departmentOptions = ref([]);
 const costCenterOptions = ref([]);
@@ -146,9 +151,18 @@ onMounted(() => {
 // 组件卸载前移除全局事件监听
 const handleDocumentClick = (event) => {
     // 检查点击是否在用户输入框或下拉框之外
-    const userInputContainer = document.querySelector('.user-input-container');
-    if (userInputContainer && !userInputContainer.contains(event.target)) {
+    const userInputContainers = document.querySelectorAll('.user-input-container');
+    let clickedInside = false;
+    
+    userInputContainers.forEach(container => {
+        if (container.contains(event.target)) {
+            clickedInside = true;
+        }
+    });
+    
+    if (!clickedInside) {
         showUserResults.value = false;
+        showEditUserResults.value = false;
     }
 };
 
@@ -173,6 +187,7 @@ const langText = computed(() => {
         manufactureDate: currentLang.value === 'zh' ? '出厂时间' : 'Manufacture Date',
         costCenter: currentLang.value === 'zh' ? '成本中心' : 'Cost Center',
         search: currentLang.value === 'zh' ? '查询' : 'Search',
+        reset: currentLang.value === 'zh' ? '重置' : 'Reset',
         computerUpdate: currentLang.value === 'zh' ? '电脑导入' : 'Import Data',
         exportData: currentLang.value === 'zh' ? '导出数据' : 'Export Data',
         
@@ -334,9 +349,14 @@ const handleUserBlur = () => {
 
 // 确认用户变更
 const confirmUserChange = () => {
-    // 如果输入框为空，则清空NT账号
+    // 如果输入框为空，则清空相关用户信息
     if (!queryForm.value.lastName || queryForm.value.lastName.trim() === '') {
         queryForm.value.ntAccount = '';
+        queryForm.value.firstName = '';
+        queryForm.value.emailAddress = '';
+        queryForm.value.department = '';
+        queryForm.value.telephone = '';
+        queryForm.value.costCenter = '';
     }
     selectPartListData();
 };
@@ -384,6 +404,186 @@ const selectUser = (user) => {
     
     // 注释掉自动查询功能
     // selectPartListData();
+};
+
+// 重置搜索表单
+const resetForm = () => {
+    // 重置查询表单为初始状态
+    queryForm.value = {
+        id: '',
+        pcStatus: '',
+        ciName: '',
+        serialNumber:'',
+        deviceClass: '',
+        manufacture: '',
+        modelOrVersion: '',
+        ntAccount: '',
+        pcClass:'',
+        comment: '',
+        lastName: '',
+        firstName: '',
+        emailAddress: '',
+        department: '',
+        telephone: '',
+        costCenter: '',
+        lifeCycleStart:'',
+        yrsToDay:'',
+        cpu: '',
+        memory: '',
+        disk: '',
+        graphic: '',
+        hardwareStatus: '',
+        pr: '',
+        po: '',
+        vendor: '',
+        company: '',
+        wbsNum: '',
+        price: '',
+        temp: '',
+        pageNum: 1,
+        pageSize: 10
+    };
+    
+    // 清除用户搜索相关状态
+    userSearchResults.value = [];
+    showUserResults.value = false;
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+        searchTimeout.value = null;
+    }
+    
+    // 重置页码为第一页
+    pageNum.value = 1;
+    
+    // 重新查询数据
+    selectPartListData();
+};
+
+// 编辑表单用户输入事件处理
+const handleEditUserInput = (value) => {
+    // 清除之前的定时器
+    if (editSearchTimeout.value) {
+        clearTimeout(editSearchTimeout.value);
+    }
+    
+    // 设置新的定时器，用户停止输入500ms后执行搜索
+    editSearchTimeout.value = setTimeout(() => {
+        if (value && value.trim() !== '') {
+            searchEditUser();
+        } else {
+            showEditUserResults.value = false;
+        }
+    }, 500);
+};
+
+// 处理编辑表单用户输入框失焦
+const handleEditUserBlur = () => {
+    // 延迟关闭下拉框，以便用户能够点击下拉框中的选项
+    setTimeout(() => {
+        showEditUserResults.value = false;
+    }, 300);
+};
+
+// 搜索编辑表单用户
+const searchEditUser = () => {
+    const searchTerm = editPartForm.value.ntAccount;
+    if (!searchTerm || searchTerm.trim() === '') {
+        showEditUserResults.value = false;
+        return;
+    }
+    
+    httpUtil.get("/sysApply/searchUsers", {
+        params: { query: searchTerm }
+    }).then(res => {
+        if (res.data && Array.isArray(res.data.list) && res.data.list.length > 0) {
+            editUserSearchResults.value = res.data.list;
+            nextTick(() => {
+                showEditUserResults.value = true;
+            });
+        } else {
+            editUserSearchResults.value = [];
+            nextTick(() => {
+                showEditUserResults.value = true;
+            });
+        }
+    }).catch(err => {
+        console.error("搜索用户失败:", err);
+        editUserSearchResults.value = [];
+        nextTick(() => {
+            showEditUserResults.value = true;
+        });
+    });
+};
+
+// 解析用户姓名的智能函数
+const parseUserName = (fullName) => {
+    if (!fullName) {
+        return { lastName: '', firstName: '' };
+    }
+    
+    let cleanName = fullName.trim();
+    
+    // 移除括号中的部门信息，如 (ITS1-CN)、(SES-MFO-STG3)
+    cleanName = cleanName.replace(/\s*\([^)]+\)$/, '');
+    
+    // 移除常见的前缀，如 FIXED-TERM
+    cleanName = cleanName.replace(/^(FIXED-TERM|TEMP|CONTRACT|PERMANENT)\s+/, '');
+    
+    // 处理 [Blue color] 格式：[Blue color] FirstName LastName
+    if (cleanName.includes('[Blue color]')) {
+        const name = cleanName.replace(/\[Blue color\]\s*/, '').trim();
+        const nameParts = name.split(/\s+/);
+        if (nameParts.length >= 2) {
+            return {
+                firstName: nameParts[0],
+                lastName: nameParts.slice(1).join(' ')
+            };
+        } else {
+            return { lastName: name, firstName: '' };
+        }
+    }
+    
+    // 处理 "LastName, FirstName" 格式
+    if (cleanName.includes(',')) {
+        const nameParts = cleanName.split(',');
+        if (nameParts.length >= 2) {
+            return {
+                lastName: nameParts[0].trim(),
+                firstName: nameParts[1].trim()
+            };
+        }
+    }
+    
+    // 处理空格分隔的名字：FirstName LastName
+    const spaceParts = cleanName.split(/\s+/);
+    if (spaceParts.length >= 2) {
+        return {
+            firstName: spaceParts[0],
+            lastName: spaceParts.slice(1).join(' ')
+        };
+    }
+    
+    // 默认情况：整个字符串作为姓
+    return { lastName: cleanName, firstName: '' };
+};
+
+// 选择编辑表单用户
+const selectEditUser = (user) => {
+    // 设置NT账号
+    editPartForm.value.ntAccount = user.userName;
+    
+    // 智能解析姓名
+    const nameInfo = parseUserName(user.userNick || user.userName);
+    editPartForm.value.lastName = nameInfo.lastName;
+    editPartForm.value.firstName = nameInfo.firstName;
+    
+    // 填充其他用户信息 - 修复电话字段映射
+    editPartForm.value.emailAddress = user.email || user.mail || '';
+    editPartForm.value.telephone = user.phone || '';  // 用户数据中电话字段是phone
+    editPartForm.value.department = user.department || '';
+    editPartForm.value.costCenter = user.costCenter || '';
+    
+    showEditUserResults.value = false;
 };
 
 /**
@@ -1059,6 +1259,7 @@ const loadDepartmentAndCostCenterOptions = () => {
                             clearable
                             @input="handleUserInput"
                             @blur="handleUserBlur"
+                            @change="confirmUserChange"
                             @keyup.enter="selectPartListData">
                         </el-input>
                         <!-- 用户查询结果下拉框，使用teleport传送到body下 -->
@@ -1128,6 +1329,7 @@ const loadDepartmentAndCostCenterOptions = () => {
                 </el-form-item>
                 <el-form-item class="form-item">
                     <el-button type="primary" @click="selectPartListData">{{ langText.search }}</el-button>
+                    <el-button @click="resetForm">{{ langText.reset }}</el-button>
                     <el-button type="primary" @click="openUploadFileDialog" class="update-btn">{{ langText.computerUpdate }}</el-button>
                     <el-button type="primary" @click="openExportDialog" class="update-btn" :loading="exportLoading">
                         <el-icon><Download /></el-icon>
@@ -1488,8 +1690,31 @@ const loadDepartmentAndCostCenterOptions = () => {
                                             </el-form-item>
                                         </el-col>
                                         <el-col :span="8">
-                                            <el-form-item :label="langText.ntAccount" prop="ntAccount" :rules="[{ required: true, message: langText.selectNTAccount, trigger: 'blur' }]">
-                                                <el-input v-model="editPartForm.ntAccount"></el-input>
+                                            <el-form-item :label="langText.ntAccount" prop="ntAccount" >
+                                                <div class="user-input-container">
+                                                    <el-input 
+                                                        v-model="editPartForm.ntAccount"
+                                                        :placeholder="langText.selectNTAccount"
+                                                        clearable
+                                                        @input="handleEditUserInput"
+                                                        @blur="handleEditUserBlur">
+                                                    </el-input>
+                                                    <!-- 用户查询结果下拉框 -->
+                                                    <div v-if="showEditUserResults" class="user-results-dropdown">
+                                                        <div v-if="editUserSearchResults.length > 0">
+                                                            <div 
+                                                                v-for="(user, index) in editUserSearchResults" 
+                                                                :key="index" 
+                                                                class="user-result-item"
+                                                                @click="selectEditUser(user)">
+                                                                {{ user.userName }} {{ user.userNick ? `(${user.userNick})` : '' }}
+                                                            </div>
+                                                        </div>
+                                                        <div v-else class="no-results">
+                                                            {{ langText.noUserFound }}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </el-form-item>
                                         </el-col>
                                     </el-row>

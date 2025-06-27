@@ -85,7 +85,8 @@
         select
         a.*,
         r.deviceCategory,
-        r.reason
+        r.reason,
+        r.costCenter
         from sys_control_assign a
         left join sys_approval_request r on a.approvalId = r.approvalId
         <where>
@@ -109,6 +110,9 @@
             </if>
             <if test="reason != null and reason != ''">
                 and r.reason like concat('%', #{reason}, '%')
+            </if>
+            <if test="costCenter != null and costCenter != ''">
+                and r.costCenter = #{costCenter}
             </if>
         </where>
         order by a.id desc

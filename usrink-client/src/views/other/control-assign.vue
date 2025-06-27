@@ -64,6 +64,11 @@
         <el-form-item>
           <el-button type="primary" @click="fetchAssignmentList">{{ t('搜索') }}</el-button>
           <el-button @click="resetForm">{{ t('重置') }}</el-button>
+          <!-- 新增导出按钮 -->
+          <el-button type="primary" @click="openExportDialog" :loading="exportLoading">
+            <el-icon><Download /></el-icon>
+            {{ t('导出数据') }}
+          </el-button>
         </el-form-item>
       </el-form>
       
@@ -84,6 +89,7 @@
         <el-table-column prop="deviceCategory" :label="t('申请类别')" width="180" />
         <el-table-column prop="reason" :label="t('申请理由')" width="200" show-overflow-tooltip />
         <el-table-column prop="user" :label="t('使用人')" width="250" />
+        <el-table-column prop="costCenter" :label="t('成本中心')" width="120" />
         <el-table-column prop="lastLeastUser" :label="t('上一个使用者')" width="250" />
         <el-table-column prop="assigner" :label="t('分配人')" width="250" />
         <el-table-column prop="assignTime" :label="t('分配时间')" width="160" fixed="right" />
@@ -503,6 +509,57 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 导出选项对话框 -->
+    <el-dialog v-model="exportDialogVisible" :title="t('数据导出')" width="480px" :close-on-click-modal="false" custom-class="tech-dialog" :show-close="true">
+      <div class="tech-dialog-content">
+        <div class="tech-header">
+          <div class="tech-icon-container">
+            <el-icon class="tech-icon"><Download /></el-icon>
+          </div>
+          <div class="tech-title-container">
+            <h3 class="tech-title">{{ t('导出数据') }}</h3>
+            <p class="tech-subtitle">{{ t('请选择要导出的数据范围') }}</p>
+          </div>
+        </div>
+        
+        <div class="tech-options">
+          <div class="tech-option" :class="{ 'tech-option-active': exportOption === 'current' }" @click="exportOption = 'current'">
+            <div class="tech-option-radio">
+              <div class="tech-option-radio-inner" v-if="exportOption === 'current'"></div>
+            </div>
+            <div class="tech-option-content">
+              <div class="tech-option-title">{{ t('导出当前页数据') }}</div>
+              <div class="tech-option-details">{{ t('导出当前页面显示的') }} {{ assignmentList.length }} {{ t('条记录') }}</div>
+            </div>
+          </div>
+          
+          <div class="tech-option" :class="{ 'tech-option-active': exportOption === 'all' }" @click="exportOption = 'all'">
+            <div class="tech-option-radio">
+              <div class="tech-option-radio-inner" v-if="exportOption === 'all'"></div>
+            </div>
+            <div class="tech-option-content">
+              <div class="tech-option-title">{{ t('导出全部符合条件的数据') }}</div>
+              <div class="tech-option-details">{{ t('导出所有符合搜索条件的') }} {{ total }} {{ t('条记录') }}</div>
+            </div>
+          </div>
+          
+          <div class="tech-warning" v-if="exportOption === 'all' && total > 1000">
+            <el-icon><Warning /></el-icon>
+            <span>{{ t('数据量较大，导出可能需要较长时间') }}</span>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="tech-dialog-footer">
+          <el-button @click="exportDialogVisible = false" class="tech-cancel-btn">{{ t('取消') }}</el-button>
+          <el-button type="primary" @click="exportTableData" :loading="exportLoading" class="tech-confirm-btn">
+            <span class="tech-btn-text">{{ t('确认导出') }}</span>
+            <span class="tech-btn-icon"><i class="el-icon-right"></i></span>
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -510,8 +567,10 @@
 import { ref, onMounted, computed } from 'vue'
 import httpUtil from '@/utils/HttpUtil'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, User, Calendar, Check, Close } from '@element-plus/icons-vue'
+import { Search, Refresh, User, Calendar, Check, Close, Download, Warning } from '@element-plus/icons-vue'
 import { useLanguageStore } from '@/stores/_frame/languageStore'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 // 获取语言存储
 const languageStore = useLanguageStore()
@@ -613,7 +672,18 @@ const translations = {
   "订单关闭失败，请稍后重试": { en: "Failed to close order, please try again", zh: "订单关闭失败，请稍后重试" },
   "设备信息": { en: "Device Information", zh: "设备信息" },
   "电脑信息": { en: "Computer Information", zh: "电脑信息" },
-  "电脑归属情况": { en: "Computer Ownership", zh: "电脑归属情况" }
+  "电脑归属情况": { en: "Computer Ownership", zh: "电脑归属情况" },
+  "导出数据": { en: "Export Data", zh: "导出数据" },
+  "数据导出": { en: "Data Export", zh: "数据导出" },
+  "请选择要导出的数据范围": { en: "Please select data range to export", zh: "请选择要导出的数据范围" },
+  "导出当前页数据": { en: "Export Current Page Data", zh: "导出当前页数据" },
+  "导出当前页面显示的": { en: "Export current page showing", zh: "导出当前页面显示的" },
+  "导出全部符合条件的数据": { en: "Export All Matching Data", zh: "导出全部符合条件的数据" },
+  "导出所有符合搜索条件的": { en: "Export all matching", zh: "导出所有符合搜索条件的" },
+  "条记录": { en: "records", zh: "条记录" },
+  "数据量较大，导出可能需要较长时间": { en: "Large amount of data, export may take some time", zh: "数据量较大，导出可能需要较长时间" },
+  "确认导出": { en: "Confirm Export", zh: "确认导出" },
+  "取消": { en: "Cancel", zh: "取消" }
 };
 
 // 翻译函数
@@ -1155,6 +1225,167 @@ const handleDelete = (row) => {
 onMounted(() => {
   fetchAssignmentList()
 })
+
+// 在响应式变量区域添加导出相关变量
+const exportLoading = ref(false)
+const exportDialogVisible = ref(false)
+const exportOption = ref('current') // 'current' 或 'all'
+
+// 新增导出按钮
+const openExportDialog = () => {
+  exportOption.value = 'current' // 默认选择当前页
+  exportDialogVisible.value = true
+}
+
+/**
+ * 导出表格数据到Excel
+ */
+const exportTableData = async () => {
+  // 关闭对话框
+  exportDialogVisible.value = false
+  
+  // 显示加载中提示
+  exportLoading.value = true
+  loading.value = true
+  ElMessage.info('正在准备导出数据，请稍候...')
+  
+  let dataToExport = []
+  
+  // 根据用户选择获取要导出的数据
+  if (exportOption.value === 'current') {
+    // 导出当前页数据
+    dataToExport = formatDataForExport(assignmentList.value)
+  } else if (exportOption.value === 'all') {
+    // 导出所有数据（需要发送请求获取所有数据）
+    try {
+      // 克隆当前查询条件，但移除分页限制
+      const exportQueryParams = {
+        ciName: queryForm.value.ciName || null,
+        deviceType: queryForm.value.deviceType || null,
+        deviceSituation: queryForm.value.deviceSituation || null,
+        company: queryForm.value.company || null,
+        assignStatus: queryForm.value.assignStatus || null,
+        deviceCategory: queryForm.value.deviceCategory || null,
+        reason: queryForm.value.reason || null
+      }
+      
+      // 将分页参数添加到URL中，设置较大的值获取所有数据
+      const urlParams = new URLSearchParams()
+      urlParams.append('pageNum', '1')
+      urlParams.append('pageSize', '10000')
+      
+      const response = await httpUtil.post(`/sysControlAssign/getControlAssignList?${urlParams.toString()}`, exportQueryParams, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (response.data && response.data.list) {
+        dataToExport = formatDataForExport(response.data.list)
+        ElMessage.success(`成功获取${dataToExport.length}条数据，正在导出...`)
+      } else {
+        ElMessage.warning('未获取到数据')
+        exportLoading.value = false
+        loading.value = false
+        return
+      }
+    } catch (error) {
+      console.error('获取所有数据失败:', error)
+      ElMessage.error('获取所有数据失败，请重试')
+      exportLoading.value = false
+      loading.value = false
+      return
+    }
+  }
+  
+  // 创建一个工作簿对象
+  const wb = XLSX.utils.book_new()
+  
+  // 将数据转换为工作表
+  const ws = XLSX.utils.json_to_sheet(dataToExport)
+  
+  // 设置列宽
+  const wscols = [
+    { wch: 15 }, // 电脑名
+    { wch: 18 }, // 电脑类型
+    { wch: 18 }, // 电脑情形
+    { wch: 15 }, // 订单号
+    { wch: 12 }, // 公司
+    { wch: 18 }, // 申请类别
+    { wch: 25 }, // 申请理由
+    { wch: 12 }, // 成本中心
+    { wch: 25 }, // 使用人
+    { wch: 25 }, // 上一个使用者
+    { wch: 25 }, // 分配人
+    { wch: 18 }, // 分配时间
+    { wch: 18 }, // 创建时间
+    { wch: 18 }  // 分配状态
+  ]
+  ws['!cols'] = wscols
+  
+  // 将工作表添加到工作簿
+  XLSX.utils.book_append_sheet(wb, ws, '订单管理')
+  
+  // 生成Excel文件并下载
+  // 获取当前日期作为文件名的一部分
+  const date = new Date()
+  const dateStr = date.getFullYear() + 
+                 ('0' + (date.getMonth() + 1)).slice(-2) + 
+                 ('0' + date.getDate()).slice(-2)
+  const timeStr = ('0' + date.getHours()).slice(-2) + 
+                 ('0' + date.getMinutes()).slice(-2)
+  const fileName = `订单管理_${dateStr}_${timeStr}.xlsx`
+  
+  // 导出文件
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
+  
+  // 将二进制数据转换为Blob对象
+  function s2ab(s) {
+    const buf = new ArrayBuffer(s.length)
+    const view = new Uint8Array(buf)
+    for (let i = 0; i < s.length; i++) {
+      view[i] = s.charCodeAt(i) & 0xFF
+    }
+    return buf
+  }
+  
+  // 使用file-saver保存文件
+  saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), fileName)
+  
+  // 隐藏加载提示
+  exportLoading.value = false
+  loading.value = false
+  
+  // 显示成功消息
+  ElMessage.success(`已成功导出${dataToExport.length}条数据`)
+}
+
+/**
+ * 格式化数据用于导出
+ */
+const formatDataForExport = (data) => {
+  return data.map(item => {
+    // 创建一个新对象，只包含我们需要导出的字段
+    const exportObj = {}
+    
+    exportObj[t('电脑名')] = item.ciName || ''
+    exportObj[t('电脑类型')] = item.deviceType || ''
+    exportObj[t('电脑情形')] = item.deviceSituation || ''
+    exportObj[t('订单号')] = item.approvalId || ''
+    exportObj[t('公司')] = item.company || ''
+    exportObj[t('申请类别')] = item.deviceCategory || ''
+    exportObj[t('申请理由')] = item.reason || ''
+    exportObj[t('成本中心')] = item.costCenter || ''
+    exportObj[t('使用人')] = item.user || ''
+    exportObj[t('上一个使用者')] = item.lastLeastUser || ''
+    exportObj[t('分配人')] = item.assigner || ''
+    exportObj[t('分配时间')] = item.assignTime || ''
+    exportObj[t('创建时间')] = item.startTime || ''
+    exportObj[t('分配状态')] = item.assignStatus || ''
+    
+    return exportObj
+  })
+}
 </script>
 
 <style scoped>
@@ -1914,5 +2145,328 @@ onMounted(() => {
 .close-form :deep(.el-select .el-input__wrapper.is-focus) {
   border-color: #005389;
   box-shadow: 0 0 0 2px rgba(0, 83, 137, 0.2);
+}
+
+/* Dialog global styles */
+:deep(.tech-dialog) {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  border: 2px solid rgba(8, 213, 207, 0.2);
+}
+
+:deep(.tech-dialog .el-dialog__header) {
+  display: none;
+  padding: 0;
+  border-bottom: none;
+}
+
+:deep(.tech-dialog .el-dialog__title) {
+  display: none;
+}
+
+:deep(.tech-dialog .el-dialog__headerbtn) {
+  top: 15px;
+  right: 20px;
+  z-index: 999;
+}
+
+:deep(.tech-dialog .el-dialog__headerbtn .el-dialog__close) {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 20px;
+}
+
+:deep(.tech-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
+  color: #fff;
+}
+
+:deep(.tech-dialog .el-dialog__body) {
+  padding: 0;
+}
+
+:deep(.tech-dialog .el-dialog__footer) {
+  padding: 0;
+}
+
+.tech-dialog-content {
+  padding: 0;
+}
+
+.tech-header {
+  background: linear-gradient(135deg, #2580bf, #20b2aa);
+  padding: 25px 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(37, 128, 191, 0.3);
+}
+
+.tech-header::before {
+  display: none;
+}
+
+.tech-header::after {
+  display: none;
+}
+
+.tech-title {
+  margin: 0;
+  padding: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tech-subtitle {
+  margin: 6px 0 0 0;
+  padding: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.3px;
+}
+
+.tech-icon-container {
+  background: rgba(255, 255, 255, 0.2);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  animation: none;
+}
+
+.tech-icon {
+  font-size: 32px;
+  color: #fff;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.tech-title-container {
+  position: relative;
+  z-index: 2;
+}
+
+.tech-options {
+  padding: 25px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.tech-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.5s ease forwards;
+  opacity: 0.9;
+  transform: translateY(5px);
+  border: 1px solid rgba(8, 213, 207, 0.1);
+}
+
+.tech-option:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.tech-option:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tech-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: #20b2aa;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.tech-option:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(32, 178, 170, 0.1);
+  transform: translateY(-2px);
+}
+
+.tech-option-active {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 5px 15px rgba(32, 178, 170, 0.15) !important;
+  border: 1px solid rgba(32, 178, 170, 0.3);
+}
+
+.tech-option-active::before {
+  opacity: 1 !important;
+}
+
+.tech-option-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #20b2aa;
+  margin-right: 15px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.tech-option-radio-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #20b2aa;
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.tech-option-content {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.tech-option-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.tech-option-details {
+  font-size: 13px;
+  color: #666;
+}
+
+.tech-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  margin-left: 4px;
+  padding: 12px 15px;
+  background: rgba(230, 162, 60, 0.08);
+  border-radius: 8px;
+  border-left: 3px solid #E6A23C;
+  animation: fadeIn 0.5s ease 0.3s forwards;
+  opacity: 0;
+}
+
+.tech-warning .el-icon {
+  color: #E6A23C;
+  font-size: 18px;
+}
+
+.tech-warning span {
+  color: #E6A23C;
+  font-size: 13px;
+}
+
+.tech-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 30px;
+  background: #f5f7fa;
+  border-top: 1px solid rgba(8, 213, 207, 0.1);
+  gap: 15px;
+}
+
+.tech-cancel-btn {
+  border: 1px solid #d9ecff;
+  background-color: white;
+  color: #606266;
+  transition: all 0.3s ease;
+}
+
+.tech-cancel-btn:hover {
+  color: #20b2aa;
+  border-color: rgba(32, 178, 170, 0.3);
+  background-color: rgba(32, 178, 170, 0.03);
+}
+
+.tech-confirm-btn {
+  background: linear-gradient(135deg, #2580bf, #20b2aa) !important;
+  border: none !important;
+  box-shadow: 0 4px 10px rgba(32, 178, 170, 0.3) !important;
+  padding: 10px 20px !important;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tech-confirm-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0) 100%);
+  transition: all 0.6s ease;
+}
+
+.tech-confirm-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 15px rgba(32, 178, 170, 0.4) !important;
+}
+
+.tech-confirm-btn:hover::before {
+  left: 100%;
+}
+
+.tech-btn-text {
+  position: relative;
+  z-index: 2;
+}
+
+.tech-btn-icon {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: all 0.3s ease;
+}
+
+.tech-confirm-btn:hover .tech-btn-icon {
+  opacity: 1;
+  transform: translateX(0);
 }
 </style>

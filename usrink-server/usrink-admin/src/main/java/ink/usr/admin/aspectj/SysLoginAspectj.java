@@ -73,6 +73,42 @@ public class SysLoginAspectj {
         recordLoginInfo(useTime, -1, result);
     }
 
+    /**
+     * 判断是否为本地或内网IP地址
+     */
+    private boolean isLocalOrPrivateIP(String ip) {
+        if (ip == null || ip.trim().isEmpty()) {
+            return true;
+        }
+        
+        // 本地回环地址
+        if (ip.equals("127.0.0.1") || ip.equals("localhost") || ip.equals("::1") || ip.equals("0:0:0:0:0:0:0:1")) {
+            return true;
+        }
+        
+        // 私有网络地址段
+        if (ip.startsWith("192.168.") || ip.startsWith("10.")) {
+            return true;
+        }
+        
+        // 172.16.0.0 - 172.31.255.255
+        if (ip.startsWith("172.")) {
+            try {
+                String[] parts = ip.split("\\.");
+                if (parts.length >= 2) {
+                    int secondOctet = Integer.parseInt(parts[1]);
+                    if (secondOctet >= 16 && secondOctet <= 31) {
+                        return true;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                // 解析失败，当作内网处理
+                return true;
+            }
+        }
+        
+        return false;
+    }
 
     /**
      * 记录登录日志
@@ -117,13 +153,43 @@ public class SysLoginAspectj {
 
         // 执行异步任务
         AsyncUtil.executeAsyncTask(() -> {
-            // 获取登录地址
-            String locationJsonString = HttpUtil.get("https://whois.pconline.com.cn/ipJson.jsp?json=true&ip=" + sysLogLoginModel.getIpAddr());
-            Object addr = JsonUtil.parse(locationJsonString, Map.class).get("addr");
-            sysLogLoginModel.setLocation(addr.toString());
+            // 判断是否为本地或内网IP，如果是则跳过地理位置查询
+            if (isLocalOrPrivateIP(sysLogLoginModel.getIpAddr())) {
+                sysLogLoginModel.setLocation("内网地址");
+                log.debug("检测到内网IP: {}, 跳过地理位置查询", sysLogLoginModel.getIpAddr());
+            } else {
+                // 外网IP，尝试查询地理位置
+                try {
+                    // 使用HTTP协议避免SSL证书问题
+                    String locationJsonString = HttpUtil.get("http://whois.pconline.com.cn/ipJson.jsp?json=true&ip=" + sysLogLoginModel.getIpAddr());
+                    if (locationJsonString != null && !locationJsonString.trim().isEmpty()) {
+                        try {
+                            Map<String, Object> locationMap = JsonUtil.parse(locationJsonString, Map.class);
+                            Object addr = locationMap.get("addr");
+                            if (addr != null) {
+                                sysLogLoginModel.setLocation(addr.toString());
+                            } else {
+                                sysLogLoginModel.setLocation("未知地区");
+                            }
+                        } catch (Exception parseException) {
+                            log.warn("解析地理位置信息失败: {}", parseException.getMessage());
+                            sysLogLoginModel.setLocation("地理位置解析失败");
+                        }
+                    } else {
+                        sysLogLoginModel.setLocation("地理位置查询无响应");
+                    }
+                } catch (Exception e) {
+                    log.warn("查询IP地理位置失败: IP={}, 错误={}", sysLogLoginModel.getIpAddr(), e.getMessage());
+                    sysLogLoginModel.setLocation("地理位置查询失败");
+                }
+            }
 
             // 保存登录日志
-            SpringBeanUtil.getBean(ISysLogLoginService.class).insertSysLogLogin(sysLogLoginModel);
+            try {
+                SpringBeanUtil.getBean(ISysLogLoginService.class).insertSysLogLogin(sysLogLoginModel);
+            } catch (Exception e) {
+                log.error("保存登录日志失败", e);
+            }
         });
     }
 
