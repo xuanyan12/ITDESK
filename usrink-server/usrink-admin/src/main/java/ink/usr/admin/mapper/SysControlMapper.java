@@ -3,6 +3,7 @@ package ink.usr.admin.mapper;
 import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.dao.DTO.SysControlRecordDTO;
 import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
+import ink.usr.admin.dao.VO.SysControlBillListVO;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import org.apache.ibatis.annotations.Delete;
@@ -51,4 +52,6 @@ public interface SysControlMapper {
     
     // 获取电脑修改记录总数
     int getControlRecordCount(SysControlRecordQueryDTO queryDTO);
+
+
 }

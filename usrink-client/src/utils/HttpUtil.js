@@ -14,7 +14,7 @@ const instance = axios.create({
     // 请求超时时间
     timeout: 10 * 1000,
     headers: {
-        'Content-Type': 'application/x-www-form-urlencoded', // 设置请求头
+        'Content-Type': 'application/json', // 设置请求头为JSON格式
     },
 })
 

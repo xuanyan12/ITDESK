@@ -5,6 +5,7 @@ import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.dao.DTO.SysControlDTO;
 import ink.usr.admin.dao.DTO.SysControlRecordDTO;
 import ink.usr.admin.dao.VO.SysControlAssignVO;
+import ink.usr.admin.dao.VO.SysControlBillListVO;
 import ink.usr.admin.dao.VO.SysControlVO;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.service.SysControlService;
@@ -64,7 +65,7 @@ public class SysControlController {
     @RequiresPermissions("sys:device:control:select")
     public Res selectSysControlList(@RequestBody SysControlDTO sysControlModel){
         // 设置limit的偏移量
-        long pageNumSize = (sysControlModel.getPageNum() - 1) * sysControlModel.getPageSize();
+        int pageNumSize = (sysControlModel.getPageNum() - 1) * sysControlModel.getPageSize();
         sysControlModel.setPageNum(pageNumSize);
         List<SysControlModel> controlList = sysControlService.selectSysControlList(sysControlModel);
         SysControlVO sysControlVO = new SysControlVO();

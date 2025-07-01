@@ -3,6 +3,7 @@ package ink.usr.admin.service;
 import ink.usr.admin.dao.DTO.SysAllocateDeviceDTO;
 import ink.usr.admin.dao.DTO.SysControlAssignDTO;
 import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
+import ink.usr.admin.dao.VO.SysControlBillListVO;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
@@ -83,3 +84,5 @@ public interface SysControlService {
      */
     Dict getControlRecordList(SysControlRecordQueryDTO queryDTO);
 }
+
+

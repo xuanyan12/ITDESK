@@ -7,6 +7,7 @@ import publicApproval from "@/views/public/public-approval.vue" // 添加公开�
 import segOnelink from "@/views/public/seg-onelink.vue" // 添加SEG ONELINK页面引入
 import segAnalytics from "@/views/public/seg-analytics.vue" // 添加SEG ONELINK数据统计页面引入
 import qaPage from "@/views/public/qa-page.vue" // 添加QA页面引入
+import controlAsset from "@/views/other/control-asset.vue" // 添加电脑台账页面引入
 import {createRouter, createWebHistory} from 'vue-router'
 import NProgress from 'nprogress'
 import loginUtil from "@/utils/LoginUtil";
@@ -27,7 +28,7 @@ const routes = [
         children: [
             // 默认的静态页面，不需要动态添加
             {path: '/welcome', component: pageWelcome},
-            {path: '/forbidden', component: usrFrameForbidden}
+            {path: '/forbidden', component: usrFrameForbidden},
         ]
     },
     // login 页面
@@ -43,7 +44,7 @@ const routes = [
     // 前置守卫会判断用户是否已经授权登录，如果没有会被重定向到`/login`；
     // 如果已经授权登录了，但该路由不在用户的权限内，会被重定向到`/forbidden`。
     // 只有一种情况例外：用户已经授权登录，且该路由在用户的权限内，但是该路由对应的组件不存在，这种情况下会渲染`usrFrameNotfound`组件
-    {path: '/:pathMatch(.*)*', component: usrFrameNotfound}
+    {path: '/:pathMatch(.*)*', component: usrFrameNotfound},
 ]
 
 /**

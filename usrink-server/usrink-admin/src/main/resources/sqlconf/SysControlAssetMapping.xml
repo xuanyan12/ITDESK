@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysControlAssetMapper">
+
+    <!-- 查询电脑资产列表 -->
+    <select id="getCoputerAssetList" resultType="ink.usr.admin.dao.VO.SysControlBillListVO">
+        SELECT
+        c.id,
+        c.ciName,
+        c.modelOrVersion,
+        c.ntAccount,
+        CONCAT(c.firstName, ' ', c.lastName) as userName,
+        c.department,
+        c.wbsNum,
+        CAST(c.price AS DECIMAL(10,2)) as price,
+        c.costCenter,
+        CAST(i.acquis_val AS DECIMAL(10,2)) as ifrsValue,
+        CAST(i.book_val AS DECIMAL(10,2)) as ifrsAllResidualValue,
+        CAST(p.book_val AS DECIMAL(10,2)) as prcAllResidualValue
+        FROM sys_control c
+        INNER JOIN sys_ifrs i ON c.wbsNum = i.wbs_element
+        JOIN sys_prc p ON i.asset = p.asset
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND LOWER(c.ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+            </if>
+            <if test="ntAccount != null and ntAccount != ''">
+                AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')
+            </if>
+            <if test="department != null and department != ''">
+                AND LOWER(c.department) LIKE CONCAT('%', LOWER(#{department}), '%')
+            </if>
+            <if test="costCenter != null and costCenter != ''">
+                AND LOWER(c.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询电脑资产列表 -->
+    <select id="selectSysControlAssetList" resultType="ink.usr.admin.dao.VO.SysControlBillListVO">
+        SELECT 
+            a.id,
+            a.asset,
+            a.cost_center,
+            a.capitalized_on,
+            a.wbs_element,
+            a.asset_class,
+            a.currency,
+            a.acquis_val,
+            a.accum_dep,
+            a.book_val
+        FROM sys_control_asset a
+        <where>
+            <if test="asset != null and asset != ''">
+                AND a.asset LIKE CONCAT('%', #{asset}, '%')
+            </if>
+            <if test="costCenter != null and costCenter != ''">
+                AND a.cost_center LIKE CONCAT('%', #{costCenter}, '%')
+            </if>
+            <if test="wbsElement != null and wbsElement != ''">
+                AND a.wbs_element LIKE CONCAT('%', #{wbsElement}, '%')
+            </if>
+        </where>
+        ORDER BY a.asset ASC
+    </select>
+
+    <!-- 批量更新IFRS数据 -->
+    <update id="batchUpdateIfrsData">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE sys_ifrs
+            SET 
+                asset = #{item.asset},
+                cost_center = #{item.costCenter},
+                capitalized_on = #{item.capitalizedOn},
+                wbs_element = #{item.wbsElement},
+                asset_class = #{item.assetClass},
+                currency = #{item.currency},
+                acquis_val = #{item.acquisVal},
+                accum_dep = #{item.accumDep},
+                book_val = #{item.bookVal},
+                update_time = NOW()
+            WHERE asset = #{item.asset}
+        </foreach>
+    </update>
+
+    <!-- 批量更新PRC数据 -->
+    <update id="batchUpdatePrcData">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE sys_prc
+            SET 
+                asset = #{item.asset},
+                cost_center = #{item.costCenter},
+                capitalized_on = #{item.capitalizedOn},
+                wbs_element = #{item.wbsElement},
+                asset_class = #{item.assetClass},
+                currency = #{item.currency},
+                acquis_val = #{item.acquisVal},
+                accum_dep = #{item.accumDep},
+                book_val = #{item.bookVal},
+                update_time = NOW()
+            WHERE asset = #{item.asset}
+        </foreach>
+    </update>
+
+</mapper>
