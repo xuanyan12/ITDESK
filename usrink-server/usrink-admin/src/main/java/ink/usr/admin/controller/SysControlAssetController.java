@@ -26,7 +26,7 @@ public class SysControlAssetController {
      */
     @PostMapping("/selectSysControlAssetList")
     @RequiresPermissions("sys:device:control:select")
-    public Res selectSysControlAssetList(@RequestBody SysControlDTO sysControlDTO) {
+    public Res selectSysControlAssetList(SysControlDTO sysControlDTO) {
         try {
             PageVO<SysControlBillListVO> pageVO = sysControlAssetService.selectSysControlAssetList(sysControlDTO);
             return Res.success(pageVO);

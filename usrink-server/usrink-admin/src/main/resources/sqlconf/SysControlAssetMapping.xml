@@ -67,40 +67,76 @@
 
     <!-- 批量更新IFRS数据 -->
     <update id="batchUpdateIfrsData">
-        <foreach collection="list" item="item" separator=";">
-            UPDATE sys_ifrs
-            SET 
-                asset = #{item.asset},
-                cost_center = #{item.costCenter},
-                capitalized_on = #{item.capitalizedOn},
-                wbs_element = #{item.wbsElement},
-                asset_class = #{item.assetClass},
-                currency = #{item.currency},
-                acquis_val = #{item.acquisVal},
-                accum_dep = #{item.accumDep},
-                book_val = #{item.bookVal},
-                update_time = NOW()
-            WHERE asset = #{item.asset}
+        INSERT INTO sys_ifrs (
+        asset,
+        cost_center,
+        capitalized_on,
+        wbs_element,
+        asset_class,
+        currency,
+        acquis_val,
+        accum_dep,
+        book_val
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.asset},
+            #{item.costCenter},
+            #{item.capitalizedOn},
+            #{item.wbsElement},
+            #{item.assetClass},
+            #{item.currency},
+            #{item.acquisVal},
+            #{item.accumDep},
+            #{item.bookVal}
+            )
         </foreach>
+        ON DUPLICATE KEY UPDATE
+        cost_center = VALUES(cost_center),
+        capitalized_on = VALUES(capitalized_on),
+        wbs_element = VALUES(wbs_element),
+        asset_class = VALUES(asset_class),
+        currency = VALUES(currency),
+        acquis_val = VALUES(acquis_val),
+        accum_dep = VALUES(accum_dep),
+        book_val = VALUES(book_val)
     </update>
 
     <!-- 批量更新PRC数据 -->
     <update id="batchUpdatePrcData">
-        <foreach collection="list" item="item" separator=";">
-            UPDATE sys_prc
-            SET 
-                asset = #{item.asset},
-                cost_center = #{item.costCenter},
-                capitalized_on = #{item.capitalizedOn},
-                wbs_element = #{item.wbsElement},
-                asset_class = #{item.assetClass},
-                currency = #{item.currency},
-                acquis_val = #{item.acquisVal},
-                accum_dep = #{item.accumDep},
-                book_val = #{item.bookVal},
-                update_time = NOW()
-            WHERE asset = #{item.asset}
+        INSERT INTO sys_prc (
+        asset,
+        cost_center,
+        capitalized_on,
+        wbs_element,
+        asset_class,
+        currency,
+        acquis_val,
+        accum_dep,
+        book_val
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.asset},
+            #{item.costCenter},
+            #{item.capitalizedOn},
+            #{item.wbsElement},
+            #{item.assetClass},
+            #{item.currency},
+            #{item.acquisVal},
+            #{item.accumDep},
+            #{item.bookVal}
+            )
         </foreach>
+        ON DUPLICATE KEY UPDATE
+        cost_center = VALUES(cost_center),
+        capitalized_on = VALUES(capitalized_on),
+        wbs_element = VALUES(wbs_element),
+        asset_class = VALUES(asset_class),
+        currency = VALUES(currency),
+        acquis_val = VALUES(acquis_val),
+        accum_dep = VALUES(accum_dep),
+        book_val = VALUES(book_val)
     </update>
 
 </mapper>

@@ -8,6 +8,7 @@ import ink.usr.common.interfaces.admin.ISysMenuService;
 import ink.usr.common.model.mysql.SysMenuModel;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

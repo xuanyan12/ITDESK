@@ -18,11 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -94,17 +92,31 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
             Workbook workbook = new XSSFWorkbook(is);
             Sheet sheet = workbook.getSheetAt(0);
 
+
             // 获取标题行
             Row headerRow = sheet.getRow(0);
-            Map<String, Integer> headerMap = new HashMap<>();
-            for (int i = 0; i < headerRow.getLastCellNum(); i++) {
-                Cell cell = headerRow.getCell(i);
-                if (cell != null) {
-                    headerMap.put(cell.getStringCellValue().trim(), i);
-                }
+            if (headerRow == null) {
+                throw new BusinessException("Excel文件格式错误：第一行（标题行）不能为空");
             }
 
-            // 验证必要的列是否存在
+            Map<String, Integer> headerMap = new HashMap<>();
+            try {
+                for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                    Cell cell = headerRow.getCell(i);
+                    if (cell != null) {
+                        String headerValue = getCellValueAsString(cell);
+                        if (headerValue != null && !headerValue.trim().isEmpty()) {
+                            headerMap.put(headerValue.trim(), i);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("解析Excel标题行失败", e);
+                throw new BusinessException("Excel文件格式错误：请确保第一行为标题行，且不包含公式或特殊格式");
+            }
+
+
+            // 验证必要列是否存在
             validateHeaders(headerMap);
 
             List<Map<String, Object>> dataList = new ArrayList<>();
@@ -126,9 +138,14 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
                 dataList.add(rowData);
             }
 
-            // 批量更新IFRS数据
-            if (!dataList.isEmpty()) {
-                sysControlAssetMapper.batchUpdateIfrsData(dataList);
+            // 分批处理数据
+            int batchSize = 1000; // 每批处理1000条
+            for (int i = 0; i < dataList.size(); i += batchSize) {
+                int end = Math.min(i + batchSize, dataList.size());
+                List<Map<String, Object>> batch = dataList.subList(i, end);
+                if (!batch.isEmpty()) {
+                    sysControlAssetMapper.batchUpdateIfrsData(batch);
+                }
             }
         }
     }

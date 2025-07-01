@@ -14,8 +14,16 @@ const instance = axios.create({
     // 请求超时时间
     timeout: 10 * 1000,
     headers: {
-        'Content-Type': 'application/json', // 设置请求头为JSON格式
+        'Content-Type': 'application/x-www-form-urlencoded', // 修改为表单格式
     },
+    // transformRequest: [function (data) {
+    //     // 将数据转换为表单格式
+    //     let ret = ''
+    //     for (let it in data) {
+    //         ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+    //     }
+    //     return ret
+    // }],
 })
 
 // 添加请求拦截器
