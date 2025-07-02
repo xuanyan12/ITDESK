@@ -37,4 +37,38 @@
         insert into sys_approval_token(flowId, token, createdAt, updatedAt, used, expireTime) VALUES
         (#{flowId},#{token},#{createdAt},#{updatedAt},#{used},#{expireTime})
     </insert>
+
+    <!-- 新增：优化的查询，一次JOIN获取所有需要的数据 -->
+    <select id="getApprovalInfoWithUserNames" resultType="ink.usr.admin.dao.VO.SysApprovalRequestListVO">
+        SELECT
+            r.approvalId,
+            r.applicant,
+            r.deviceCategory,
+            r.deviceType,
+            r.costCenter,
+            r.company,
+            r.responsibility,
+            r.deviceSituation,
+            r.companySystem,
+            r.reason,
+            r.timestamp,
+            r.status,
+            r.createdAt,
+            r.updatedAt,
+            r.ciName,
+            u1.userNick as userName,
+            u2.userNick as responsibilityName,
+            COALESCE(f.approvalReason, '') as approvalReason
+        FROM sys_approval_request r
+                 LEFT JOIN sys_user u1 ON r.applicant = u1.userId
+                 LEFT JOIN sys_user u2 ON r.responsibility = u2.userId
+                 LEFT JOIN (
+            SELECT approvalId, approvalReason
+            FROM sys_approval_flow
+            WHERE approvalId = #{approvalId} AND status != '审批中'
+            ORDER BY stage DESC
+            LIMIT 1
+        ) f ON r.approvalId = f.approvalId
+        WHERE r.approvalId = #{approvalId}
+    </select>
 </mapper>

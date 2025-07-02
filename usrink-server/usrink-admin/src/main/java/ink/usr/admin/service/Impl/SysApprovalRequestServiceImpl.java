@@ -30,35 +30,22 @@ public class SysApprovalRequestServiceImpl implements SysApprovalRequestService 
 
     @Override
     public SysApprovalRequestListVO getInfoByApprovalId(Long approvalId) {
-        SysApprovalRequestModel sysApprovalRequestList = sysApplyMapper.getByApprovalId(approvalId);
-        SysApprovalRequestListVO sysApprovalRequestListVO = new SysApprovalRequestListVO();
-        BeanUtils.copyProperties(sysApprovalRequestList, sysApprovalRequestListVO);
-        
-        // 处理状态值
-        if (sysApprovalRequestListVO.getStatus() != null) {
-            // 确保状态值符合前端期望的格式
-            if ("已通过".equals(sysApprovalRequestListVO.getStatus())) {
-                sysApprovalRequestListVO.setStatus("审批通过");
-            } else if ("已驳回".equals(sysApprovalRequestListVO.getStatus())) {
-                sysApprovalRequestListVO.setStatus("审批不通过");
-            }
-        }
-        
-        // 获取审批流信息和审批理由
-        List<SysApprovalFlowModel> approvalFlows = sysApprovalFlowMapper.getApprovalFlowsByApprovalId(approvalId);
-        if (approvalFlows != null && !approvalFlows.isEmpty()) {
-            // 获取最新的审批流信息（通常是状态为非"审批中"的最后一个审批流）
-            for (SysApprovalFlowModel flow : approvalFlows) {
-                if (!"审批中".equals(flow.getStatus())) {
-                    sysApprovalRequestListVO.setApprovalReason(flow.getApprovalReason());
-                    break;
+        // 优化：使用一次JOIN查询替代多次查询
+        SysApprovalRequestListVO sysApprovalRequestListVO = sysApplyMapper.getApprovalInfoWithUserNames(approvalId);
+
+        if (sysApprovalRequestListVO != null) {
+            // 处理状态值格式化
+            if (sysApprovalRequestListVO.getStatus() != null) {
+                if ("已通过".equals(sysApprovalRequestListVO.getStatus())) {
+                    sysApprovalRequestListVO.setStatus("审批通过");
+                } else if ("已驳回".equals(sysApprovalRequestListVO.getStatus())) {
+                    sysApprovalRequestListVO.setStatus("审批不通过");
                 }
             }
         }
-        
-        sysApprovalRequestListVO.setUserName(sysUserMapper.getUserNickNameByUserId(sysApprovalRequestList.getApplicant()));
-        sysApprovalRequestListVO.setResponsibilityName(sysUserMapper.getUserNickNameByUserId(sysApprovalRequestList.getResponsibility()));
+
         return sysApprovalRequestListVO;
     }
+
 
 }
