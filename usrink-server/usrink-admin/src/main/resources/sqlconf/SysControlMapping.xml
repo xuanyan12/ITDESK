@@ -15,6 +15,7 @@
             <if test="pcStatus!=null and pcStatus!=''">AND pcStatus = #{pcStatus}</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
             <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="company!=null and company!=''">AND company = #{company}</if>
         </where>
         Limit #{pageNum}, #{pageSize}
     </select>
@@ -31,6 +32,7 @@
             <if test="pcStatus!=null and pcStatus!=''">AND pcStatus = #{pcStatus}</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
             <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="company!=null and company!=''">AND company = #{company}</if>
         </where>
     </select>
 

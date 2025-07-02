@@ -1327,6 +1327,14 @@ const loadDepartmentAndCostCenterOptions = () => {
                         <el-option v-for="center in costCenterOptions" :key="center" :label="center" :value="center"></el-option>
                     </el-select>
                 </el-form-item>
+                <el-form-item :label="langText.company" class="form-item">
+                    <el-select v-model="queryForm.company" :placeholder="langText.selectCompany" class="input-field" clearable>
+                        <el-option :label="langText.all" value="" />
+                        <el-option label="SGCS" value="SGCS" />
+                        <el-option label="SES" value="SES" />
+                        <el-option label="SGCC" value="SGCC" />
+                    </el-select>
+                </el-form-item>
                 <el-form-item class="form-item">
                     <el-button type="primary" @click="selectPartListData">{{ langText.search }}</el-button>
                     <el-button @click="resetForm">{{ langText.reset }}</el-button>
