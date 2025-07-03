@@ -203,6 +203,7 @@ const langText = computed(() => {
         comment: currentLang.value === 'zh' ? '备注' : 'Comment',
         lastName: currentLang.value === 'zh' ? '姓' : 'Last Name',
         firstName: currentLang.value === 'zh' ? '名' : 'First Name',
+        userName: currentLang.value === 'zh' ? '使用人' : 'User Name',
         emailAddress: currentLang.value === 'zh' ? '邮箱地址' : 'Email',
         telephone: currentLang.value === 'zh' ? '电话号码' : 'Phone',
         departmentCol: currentLang.value === 'zh' ? '所属部门' : 'Department',
@@ -572,7 +573,10 @@ const selectEditUser = (user) => {
     // 设置NT账号
     editPartForm.value.ntAccount = user.userName;
     
-    // 智能解析姓名
+    // 设置使用人信息
+    editPartForm.value.userName = user.userNick || user.userName;
+    
+    // 智能解析姓名（保持向后兼容）
     const nameInfo = parseUserName(user.userNick || user.userName);
     editPartForm.value.lastName = nameInfo.lastName;
     editPartForm.value.firstName = nameInfo.firstName;
@@ -666,6 +670,10 @@ const addPart = () => {
 const editPartDialog = (row) => {
     // 将选中的配件数据传递到编辑表单中
     editPartForm.value = { ...row }
+    // 确保userName字段存在
+    if (!editPartForm.value.userName) {
+        editPartForm.value.userName = row.userName || (row.lastName + (row.firstName ? ' ' + row.firstName : '')) || '';
+    }
     editPartDialogVisible.value = true
     if (editPartFormRef.value) {
         editPartFormRef.value.resetFields()
@@ -959,8 +967,7 @@ const formatDataForExport = (data) => {
     exportObj[currentLangText.ntAccount] = item.ntAccount || '';
     exportObj[currentLangText.pcClass] = item.pcClass || '';
     exportObj[currentLangText.comment] = item.comment || '';
-    exportObj[currentLangText.lastName] = item.lastName || '';
-    exportObj[currentLangText.firstName] = item.firstName || '';
+    exportObj[currentLangText.userName] = item.userName || (item.lastName + (item.firstName ? ' ' + item.firstName : '')) || '';
     exportObj[currentLangText.emailAddress] = item.emailAddress || '';
     exportObj[currentLangText.telephone] = item.telephone || '';
     exportObj[currentLangText.departmentCol] = item.department || '';
@@ -1114,8 +1121,8 @@ const getRecordDetails = (record) => {
     if (record.lifeCycleStart) details[langText.value.lifeCycleStart] = record.lifeCycleStart;
     if (record.modelOrVersion) details[langText.value.modelOrVersion] = record.modelOrVersion;
     if (record.serialNumber) details[langText.value.serialNumber] = record.serialNumber;
-    if (record.lastName || record.firstName) {
-        details[currentLang.value === 'zh' ? '用户' : 'User'] = `${record.lastName || ''} ${record.firstName || ''}`.trim();
+    if (record.userName || record.lastName || record.firstName) {
+        details[currentLang.value === 'zh' ? '用户' : 'User'] = record.userName || `${record.lastName || ''} ${record.firstName || ''}`.trim();
     }
     if (record.department) details[langText.value.departmentCol] = record.department;
     if (record.costCenter) details[langText.value.costCenterCol] = record.costCenter;
@@ -1140,8 +1147,8 @@ const getCurrentDetails = () => {
     if (currentComputer.value.lifeCycleStart) details[langText.value.lifeCycleStart] = currentComputer.value.lifeCycleStart;
     if (currentComputer.value.modelOrVersion) details[langText.value.modelOrVersion] = currentComputer.value.modelOrVersion;
     if (currentComputer.value.serialNumber) details[langText.value.serialNumber] = currentComputer.value.serialNumber;
-    if (currentComputer.value.lastName || currentComputer.value.firstName) {
-        details[currentLang.value === 'zh' ? '用户' : 'User'] = `${currentComputer.value.lastName || ''} ${currentComputer.value.firstName || ''}`.trim();
+    if (currentComputer.value.userName || currentComputer.value.lastName || currentComputer.value.firstName) {
+        details[currentLang.value === 'zh' ? '用户' : 'User'] = currentComputer.value.userName || `${currentComputer.value.lastName || ''} ${currentComputer.value.firstName || ''}`.trim();
     }
     if (currentComputer.value.department) details[langText.value.departmentCol] = currentComputer.value.department;
     if (currentComputer.value.costCenter) details[langText.value.costCenterCol] = currentComputer.value.costCenter;
@@ -1435,20 +1442,11 @@ const loadDepartmentAndCostCenterOptions = () => {
                     </template>
                 </el-table-column>
 
-                <!-- 姓 -->
-                <el-table-column :label="langText.lastName" prop="lastName" :width="150">
+                <!-- 使用人 -->
+                <el-table-column :label="langText.userName" prop="userName" :width="200">
                     <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="row.lastName" placement="top">
-                            <div class="text-ellipsis">{{ row.lastName }}</div>
-                        </el-tooltip>
-                    </template>
-                </el-table-column>
-
-                <!-- 名 -->
-                <el-table-column :label="langText.firstName" prop="firstName" :width="150">
-                    <template #default="{ row }">
-                        <el-tooltip class="item" effect="light" :content="row.firstName" placement="top">
-                            <div class="text-ellipsis">{{ row.firstName }}</div>
+                        <el-tooltip class="item" effect="light" :content="row.userName || (row.lastName + (row.firstName ? ' ' + row.firstName : ''))" placement="top">
+                            <div class="text-ellipsis">{{ row.userName || (row.lastName + (row.firstName ? ' ' + row.firstName : '')) }}</div>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -1784,17 +1782,12 @@ const loadDepartmentAndCostCenterOptions = () => {
                                 
                                 <el-tab-pane :label="langText.userInfo">
                                     <el-row :gutter="20">
-                                        <el-col :span="8">
-                                            <el-form-item :label="langText.lastName" prop="lastName">
-                                                <el-input v-model="editPartForm.lastName"></el-input>
+                                        <el-col :span="12">
+                                            <el-form-item :label="langText.userName" prop="userName">
+                                                <el-input v-model="editPartForm.userName" readonly :placeholder="langText.userNameReadonly"></el-input>
                                             </el-form-item>
                                         </el-col>
-                                        <el-col :span="8">
-                                            <el-form-item :label="langText.firstName" prop="firstName">
-                                                <el-input v-model="editPartForm.firstName"></el-input>
-                                            </el-form-item>
-                                        </el-col>
-                                        <el-col :span="8">
+                                        <el-col :span="12">
                                             <el-form-item :label="langText.emailAddress" prop="emailAddress">
                                                 <el-input v-model="editPartForm.emailAddress"></el-input>
                                             </el-form-item>
@@ -2097,9 +2090,10 @@ const loadDepartmentAndCostCenterOptions = () => {
                                 <div class="property-item">
                                     <div class="property-label">{{ currentLang.value === 'zh' ? '当前用户' : 'Current User' }}:</div>
                                     <div class="property-value">
-                                        {{ currentComputer.lastName && currentComputer.firstName ? 
+                                        {{ currentComputer.userName || 
+                                           (currentComputer.lastName && currentComputer.firstName ? 
                                            `${currentComputer.lastName} ${currentComputer.firstName}` : 
-                                           (currentComputer.ntAccount || (currentLang.value === 'zh' ? '无' : 'None')) }}
+                                           (currentComputer.ntAccount || (currentLang.value === 'zh' ? '无' : 'None'))) }}
                                     </div>
                                 </div>
                                 <div class="property-item">
@@ -2151,9 +2145,10 @@ const loadDepartmentAndCostCenterOptions = () => {
                                 <el-table-column prop="ntAccount" :label="langText.ntAccount" width="150" />
                                 <el-table-column :label="currentLang.value === 'zh' ? '用户' : 'User'" width="180">
                                     <template #default="{ row }">
-                                        {{ row.lastName && row.firstName ? 
+                                        {{ row.userName || 
+                                           (row.lastName && row.firstName ? 
                                            `${row.lastName} ${row.firstName}` : 
-                                           (row.ntAccount || (currentLang.value === 'zh' ? '无' : 'None')) }}
+                                           (row.ntAccount || (currentLang.value === 'zh' ? '无' : 'None'))) }}
                                     </template>
                                 </el-table-column>
                                 <el-table-column prop="pcClass" :label="langText.pcClass" width="300" />
@@ -2224,7 +2219,7 @@ const loadDepartmentAndCostCenterOptions = () => {
                         </div>
                         <div class="return-detail-item">
                             <div class="return-detail-label">{{ langText.currentUser }}</div>
-                            <div class="return-detail-value">{{ currentReturnComputer?.lastName }} {{ currentReturnComputer?.firstName }}</div>
+                            <div class="return-detail-value">{{ currentReturnComputer?.userName || (currentReturnComputer?.lastName + (currentReturnComputer?.firstName ? ' ' + currentReturnComputer?.firstName : '')) || (currentLang.value === 'zh' ? '未知' : 'Unknown') }}</div>
                         </div>
                         <div class="return-detail-item">
                             <div class="return-detail-label">{{ langText.useYears }}</div>

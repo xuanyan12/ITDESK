@@ -3,36 +3,60 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="ink.usr.admin.mapper.SysControlMapper">
 
-    <!--  用于分页查询  -->
+    <!--  用于分页查询，关联用户表获取最新用户信息  -->
     <select id="selectSysControlList" resultType="ink.usr.common.model.mysql.SysControlModel">
-        select *
-        from sys_control
+        select 
+            c.id, c.pcStatus, c.ciName, c.serialNumber, c.deviceClass, c.manufacture, c.modelOrVersion,
+            c.ntAccount, c.pcClass, c.comment, c.lifeCycleStart, c.yrsToDay, c.cpu, c.memory, c.disk, 
+            c.graphic, c.hardwareStatus, c.pr, c.po, c.vendor, c.wbsNum, c.price, c.temp,
+            -- 从用户表获取最新的用户信息
+            COALESCE(u.userNick, 
+                CASE 
+                    WHEN c.lastName IS NOT NULL AND c.lastName != '' AND c.firstName IS NOT NULL AND c.firstName != '' 
+                    THEN CONCAT(c.lastName, ' ', c.firstName)
+                    WHEN c.lastName IS NOT NULL AND c.lastName != '' 
+                    THEN c.lastName
+                    WHEN c.firstName IS NOT NULL AND c.firstName != ''
+                    THEN c.firstName
+                    ELSE ''
+                END
+            ) as userName,
+            COALESCE(u.userNick, c.lastName) as lastName,
+            COALESCE('', c.firstName) as firstName,
+            COALESCE(u.email, c.emailAddress) as emailAddress,
+            COALESCE(u.department, c.department) as department,
+            COALESCE(u.phone, c.telephone) as telephone,
+            COALESCE(u.costCenter, c.costCenter) as costCenter,
+            COALESCE(u.company, c.company) as company
+        from sys_control c
+        left join sys_user u on c.ntAccount = u.userName and u.status = 0
         <where>
-            <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
-            <if test="costCenter!=null and costCenter!=''">AND LOWER(costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')</if>
-            <if test="pcClass!=null and pcClass!=''">AND pcClass = #{pcClass}</if>
-            <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
-            <if test="pcStatus!=null and pcStatus!=''">AND pcStatus = #{pcStatus}</if>
-            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
-            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
-            <if test="company!=null and company!=''">AND company = #{company}</if>
+            <if test="ciName!=null and ciName!=''">AND LOWER(c.ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
+            <if test="costCenter!=null and costCenter!=''">AND (LOWER(u.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%') OR LOWER(c.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%'))</if>
+            <if test="pcClass!=null and pcClass!=''">AND c.pcClass = #{pcClass}</if>
+            <if test="department!=null and department!=''">AND (LOWER(u.department) LIKE CONCAT('%', LOWER(#{department}), '%') OR LOWER(c.department) LIKE CONCAT('%', LOWER(#{department}), '%'))</if>
+            <if test="pcStatus!=null and pcStatus!=''">AND c.pcStatus = #{pcStatus}</if>
+            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(c.lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
+            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="company!=null and company!=''">AND (u.company = #{company} OR c.company = #{company})</if>
         </where>
         Limit #{pageNum}, #{pageSize}
     </select>
 
-    <!--    用于返回分页查询前的记录数-->
+    <!--    用于返回分页查询前的记录数，关联用户表保持查询条件一致-->
     <select id="selectCountNum" resultType="java.lang.Integer">
         select count(*)
-        from sys_control
+        from sys_control c
+        left join sys_user u on c.ntAccount = u.userName and u.status = 0
         <where>
-            <if test="ciName!=null and ciName!=''">AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
-            <if test="costCenter!=null and costCenter!=''">AND LOWER(costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')</if>
-            <if test="pcClass!=null and pcClass!=''">AND pcClass = #{pcClass}</if>
-            <if test="department!=null and department!=''">AND LOWER(department) LIKE CONCAT('%', LOWER(#{department}), '%')</if>
-            <if test="pcStatus!=null and pcStatus!=''">AND pcStatus = #{pcStatus}</if>
-            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
-            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
-            <if test="company!=null and company!=''">AND company = #{company}</if>
+            <if test="ciName!=null and ciName!=''">AND LOWER(c.ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')</if>
+            <if test="costCenter!=null and costCenter!=''">AND (LOWER(u.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%') OR LOWER(c.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%'))</if>
+            <if test="pcClass!=null and pcClass!=''">AND c.pcClass = #{pcClass}</if>
+            <if test="department!=null and department!=''">AND (LOWER(u.department) LIKE CONCAT('%', LOWER(#{department}), '%') OR LOWER(c.department) LIKE CONCAT('%', LOWER(#{department}), '%'))</if>
+            <if test="pcStatus!=null and pcStatus!=''">AND c.pcStatus = #{pcStatus}</if>
+            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(c.lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
+            <if test="ntAccount!=null and ntAccount!=''">AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
+            <if test="company!=null and company!=''">AND (u.company = #{company} OR c.company = #{company})</if>
         </where>
     </select>
 
@@ -196,39 +220,62 @@
     </insert>
 
     <select id="getComputerByInfo" resultType="ink.usr.common.model.mysql.SysControlModel" parameterType="ink.usr.admin.dao.DTO.SysControlAssignDTO">
-        SELECT *
-        FROM sys_control
+        SELECT 
+            c.id, c.pcStatus, c.ciName, c.serialNumber, c.deviceClass, c.manufacture, c.modelOrVersion,
+            c.ntAccount, c.pcClass, c.comment, c.lifeCycleStart, c.yrsToDay, c.cpu, c.memory, c.disk, 
+            c.graphic, c.hardwareStatus, c.pr, c.po, c.vendor, c.wbsNum, c.price, c.temp,
+            -- 从用户表获取最新的用户信息
+            COALESCE(u.userNick, 
+                CASE 
+                    WHEN c.lastName IS NOT NULL AND c.lastName != '' AND c.firstName IS NOT NULL AND c.firstName != '' 
+                    THEN CONCAT(c.lastName, ' ', c.firstName)
+                    WHEN c.lastName IS NOT NULL AND c.lastName != '' 
+                    THEN c.lastName
+                    WHEN c.firstName IS NOT NULL AND c.firstName != ''
+                    THEN c.firstName
+                    ELSE ''
+                END
+            ) as userName,
+            COALESCE(u.userNick, c.lastName) as lastName,
+            COALESCE('', c.firstName) as firstName,
+            COALESCE(u.email, c.emailAddress) as emailAddress,
+            COALESCE(u.department, c.department) as department,
+            COALESCE(u.phone, c.telephone) as telephone,
+            COALESCE(u.costCenter, c.costCenter) as costCenter,
+            COALESCE(u.company, c.company) as company
+        FROM sys_control c
+        LEFT JOIN sys_user u ON c.ntAccount = u.userName AND u.status = 0
         <where>
             <!-- 1. ciName 非空时匹配 -->
             <if test="ciName != null and ciName != ''">
-                AND LOWER(ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
+                AND LOWER(c.ciName) LIKE CONCAT('%', LOWER(#{ciName}), '%')
             </if>
 
             <!-- 2. deviceClass/deviceType 非空时匹配 -->
             <if test="deviceType != null and deviceType != ''">
-                AND deviceClass = #{deviceType}
+                AND c.deviceClass = #{deviceType}
             </if>
 
             <!-- 3. ntAccount 非空时匹配 -->
             <if test="ntAccount != null and ntAccount != ''">
-                AND LOWER(ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')
+                AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')
             </if>
 
             <!-- 4. deviceSituation 处理 -->
             <if test="deviceSituation == '新电脑'">
-                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ]]>
+                <![CDATA[ AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ]]>
             </if>
             <if test="deviceSituation == '库存旧电脑'">
-                <![CDATA[ AND STR_TO_DATE(lifeCycleStart, '%Y-%m-%d') < DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ]]>
+                <![CDATA[ AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') < DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ]]>
             </if>
 
             <!-- 5. company 非空时匹配 -->
             <if test="company != null and company != ''">
-                AND LOWER(company) LIKE CONCAT('%', LOWER(#{company}), '%')
+                AND (LOWER(u.company) LIKE CONCAT('%', LOWER(#{company}), '%') OR LOWER(c.company) LIKE CONCAT('%', LOWER(#{company}), '%'))
             </if>
 
             <!-- 6. 固定条件：只查询状态为 "To be assigned" 的电脑 -->
-            AND pcStatus = 'To be assigned'
+            AND c.pcStatus = 'To be assigned'
         </where>
     </select>
 

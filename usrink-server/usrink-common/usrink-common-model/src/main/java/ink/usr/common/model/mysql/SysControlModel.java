@@ -47,6 +47,9 @@ public class SysControlModel implements Serializable {
     // 姓
     private String lastName;
 
+    // 使用人（从用户表获取的userNick或拼接的姓名）
+    private String userName;
+
     // 邮箱地址
     private String emailAddress;
 
