@@ -125,7 +125,7 @@ public class SysLadpServiceImpl implements SysLadpService {
             do{
                 count ++;
                 this.connect(loginName, password);
-            }while (this.ctx != null && count < 3);
+            }while (this.ctx == null && count < 3);
             if( this.ctx != null ){
                 List<SysLadpUserModel> ldapUserDOS = this.searchLdapUser(loginName);
                 if( ldapUserDOS.size() == 1 ){
