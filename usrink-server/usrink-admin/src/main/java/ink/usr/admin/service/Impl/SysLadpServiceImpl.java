@@ -125,7 +125,7 @@ public class SysLadpServiceImpl implements SysLadpService {
             do{
                 count ++;
                 this.connect(loginName, password);
-            }while (this.ctx == null && count < 3);
+            }while (this.ctx != null && count < 3);
             if( this.ctx != null ){
                 List<SysLadpUserModel> ldapUserDOS = this.searchLdapUser(loginName);
                 if( ldapUserDOS.size() == 1 ){
@@ -134,40 +134,40 @@ public class SysLadpServiceImpl implements SysLadpService {
             }
         } catch (Exception e) {
             // 只有在非"用户不存在"错误的情况下才尝试备用验证方式
-//            if (!(e instanceof RuntimeException && e.getMessage().equals("用户不在域中，请联系IT处理"))) {
-//                log.error("AD域认证失败，尝试备用验证方式", e);
-//
-//                // 尝试使用备用密码验证
-////                if (user.getUserPassword() != null) {
-////                    try {
-////                        // 解密存储的UUID密码
-////                        String decryptedUuid = AESUtil.decrypt(user.getUserPassword());
-////                        // 比较输入的密码与解密后的UUID
-////                        if (decryptedUuid.equals(password)) {
-////                            // 密码匹配，构造返回对象
-////                            SysLadpUserModel backupUser = new SysLadpUserModel();
-////                            backupUser.setName(user.getUserName());
-////                            backupUser.setDisplayName(user.getUserNick());
-////                            backupUser.setMail(user.getEmail());
-////                            backupUser.setDepartment(user.getDepartment());
-////                            backupUser.setDescription(user.getCostCenter());
-////                            // 其他必要字段...
-////
-////                            log.info("用户 {} 使用备用密码认证成功", loginName);
-////                            return backupUser;
-////                        }
-////                    } catch (Exception decryptException) {
-////                        log.warn("解密用户 {} 的备用密码失败: {}", loginName, decryptException.getMessage());
-////                        // 解密失败，继续后续的异常处理
-////                    }
-////                }
-//
-//                // 如果备用密码验证也失败，抛出AD域连接异常的消息
-////                throw new RuntimeException("AD域连接异常，请检查账号密码或联系IT");
-//            } else {
-                // 重新抛出"用户不存在"的异常，让上层处理
-//                throw e;
-//            }
+            if (!(e instanceof RuntimeException && e.getMessage().equals("用户不在域中，请联系IT处理"))) {
+                log.error("AD域认证失败，尝试备用验证方式", e);
+
+                // 尝试使用备用密码验证
+                if (user.getUserPassword() != null) {
+                    try {
+                        // 解密存储的UUID密码
+                        String decryptedUuid = AESUtil.decrypt(user.getUserPassword());
+                        // 比较输入的密码与解密后的UUID
+                        if (decryptedUuid.equals(password)) {
+                            // 密码匹配，构造返回对象
+                            SysLadpUserModel backupUser = new SysLadpUserModel();
+                            backupUser.setName(user.getUserName());
+                            backupUser.setDisplayName(user.getUserNick());
+                            backupUser.setMail(user.getEmail());
+                            backupUser.setDepartment(user.getDepartment());
+                            backupUser.setDescription(user.getCostCenter());
+                            // 其他必要字段...
+
+                            log.info("用户 {} 使用备用密码认证成功", loginName);
+                            return backupUser;
+                        }
+                    } catch (Exception decryptException) {
+                        log.warn("解密用户 {} 的备用密码失败: {}", loginName, decryptException.getMessage());
+                        // 解密失败，继续后续的异常处理
+                    }
+                }
+
+                // 如果备用密码验证也失败，抛出AD域连接异常的消息
+                throw new RuntimeException("AD域连接异常，请检查账号密码或联系IT");
+            } else {
+//                 重新抛出"用户不存在"的异常，让上层处理
+                throw e;
+            }
         }
         return null;
     }
@@ -453,8 +453,8 @@ public class SysLadpServiceImpl implements SysLadpService {
                 toUpdate.size(), toInsert.size(), toDelete.size());
         //新增代码
 
-        // 更新user表： XJU1CS,TII2CS,YSG1CNG,YIL2CS,PEV2CS,HWE1CS,NYO2CC -> role = 1 (加if条件,存在时才进行修改)
-        String[] arr = {"XJU1CS", "TII2CS", "YSG1CNG", "YIL2CS", "PEV2CS", "HWE1CS", "NYO2CC"};
+        // 更新user表： JIP1CS,TII2CS,YSG1CNG,YIL2CS,PEV2CS,HWE1CS,NYO2CC -> role = 1 (加if条件,存在时才进行修改)
+        String[] arr = {"JIP1CS", "TII2CS", "YSG1CNG", "YIL2CS", "PEV2CS", "HWE1CS", "NYO2CC"};
         for(String singleArr : arr){
             SysUserModel user4Approver = sysUserMapper.getUserInfoByUserName(singleArr);
             // 用户非空时role=1(admin权限)
