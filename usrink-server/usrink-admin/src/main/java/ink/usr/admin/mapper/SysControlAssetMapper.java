@@ -12,14 +12,13 @@ import java.util.Map;
 @Mapper
 public interface SysControlAssetMapper {
 
-    List<SysControlBillListVO> getCoputerAssetList(SysControlModel sysControlModel);
-
     /**
      * 查询电脑资产列表
-     * @param sysControlDTO 查询条件
-     * @return 资产列表
+     * @param sysControlModel
+     * @return
      */
-    List<SysControlBillListVO> selectSysControlAssetList(SysControlDTO sysControlDTO);
+    List<SysControlBillListVO> getCoputerAssetList(SysControlModel sysControlModel);
+
 
     /**
      * 批量更新IFRS数据

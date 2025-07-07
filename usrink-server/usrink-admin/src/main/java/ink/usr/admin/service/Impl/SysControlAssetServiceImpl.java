@@ -63,22 +63,19 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
         double tenPercent = asset.getPrice() * 0.1;
         asset.setTenPercentPrice(tenPercent);
 
-        // 2. 计算 PRC 残值 (直接使用 prcAllResidualValue)
-        asset.setPrcResidualValue(asset.getPrcAllResidualValue());
-
-        // 3. 计算 IFRS 残值 (直接使用 ifrsAllResidualValue)
-        asset.setIfrsResidualValue(asset.getIfrsAllResidualValue());
-
-        // 4. 计算转卖价（取 PRC残值 和 价格10% 中的较大值）
-        asset.setSellPrice(Math.max(asset.getPrcResidualValue(), tenPercent));
-
-        // 5. 计算WBS价值占比
+        // 2. 计算WBS价值占比
         if (asset.getIfrsValue() > 0) {
             double percent = (asset.getPrice() / asset.getIfrsValue()) * 100;
+
             asset.setWbsPercent(String.format("%.2f%%", percent));
         } else {
             asset.setWbsPercent("0.00%");
         }
+        asset.setPrcResidualValue(asset.getPrcAllResidualValue() * (asset.getPrice() / asset.getIfrsValue()));
+        asset.setIfrsResidualValue(asset.getIfrsAllResidualValue() * (asset.getPrice() / asset.getIfrsValue()));
+        // 3. 计算转卖价（取 PRC残值 和 价格10% 中的较大值）
+        asset.setSellPrice(Math.max(asset.getPrcResidualValue(), tenPercent));
+
     }
 
     @Override

@@ -27,7 +27,7 @@
             COALESCE(u.department, c.department) as department,
             COALESCE(u.phone, c.telephone) as telephone,
             COALESCE(u.costCenter, c.costCenter) as costCenter,
-            COALESCE(u.company, c.company) as company
+            c.company as company
         from sys_control c
         left join sys_user u on c.ntAccount = u.userName and u.status = 0
         <where>
@@ -38,7 +38,7 @@
             <if test="pcStatus!=null and pcStatus!=''">AND c.pcStatus = #{pcStatus}</if>
             <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(c.lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
             <if test="ntAccount!=null and ntAccount!=''">AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
-            <if test="company!=null and company!=''">AND (u.company = #{company} OR c.company = #{company})</if>
+            <if test="company!=null and company!=''">AND c.company = #{company}</if>
         </where>
         Limit #{pageNum}, #{pageSize}
     </select>
@@ -242,7 +242,7 @@
             COALESCE(u.department, c.department) as department,
             COALESCE(u.phone, c.telephone) as telephone,
             COALESCE(u.costCenter, c.costCenter) as costCenter,
-            COALESCE(u.company, c.company) as company
+            c.company as company
         FROM sys_control c
         LEFT JOIN sys_user u ON c.ntAccount = u.userName AND u.status = 0
         <where>
@@ -271,7 +271,7 @@
 
             <!-- 5. company 非空时匹配 -->
             <if test="company != null and company != ''">
-                AND (LOWER(u.company) LIKE CONCAT('%', LOWER(#{company}), '%') OR LOWER(c.company) LIKE CONCAT('%', LOWER(#{company}), '%'))
+                AND (LOWER(c.company) LIKE CONCAT('%', LOWER(#{company}), '%'))
             </if>
 
             <!-- 6. 固定条件：只查询状态为 "To be assigned" 的电脑 -->

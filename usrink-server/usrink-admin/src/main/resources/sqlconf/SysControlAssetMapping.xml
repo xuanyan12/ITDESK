@@ -14,7 +14,7 @@
         c.department,
         c.wbsNum,
         CAST(c.price AS DECIMAL(10,2)) as price,
-        c.costCenter,
+        i.cost_center as costCenter,
         CAST(i.acquis_val AS DECIMAL(10,2)) as ifrsValue,
         CAST(i.book_val AS DECIMAL(10,2)) as ifrsAllResidualValue,
         CAST(p.book_val AS DECIMAL(10,2)) as prcAllResidualValue
@@ -35,34 +35,6 @@
                 AND LOWER(c.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')
             </if>
         </where>
-    </select>
-
-    <!-- 查询电脑资产列表 -->
-    <select id="selectSysControlAssetList" resultType="ink.usr.admin.dao.VO.SysControlBillListVO">
-        SELECT 
-            a.id,
-            a.asset,
-            a.cost_center,
-            a.capitalized_on,
-            a.wbs_element,
-            a.asset_class,
-            a.currency,
-            a.acquis_val,
-            a.accum_dep,
-            a.book_val
-        FROM sys_control_asset a
-        <where>
-            <if test="asset != null and asset != ''">
-                AND a.asset LIKE CONCAT('%', #{asset}, '%')
-            </if>
-            <if test="costCenter != null and costCenter != ''">
-                AND a.cost_center LIKE CONCAT('%', #{costCenter}, '%')
-            </if>
-            <if test="wbsElement != null and wbsElement != ''">
-                AND a.wbs_element LIKE CONCAT('%', #{wbsElement}, '%')
-            </if>
-        </where>
-        ORDER BY a.asset ASC
     </select>
 
     <!-- 批量更新IFRS数据 -->

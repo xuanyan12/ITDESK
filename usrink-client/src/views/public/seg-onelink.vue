@@ -121,6 +121,13 @@
           </div>
         </div>
         
+        <!-- AI助手按钮 - 机器人图标 -->
+        <div class="ai-assistant-wrapper" :class="{ 'hide-ai-assistant': isScrolled }">
+          <button class="ai-assistant-button" @click="openDifyModal" title="AI知识库助手">
+            <i class="fas fa-robot"></i>
+          </button>
+        </div>
+        
         <!-- Favorites icon button - now next to search box -->
         <div class="favorites-wrapper" ref="favoritesWrapper" :class="{ 'hide-favorites': isScrolled }">
           <button class="my-favorites-button" @click="toggleFavoritesDropdown">
@@ -260,6 +267,30 @@
         <div class="copyright">© 2025 SEG IT 部门. 保留所有权利</div>
       </div>
     </div>
+    
+    <!-- Dify工作流模态框 -->
+    <div class="dify-modal" v-if="showDifyModal" @click="closeDifyModal">
+      <div class="dify-modal-content" @click.stop>
+        <div class="dify-modal-header">
+          <h3>
+            <i :class="currentDifySystem?.icon"></i>
+            {{ currentDifySystem?.name }}
+          </h3>
+          <button class="dify-close-btn" @click="closeDifyModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="dify-modal-body">
+          <iframe
+            v-if="currentDifySystem"
+            :src="currentDifySystem.url"
+            style="width: 100%; height: 100%; border: none;"
+            frameborder="0"
+            allow="microphone">
+          </iframe>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -286,6 +317,9 @@ export default {
       expandedCategory: null, // 当前展开的分类
       isDetailView: false, // 是否在详情视图
       originalViewport: null, // 保存原来的viewport设置
+      // Dify模态框相关
+      showDifyModal: false,
+      currentDifySystem: null,
       // 数据统计相关
       sessionId: null,
       flowerColors: [
@@ -578,6 +612,7 @@ export default {
     window.addEventListener('resize', this.handleResize)
     window.addEventListener('scroll', this.handleScroll)
     document.addEventListener('click', this.handleOutsideClick)
+    document.addEventListener('keydown', this.handleEscKey)
     
     // 不再监听页面离开事件，取消停留时间统计
   },
@@ -589,6 +624,7 @@ export default {
     window.removeEventListener('resize', this.handleResize)
     window.removeEventListener('scroll', this.handleScroll)
     document.removeEventListener('click', this.handleOutsideClick)
+    document.removeEventListener('keydown', this.handleEscKey)
     
     // 不再需要移除页面离开事件监听器
     
@@ -860,6 +896,32 @@ export default {
       };
       
       return iconMap[category] || 'fas fa-folder';
+    },
+    
+    // Dify模态框处理方法
+    openDifyModal() {
+      // 固定的Dify系统配置
+      this.currentDifySystem = {
+        name: 'AI知识库助手',
+        icon: 'fas fa-robot',
+        url: 'https://udify.app/chatbot/ZDGkYwcl7GjNGsMo'
+      };
+      this.showDifyModal = true;
+      // 防止背景滚动
+      document.body.style.overflow = 'hidden';
+    },
+    
+    closeDifyModal() {
+      this.showDifyModal = false;
+      this.currentDifySystem = null;
+      // 恢复背景滚动
+      document.body.style.overflow = 'auto';
+    },
+    
+    handleEscKey(event) {
+      if (event.key === 'Escape' && this.showDifyModal) {
+        this.closeDifyModal();
+      }
     },
     // Favorites management
     toggleFavoritesDropdown() {
@@ -1167,6 +1229,7 @@ export default {
   z-index: 20;
   display: flex;
   align-items: center;
+  gap: 15px;
 }
 
 .search-box {
@@ -1289,6 +1352,7 @@ export default {
     margin-bottom: 20px;
     display: flex;
     justify-content: center;
+    gap: 12px;
   }
   
   .search-box {
@@ -1306,6 +1370,12 @@ export default {
     left: 50%;
     transform: translateX(-50%);
     width: calc(100% - 40px);
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container {
+    gap: 10px;
   }
 }
 
@@ -2197,13 +2267,13 @@ export default {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   padding: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 15px rgba(0, 83, 137, 0.3);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -2213,7 +2283,8 @@ export default {
 }
 
 .my-favorites-button:hover {
-  box-shadow: 0 5px 20px rgba(0, 83, 137, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 83, 137, 0.4);
 }
 
 /* Favorites dropdown */
@@ -2320,14 +2391,10 @@ export default {
 
 /* Responsive adjustments for favorites */
 @media (max-width: 768px) {
-  .favorites-wrapper {
-    margin-left: 8px;
-  }
-  
   .my-favorites-button {
-    width: 34px;
-    height: 34px;
-    font-size: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
   }
   
   .favorites-dropdown {
@@ -2336,14 +2403,10 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .favorites-wrapper {
-    margin-left: 5px;
-  }
-  
   .my-favorites-button {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
   
   .favorites-dropdown {
@@ -2727,6 +2790,247 @@ export default {
   
   .expanded-system-description {
     font-size: 12px;
+  }
+}
+
+/* Dify模态框样式 */
+.dify-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dify-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  height: 85%;
+  max-width: 1200px;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dify-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #005389 0%, #029165 100%);
+  color: white;
+}
+
+.dify-modal-header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dify-modal-header h3 i {
+  font-size: 20px;
+}
+
+.dify-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.dify-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.dify-modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.dify-modal-body iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .dify-modal-content {
+    width: 95%;
+    height: 90%;
+    margin: 20px;
+  }
+  
+  .dify-modal-header {
+    padding: 16px 20px;
+  }
+  
+  .dify-modal-header h3 {
+    font-size: 20px;
+  }
+}
+
+/* 平板设备 */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .dify-modal-content {
+    width: 85%;
+    height: 80%;
+  }
+}
+
+/* 超小屏幕 */
+@media (max-width: 480px) {
+  .dify-modal-content {
+    width: 98%;
+    height: 95%;
+    margin: 10px;
+  }
+  
+  .dify-modal-header {
+    padding: 12px 16px;
+  }
+  
+  .dify-modal-header h3 {
+    font-size: 18px;
+    gap: 8px;
+  }
+  
+  .dify-close-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+}
+
+/* AI助手机器人按钮样式 */
+.ai-assistant-wrapper {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ai-assistant-wrapper.hide-ai-assistant {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+}
+
+.ai-assistant-button {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #005389, #029165);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 83, 137, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-assistant-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.ai-assistant-button:hover::before {
+  left: 100%;
+}
+
+.ai-assistant-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 83, 137, 0.4);
+  background: linear-gradient(135deg, #0277BD, #00ACC1);
+}
+
+.ai-assistant-button:active {
+  transform: scale(0.95);
+}
+
+.ai-assistant-button i {
+  animation: robotPulse 2s infinite ease-in-out;
+}
+
+@keyframes robotPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .ai-assistant-button {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-assistant-button {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
   }
 }
 </style> 
