@@ -35,6 +35,7 @@
         <poi.version>5.2.3</poi.version>
         <poi-ooxml.version>5.2.3</poi-ooxml.version>
         <springdoc.version>1.7.0</springdoc.version>
+        <commons-pool2.version>2.11.1</commons-pool2.version>
     </properties>
 
     <!-- 仓库 -->

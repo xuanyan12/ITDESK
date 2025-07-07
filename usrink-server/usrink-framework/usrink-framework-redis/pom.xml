@@ -12,4 +12,30 @@
     <artifactId>usrink-framework-redis</artifactId>
     <description>Redis模块，提供Redis的配置，操作类，多数据源等，根据需要导入</description>
 
+    <dependencies>
+        <!-- Spring Boot Redis Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Redis连接池 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+
+        <!-- 可选：如果需要使用JSON序列化 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- 依赖common-core模块 -->
+        <dependency>
+            <groupId>ink.usr</groupId>
+            <artifactId>usrink-common-core</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

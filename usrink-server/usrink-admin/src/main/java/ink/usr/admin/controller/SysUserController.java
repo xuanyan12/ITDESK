@@ -41,6 +41,9 @@ public class SysUserController {
 
     @Autowired
     private ink.usr.admin.config.EmailConfig emailConfig;
+    
+    @Autowired
+    private ink.usr.admin.service.ITempPasswordService tempPasswordService;
 
     // 文件上传路径
     @Value("${file.upload.path}")
@@ -305,31 +308,14 @@ public class SysUserController {
         
         log.info("正在处理获取临时密码请求，用户名: {}", userName);
         
-        // 检查用户是否存在
-        SysUserModel sysUserModel = sysUserService.checkUserNameUnique(userName);
-        if (sysUserModel == null) {
-            return Res.error("该用户不存在，请联系IT进行处理");
+        // 使用新的临时密码服务
+        String result = tempPasswordService.generateAndSendTempPassword(userName);
+        
+        // 根据返回结果判断是否成功
+        if ("临时密码已发送到您的邮箱，请查收".equals(result)) {
+            return Res.success(result);
+        } else {
+            return Res.error(result);
         }
-        
-        // 验证邮箱是否存在
-        if (StringUtil.isEmpty(sysUserModel.getEmail())) {
-            return Res.error("该用户未设置邮箱，请联系IT进行处理");
-        }
-        
-        // 解密UUID密码用于邮件发送
-        String decryptedPassword;
-        try {
-            decryptedPassword = AESUtil.decrypt(sysUserModel.getUserPassword());
-        } catch (Exception e) {
-            log.error("解密用户密码失败，用户名: {}", userName, e);
-            return Res.error("获取临时密码失败，请联系IT进行处理");
-        }
-        
-        // 发送邮件
-        String emailSubject = emailConfig.buildTempPasswordEmailSubject();
-        String emailContent = emailConfig.buildTempPasswordEmailContent(userName, decryptedPassword);
-        emailConfig.sendMail(sysUserModel.getEmail(), emailSubject, emailContent);
-        
-        return Res.success("临时密码已发送到您的邮箱，请查收");
     }
 }

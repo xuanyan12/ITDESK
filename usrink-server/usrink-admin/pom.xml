@@ -56,6 +56,11 @@
             <artifactId>usrink-framework-mysql</artifactId>
         </dependency>
 
+        <!-- Redis模块 -->
+        <dependency>
+            <groupId>ink.usr</groupId>
+            <artifactId>usrink-framework-redis</artifactId>
+        </dependency>
         <!-- Shiro模块 -->
         <dependency>
             <groupId>ink.usr</groupId>
