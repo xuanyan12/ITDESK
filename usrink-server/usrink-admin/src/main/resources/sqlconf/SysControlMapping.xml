@@ -78,34 +78,34 @@
             <if test="modelOrVersion!=null and modelOrVersion!=''">
                 modelOrVersion = #{modelOrVersion},
             </if>
-            <if test="ntAccount!=null and ntAccount!=''">
+            <if test="ntAccount!=null">
                 ntAccount = #{ntAccount},
             </if>
             <if test="pcClass!=null and pcClass!=''">
                 pcClass = #{pcClass},
             </if>
-            <if test="comment!=null and comment!=''">
+            <if test="comment!=null">
                 comment = #{comment},
             </if>
-            <if test="lastName!=null and lastName!=''">
+            <if test="lastName!=null">
                 lastName = #{lastName},
             </if>
-            <if test="firstName!=null and firstName!=''">
+            <if test="firstName!=null">
                 firstName = #{firstName},
             </if>
-            <if test="emailAddress!=null and emailAddress!=''">
+            <if test="emailAddress!=null">
                 emailAddress = #{emailAddress},
             </if>
-            <if test="department!=null and department!=''">
+            <if test="department!=null">
                 department = #{department},
             </if>
-            <if test="telephone!=null and telephone!=''">
+            <if test="telephone!=null">
                 telephone = #{telephone},
             </if>
-            <if test="costCenter!=null and costCenter!=''">
+            <if test="costCenter!=null">
                 costCenter = #{costCenter},
             </if>
-            <if test="lifeCycleStart!=null and lifeCycleStart!=''">
+            <if test="lifeCycleStart!=null">
                 lifeCycleStart = #{lifeCycleStart},
             </if>
             <if test="yrsToDay!=null and yrsToDay!=''">
@@ -289,15 +289,15 @@
             <if test="deviceClass != null and deviceClass != ''">deviceClass,</if>
             <if test="manufacture != null and manufacture != ''">manufacture,</if>
             <if test="modelOrVersion != null and modelOrVersion != ''">modelOrVersion,</if>
-            <if test="ntAccount != null and ntAccount != ''">ntAccount,</if>
+            <if test="ntAccount != null">ntAccount,</if>
             <if test="pcClass != null and pcClass != ''">pcClass,</if>
-            <if test="comment != null and comment != ''">comment,</if>
-            <if test="firstName != null and firstName != ''">firstName,</if>
-            <if test="lastName != null and lastName != ''">lastName,</if>
-            <if test="emailAddress != null and emailAddress != ''">emailAddress,</if>
-            <if test="telephone != null and telephone != ''">telephone,</if>
-            <if test="department != null and department != ''">department,</if>
-            <if test="costCenter != null and costCenter != ''">costCenter,</if>
+            <if test="comment != null">comment,</if>
+            <if test="firstName != null">firstName,</if>
+            <if test="lastName != null">lastName,</if>
+            <if test="emailAddress != null">emailAddress,</if>
+            <if test="telephone != null">telephone,</if>
+            <if test="department != null">department,</if>
+            <if test="costCenter != null">costCenter,</if>
             <if test="lifeCycleStart != null and lifeCycleStart != ''">lifeCycleStart,</if>
             <if test="yrsToDay != null and yrsToDay != ''">yrsToDay,</if>
             <if test="cpu != null and cpu != ''">cpu,</if>
@@ -321,15 +321,15 @@
             <if test="deviceClass != null and deviceClass != ''">#{deviceClass},</if>
             <if test="manufacture != null and manufacture != ''">#{manufacture},</if>
             <if test="modelOrVersion != null and modelOrVersion != ''">#{modelOrVersion},</if>
-            <if test="ntAccount != null and ntAccount != ''">#{ntAccount},</if>
+            <if test="ntAccount != null">#{ntAccount},</if>
             <if test="pcClass != null and pcClass != ''">#{pcClass},</if>
-            <if test="comment != null and comment != ''">#{comment},</if>
-            <if test="firstName != null and firstName != ''">#{firstName},</if>
-            <if test="lastName != null and lastName != ''">#{lastName},</if>
-            <if test="emailAddress != null and emailAddress != ''">#{emailAddress},</if>
-            <if test="telephone != null and telephone != ''">#{telephone},</if>
-            <if test="department != null and department != ''">#{department},</if>
-            <if test="costCenter != null and costCenter != ''">#{costCenter},</if>
+            <if test="comment != null">#{comment},</if>
+            <if test="firstName != null">#{firstName},</if>
+            <if test="lastName != null">#{lastName},</if>
+            <if test="emailAddress != null">#{emailAddress},</if>
+            <if test="telephone != null">#{telephone},</if>
+            <if test="department != null">#{department},</if>
+            <if test="costCenter != null">#{costCenter},</if>
             <if test="lifeCycleStart != null and lifeCycleStart != ''">#{lifeCycleStart},</if>
             <if test="yrsToDay != null and yrsToDay != ''">#{yrsToDay},</if>
             <if test="cpu != null and cpu != ''">#{cpu},</if>

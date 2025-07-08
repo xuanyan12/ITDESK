@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.ArrayList;
 
 @Slf4j
 @Service
@@ -31,12 +32,28 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
 
     @Override
     public PageVO<SysControlBillListVO> selectSysControlAssetList(SysControlDTO sysControlDTO) {
+        // 预处理WBS号，如果包含逗号则设置到wbsNumList属性
+        if (sysControlDTO.getWbsNum() != null && sysControlDTO.getWbsNum().contains(",")) {
+            // 处理多个WBS号的情况
+            String[] wbsArray = sysControlDTO.getWbsNum().split(",");
+            List<String> wbsList = new ArrayList<>();
+            for (String wbs : wbsArray) {
+                String trimmedWbs = wbs.trim();
+                if (!trimmedWbs.isEmpty()) {
+                    wbsList.add(trimmedWbs);
+                }
+            }
+            sysControlDTO.setWbsNumList(wbsList);
+            // 清空原始的wbsNum，避免在XML中重复处理
+            sysControlDTO.setWbsNum(null);
+        }
+
         // 开启分页
         PageHelper.startPage(sysControlDTO.getPageNum(), sysControlDTO.getPageSize());
-        
+
         // 查询数据
         List<SysControlBillListVO> assetList = sysControlAssetMapper.getCoputerAssetList(sysControlDTO);
-        
+
         // 处理业务逻辑
         for (SysControlBillListVO asset : assetList) {
             calculateAssetValues(asset);
@@ -44,18 +61,19 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
 
         // 获取分页信息
         PageInfo<SysControlBillListVO> pageInfo = new PageInfo<>(assetList);
-        
+
         // 构建分页响应对象
         return PageVO.build(
-            pageInfo.getList(),
-            pageInfo.getTotal(),
-            pageInfo.getPageNum(),
-            pageInfo.getPageSize()
+                pageInfo.getList(),
+                pageInfo.getTotal(),
+                pageInfo.getPageNum(),
+                pageInfo.getPageSize()
         );
     }
 
     /**
      * 计算资产相关值
+     *
      * @param asset 资产对象
      */
     private void calculateAssetValues(SysControlBillListVO asset) {
@@ -199,10 +217,10 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
 
     private void validateHeaders(Map<String, Integer> headerMap) {
         List<String> requiredHeaders = Arrays.asList(
-            "Asset", "Cost Center", "Capitalized on", "WBS element", 
-            "Asset Class", "Currency", "Acquis.val.", "Accum.dep.", "Book val."
+                "Asset", "Cost Center", "Capitalized on", "WBS element",
+                "Asset Class", "Currency", "Acquis.val.", "Accum.dep.", "Book val."
         );
-        
+
         for (String header : requiredHeaders) {
             if (!headerMap.containsKey(header)) {
                 throw new BusinessException("Excel文件缺少必要的列：" + header);
@@ -218,7 +236,7 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
 
     private BigDecimal getCellValueAsDecimal(Cell cell) {
         if (cell == null) return BigDecimal.ZERO;
-        
+
         try {
             switch (cell.getCellType()) {
                 case NUMERIC:

@@ -31,8 +31,14 @@
             <if test="department != null and department != ''">
                 AND LOWER(c.department) LIKE CONCAT('%', LOWER(#{department}), '%')
             </if>
-            <if test="costCenter != null and costCenter != ''">
-                AND LOWER(c.costCenter) LIKE CONCAT('%', LOWER(#{costCenter}), '%')
+            <if test="wbsNum != null and wbsNum != ''">
+                AND LOWER(c.wbsNum) LIKE CONCAT('%', LOWER(#{wbsNum}), '%')
+            </if>
+            <if test="wbsNumList != null and wbsNumList.size() > 0">
+                AND c.wbsNum IN
+                <foreach collection="wbsNumList" item="wbs" open="(" close=")" separator=",">
+                    #{wbs}
+                </foreach>
             </if>
         </where>
         GROUP BY c.id, c.ciName, c.modelOrVersion, c.ntAccount, c.firstName, c.lastName, c.department, c.wbsNum, c.price

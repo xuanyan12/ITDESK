@@ -20,5 +20,7 @@ public class SysControlDTO extends SysControlModel {
     private String ciName;
     private String ntAccount;
     private String department;
-    private String costCenter;
+    private String wbsNum;
+    // WBS号列表，用于IN查询
+    private List<String> wbsNumList;
 }
