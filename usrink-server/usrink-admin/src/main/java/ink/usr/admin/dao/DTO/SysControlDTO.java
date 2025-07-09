@@ -23,4 +23,8 @@ public class SysControlDTO extends SysControlModel {
     private String wbsNum;
     // WBS号列表，用于IN查询
     private List<String> wbsNumList;
+    // NT账号列表，用于IN查询
+    private List<String> ntAccountList;
+    // 残值状态查询条件
+    private String residualValueStatus;
 }

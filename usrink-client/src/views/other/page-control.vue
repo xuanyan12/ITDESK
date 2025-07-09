@@ -467,6 +467,12 @@ const handleEditUserInput = (value) => {
         clearTimeout(editSearchTimeout.value);
     }
     
+    // 如果输入为空，清空所有相关用户信息
+    if (!value || value.trim() === '') {
+        clearUserInfo();
+        showEditUserResults.value = false;
+        return;
+    }
     // 设置新的定时器，用户停止输入500ms后执行搜索
     editSearchTimeout.value = setTimeout(() => {
         if (value && value.trim() !== '') {
@@ -477,6 +483,17 @@ const handleEditUserInput = (value) => {
     }, 500);
 };
 
+// 清空用户信息的函数
+const clearUserInfo = () => {
+    // 清空使用人相关信息
+    editPartForm.value.userName = '';
+    editPartForm.value.lastName = '';
+    editPartForm.value.firstName = '';
+    editPartForm.value.emailAddress = '';
+    editPartForm.value.telephone = '';
+    editPartForm.value.department = '';
+    editPartForm.value.costCenter = '';
+};
 // 处理编辑表单用户输入框失焦
 const handleEditUserBlur = () => {
     // 延迟关闭下拉框，以便用户能够点击下拉框中的选项

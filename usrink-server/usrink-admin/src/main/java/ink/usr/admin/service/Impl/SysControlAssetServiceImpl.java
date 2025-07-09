@@ -47,6 +47,22 @@ public class SysControlAssetServiceImpl implements SysControlAssetService {
             // 清空原始的wbsNum，避免在XML中重复处理
             sysControlDTO.setWbsNum(null);
         }
+        
+        // 预处理NT账号，如果包含逗号则设置到ntAccountList属性
+        if (sysControlDTO.getNtAccount() != null && sysControlDTO.getNtAccount().contains(",")) {
+            // 处理多个NT账号的情况
+            String[] ntArray = sysControlDTO.getNtAccount().split(",");
+            List<String> ntList = new ArrayList<>();
+            for (String nt : ntArray) {
+                String trimmedNt = nt.trim();
+                if (!trimmedNt.isEmpty()) {
+                    ntList.add(trimmedNt);
+                }
+            }
+            sysControlDTO.setNtAccountList(ntList);
+            // 清空原始的ntAccount，避免在XML中重复处理
+            sysControlDTO.setNtAccount(null);
+        }
 
         // 开启分页
         PageHelper.startPage(sysControlDTO.getPageNum(), sysControlDTO.getPageSize());

@@ -14,10 +14,10 @@
         c.department,
         c.wbsNum,
         CAST(c.price AS DECIMAL(10,2)) as price,
-        i.cost_center as costCenter,
-        CAST(i.acquis_val AS DECIMAL(10,2)) as ifrsValue,
-        CAST(i.book_val AS DECIMAL(10,2)) as ifrsAllResidualValue,
-        CAST(p.book_val AS DECIMAL(10,2)) as prcAllResidualValue
+        MAX(i.cost_center) as costCenter,
+        CAST(MAX(i.acquis_val) AS DECIMAL(10,2)) as ifrsValue,
+        CAST(MAX(i.book_val) AS DECIMAL(10,2)) as ifrsAllResidualValue,
+        CAST(MAX(p.book_val) AS DECIMAL(10,2)) as prcAllResidualValue
         FROM sys_control c
         LEFT JOIN sys_ifrs i ON c.wbsNum = i.wbs_element
         LEFT JOIN sys_prc p ON i.asset = p.asset
@@ -27,6 +27,12 @@
             </if>
             <if test="ntAccount != null and ntAccount != ''">
                 AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')
+            </if>
+            <if test="ntAccountList != null and ntAccountList.size() > 0">
+                AND c.ntAccount IN
+                <foreach collection="ntAccountList" item="nt" open="(" close=")" separator=",">
+                    #{nt}
+                </foreach>
             </if>
             <if test="department != null and department != ''">
                 AND LOWER(c.department) LIKE CONCAT('%', LOWER(#{department}), '%')
@@ -42,6 +48,21 @@
             </if>
         </where>
         GROUP BY c.id, c.ciName, c.modelOrVersion, c.ntAccount, c.firstName, c.lastName, c.department, c.wbsNum, c.price
+        <if test="residualValueStatus != null and residualValueStatus != ''">
+            HAVING 
+            <choose>
+                <when test="residualValueStatus == 'zero'">
+                    (CASE WHEN CAST(MAX(i.acquis_val) AS DECIMAL(10,2)) = 0 OR CAST(MAX(i.acquis_val) AS DECIMAL(10,2)) IS NULL THEN 0 
+                          ELSE CAST(MAX(i.book_val) AS DECIMAL(10,2)) * (CAST(c.price AS DECIMAL(10,2)) / CAST(MAX(i.acquis_val) AS DECIMAL(10,2))) 
+                     END) = 0
+                </when>
+                <when test="residualValueStatus == 'nonzero'">
+                    (CASE WHEN CAST(MAX(i.acquis_val) AS DECIMAL(10,2)) = 0 OR CAST(MAX(i.acquis_val) AS DECIMAL(10,2)) IS NULL THEN 0 
+                          ELSE CAST(MAX(i.book_val) AS DECIMAL(10,2)) * (CAST(c.price AS DECIMAL(10,2)) / CAST(MAX(i.acquis_val) AS DECIMAL(10,2))) 
+                     END) > 0
+                </when>
+            </choose>
+        </if>
     </select>
 
     <!-- 批量更新IFRS数据 -->
