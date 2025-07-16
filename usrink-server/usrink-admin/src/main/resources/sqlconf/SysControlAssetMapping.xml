@@ -10,8 +10,8 @@
         c.ciName,
         c.modelOrVersion,
         c.ntAccount,
-        CONCAT(c.firstName, ' ', c.lastName) as userName,
-        c.department,
+        CONCAT(c.lastName, ' ', c.firstName) as userName,
+        u.department,
         c.wbsNum,
         CAST(c.price AS DECIMAL(10,2)) as price,
         MAX(i.cost_center) as costCenter,
@@ -19,6 +19,7 @@
         CAST(MAX(i.book_val) AS DECIMAL(10,2)) as ifrsAllResidualValue,
         CAST(MAX(p.book_val) AS DECIMAL(10,2)) as prcAllResidualValue
         FROM sys_control c
+        LEFT JOIN sys_user u ON c.ntAccount = u.userName
         LEFT JOIN sys_ifrs i ON c.wbsNum = i.wbs_element
         LEFT JOIN sys_prc p ON i.asset = p.asset
         <where>

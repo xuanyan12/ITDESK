@@ -382,11 +382,13 @@ public class SysControlController {
                     List<SysControlModel> existingComputers = sysControlService.selectNonScrappedComputersByCiName(ciName);
                     
                     if (existingComputers != null && !existingComputers.isEmpty()) {
-                        // 存在记录，执行更新操作
+                        // 存在记录，执行更新操作 - 使用现有记录作为基础，只更新Excel中的非空字段
                         SysControlModel existingComputer = existingComputers.get(0);
-                        computerModel.setId(existingComputer.getId()); // 设置ID以便更新
                         
-                        boolean updateResult = sysControlService.updateSysControl(computerModel);
+                        // 将Excel中的非空字段更新到现有记录上
+                        updateExistingComputerWithExcelData(existingComputer, computerModel, headerIndexMap);
+                        
+                        boolean updateResult = sysControlService.updateSysControl(existingComputer);
                         if (updateResult) {
                             updateCount++;
                             log.info("第 {} 行: ciName={}, 更新成功", i + 1, ciName);
@@ -460,6 +462,101 @@ public class SysControlController {
         }
         
         return cellValue;
+    }
+
+    /**
+     * 将Excel中的非空字段更新到现有的数据库记录上
+     * @param existingComputer 数据库中的现有记录
+     * @param excelData Excel中读取的数据（只包含非空字段）
+     * @param headerIndexMap Excel表头到列索引的映射，用于检查某些字段是否在Excel中存在
+     */
+    private void updateExistingComputerWithExcelData(SysControlModel existingComputer, SysControlModel excelData, Map<String, Integer> headerIndexMap) {
+        // 只更新Excel中非空的字段
+        if (excelData.getPcStatus() != null && !excelData.getPcStatus().trim().isEmpty()) {
+            existingComputer.setPcStatus(excelData.getPcStatus());
+        }
+        if (excelData.getSerialNumber() != null && !excelData.getSerialNumber().trim().isEmpty()) {
+            existingComputer.setSerialNumber(excelData.getSerialNumber());
+        }
+        if (excelData.getDeviceClass() != null && !excelData.getDeviceClass().trim().isEmpty()) {
+            existingComputer.setDeviceClass(excelData.getDeviceClass());
+        }
+        if (excelData.getManufacture() != null && !excelData.getManufacture().trim().isEmpty()) {
+            existingComputer.setManufacture(excelData.getManufacture());
+        }
+        if (excelData.getModelOrVersion() != null && !excelData.getModelOrVersion().trim().isEmpty()) {
+            existingComputer.setModelOrVersion(excelData.getModelOrVersion());
+        }
+        if (excelData.getNtAccount() != null && !excelData.getNtAccount().trim().isEmpty()) {
+            existingComputer.setNtAccount(excelData.getNtAccount());
+        }
+        if (excelData.getPcClass() != null && !excelData.getPcClass().trim().isEmpty()) {
+            existingComputer.setPcClass(excelData.getPcClass());
+        }
+        if (excelData.getComment() != null && !excelData.getComment().trim().isEmpty()) {
+            existingComputer.setComment(excelData.getComment());
+        }
+        if (excelData.getLastName() != null && !excelData.getLastName().trim().isEmpty()) {
+            existingComputer.setLastName(excelData.getLastName());
+        }
+        if (excelData.getFirstName() != null && !excelData.getFirstName().trim().isEmpty()) {
+            existingComputer.setFirstName(excelData.getFirstName());
+        }
+        if (excelData.getEmailAddress() != null && !excelData.getEmailAddress().trim().isEmpty()) {
+            existingComputer.setEmailAddress(excelData.getEmailAddress());
+        }
+        if (excelData.getDepartment() != null && !excelData.getDepartment().trim().isEmpty()) {
+            existingComputer.setDepartment(excelData.getDepartment());
+        }
+        if (excelData.getTelephone() != null && !excelData.getTelephone().trim().isEmpty()) {
+            existingComputer.setTelephone(excelData.getTelephone());
+        }
+        if (excelData.getCostCenter() != null && !excelData.getCostCenter().trim().isEmpty()) {
+            existingComputer.setCostCenter(excelData.getCostCenter());
+        }
+        if (excelData.getLifeCycleStart() != null && !excelData.getLifeCycleStart().trim().isEmpty()) {
+            existingComputer.setLifeCycleStart(excelData.getLifeCycleStart());
+        }
+        if (excelData.getYrsToDay() != null && !excelData.getYrsToDay().trim().isEmpty()) {
+            existingComputer.setYrsToDay(excelData.getYrsToDay());
+        }
+        if (excelData.getCpu() != null && !excelData.getCpu().trim().isEmpty()) {
+            existingComputer.setCpu(excelData.getCpu());
+        }
+        if (excelData.getMemory() != null && !excelData.getMemory().trim().isEmpty()) {
+            existingComputer.setMemory(excelData.getMemory());
+        }
+        if (excelData.getDisk() != null && !excelData.getDisk().trim().isEmpty()) {
+            existingComputer.setDisk(excelData.getDisk());
+        }
+        if (excelData.getGraphic() != null && !excelData.getGraphic().trim().isEmpty()) {
+            existingComputer.setGraphic(excelData.getGraphic());
+        }
+        if (excelData.getHardwareStatus() != null && !excelData.getHardwareStatus().trim().isEmpty()) {
+            existingComputer.setHardwareStatus(excelData.getHardwareStatus());
+        }
+        if (excelData.getPr() != null && !excelData.getPr().trim().isEmpty()) {
+            existingComputer.setPr(excelData.getPr());
+        }
+        if (excelData.getPo() != null && !excelData.getPo().trim().isEmpty()) {
+            existingComputer.setPo(excelData.getPo());
+        }
+        if (excelData.getVendor() != null && !excelData.getVendor().trim().isEmpty()) {
+            existingComputer.setVendor(excelData.getVendor());
+        }
+        if (excelData.getCompany() != null && !excelData.getCompany().trim().isEmpty()) {
+            existingComputer.setCompany(excelData.getCompany());
+        }
+        if (excelData.getWbsNum() != null && !excelData.getWbsNum().trim().isEmpty()) {
+            existingComputer.setWbsNum(excelData.getWbsNum());
+        }
+        if (excelData.getPrice() != null && !excelData.getPrice().trim().isEmpty()) {
+            existingComputer.setPrice(excelData.getPrice());
+        }
+        // temp字段是int类型，只有当Excel中包含temp相关列时才更新
+        if (headerIndexMap.containsKey("temp") || headerIndexMap.containsKey("临时分配")) {
+            existingComputer.setTemp(excelData.getTemp());
+        }
     }
 
     /**
