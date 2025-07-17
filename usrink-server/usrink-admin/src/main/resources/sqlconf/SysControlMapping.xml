@@ -36,7 +36,13 @@
             <if test="pcClass!=null and pcClass!=''">AND c.pcClass = #{pcClass}</if>
             <if test="department!=null and department!=''">AND (LOWER(u.department) LIKE CONCAT('%', LOWER(#{department}), '%') OR LOWER(c.department) LIKE CONCAT('%', LOWER(#{department}), '%'))</if>
             <if test="pcStatus!=null and pcStatus!=''">AND c.pcStatus = #{pcStatus}</if>
-            <if test="lifeCycleStart!=null and lifeCycleStart!=''">AND LOWER(c.lifecycleStart) LIKE CONCAT('%', LOWER(#{lifeCycleStart}), '%')</if>
+
+            <if test="lifeCycleStart != null and lifeCycleStart != ''">
+                AND c.lifeCycleStart &gt;= #{lifeCycleStart}
+            </if>
+            <if test="lifeCycleEnd != null and lifeCycleEnd != ''">
+                AND c.lifeCycleStart &lt;= #{lifeCycleEnd}
+            </if>
             <if test="ntAccount!=null and ntAccount!=''">AND LOWER(c.ntAccount) LIKE CONCAT('%', LOWER(#{ntAccount}), '%')</if>
             <if test="company!=null and company!=''">AND c.company = #{company}</if>
         </where>

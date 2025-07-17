@@ -121,9 +121,10 @@
           </div>
         </div>
         
-        <!-- AI助手按钮 - 机器人图标 -->
-        <div class="ai-assistant-wrapper" :class="{ 'hide-ai-assistant': isScrolled }">
-          <button class="ai-assistant-button" @click="openDifyModal" title="AI知识库助手">
+        <!-- AI助手按钮组 -->
+        <div class="ai-assistant-group" :class="{ 'hide-ai-assistant': isScrolled }">
+          <!-- AI助手弹窗按钮 -->
+          <button class="ai-assistant-button" @click="openDifyModal" title="SEG-AIBot">
             <i class="fas fa-robot"></i>
           </button>
         </div>
@@ -272,10 +273,7 @@
     <div class="dify-modal" v-if="showDifyModal" @click="closeDifyModal">
       <div class="dify-modal-content" @click.stop>
         <div class="dify-modal-header">
-          <h3>
-            <i :class="currentDifySystem?.icon"></i>
-            {{ currentDifySystem?.name }}
-          </h3>
+          <div></div>
           <button class="dify-close-btn" @click="closeDifyModal">
             <i class="fas fa-times"></i>
           </button>
@@ -902,9 +900,9 @@ export default {
     openDifyModal() {
       // 固定的Dify系统配置
       this.currentDifySystem = {
-        name: 'AI知识库助手',
+        name: 'SEG-AIBot',
         icon: 'fas fa-robot',
-        url: 'https://udify.app/chatbot/ZDGkYwcl7GjNGsMo'
+        url: 'http://csd22602:8089/chat/6e55ev5WVAzUrj3d'
       };
       this.showDifyModal = true;
       // 防止背景滚动
@@ -2821,10 +2819,10 @@ export default {
 .dify-modal-content {
   background: white;
   border-radius: 12px;
-  width: 90%;
-  height: 85%;
-  max-width: 1200px;
-  max-height: 800px;
+  width: 98%;
+  height: 95%;
+  max-width: 1600px;
+  max-height: 1000px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -2847,7 +2845,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 6px 16px;
   border-bottom: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #005389 0%, #029165 100%);
   color: white;
@@ -2903,13 +2901,13 @@ export default {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .dify-modal-content {
-    width: 95%;
-    height: 90%;
-    margin: 20px;
+    width: 99%;
+    height: 97%;
+    margin: 5px;
   }
   
   .dify-modal-header {
-    padding: 16px 20px;
+    padding: 10px 16px;
   }
   
   .dify-modal-header h3 {
@@ -2920,21 +2918,21 @@ export default {
 /* 平板设备 */
 @media (max-width: 1024px) and (min-width: 769px) {
   .dify-modal-content {
-    width: 85%;
-    height: 80%;
+    width: 96%;
+    height: 92%;
   }
 }
 
 /* 超小屏幕 */
 @media (max-width: 480px) {
   .dify-modal-content {
-    width: 98%;
-    height: 95%;
-    margin: 10px;
+    width: 100%;
+    height: 99%;
+    margin: 2px;
   }
   
   .dify-modal-header {
-    padding: 12px 16px;
+    padding: 8px 12px;
   }
   
   .dify-modal-header h3 {
@@ -2949,13 +2947,14 @@ export default {
   }
 }
 
-/* AI助手机器人按钮样式 */
-.ai-assistant-wrapper {
+/* AI助手按钮组样式 */
+.ai-assistant-group {
   position: relative;
+  display: flex;
   transition: all 0.3s ease;
 }
 
-.ai-assistant-wrapper.hide-ai-assistant {
+.ai-assistant-group.hide-ai-assistant {
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
@@ -3007,6 +3006,8 @@ export default {
 .ai-assistant-button i {
   animation: robotPulse 2s infinite ease-in-out;
 }
+
+
 
 @keyframes robotPulse {
   0%, 100% {
