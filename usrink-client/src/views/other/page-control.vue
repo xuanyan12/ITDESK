@@ -27,6 +27,7 @@ const queryForm = ref({
     telephone: '',
     costCenter: '',
     lifeCycleStart:'',
+    lifeCycleEnd:'',
     yrsToDay:'',
     cpu: '',
     memory: '',
@@ -185,6 +186,9 @@ const langText = computed(() => {
         department: currentLang.value === 'zh' ? '所属部门' : 'Department',
         computerStatus: currentLang.value === 'zh' ? '电脑状态' : 'Computer Status',
         manufactureDate: currentLang.value === 'zh' ? '出厂时间' : 'Manufacture Date',
+        startDate: currentLang.value === 'zh' ? '开始日期' : 'Start Date',
+        endDate: currentLang.value === 'zh' ? '结束日期' : 'End Date',
+        selectDate: currentLang.value === 'zh' ? '选择日期' : 'Select Date',
         costCenter: currentLang.value === 'zh' ? '成本中心' : 'Cost Center',
         search: currentLang.value === 'zh' ? '查询' : 'Search',
         reset: currentLang.value === 'zh' ? '重置' : 'Reset',
@@ -428,6 +432,7 @@ const resetForm = () => {
         telephone: '',
         costCenter: '',
         lifeCycleStart:'',
+        lifeCycleEnd:'',
         yrsToDay:'',
         cpu: '',
         memory: '',
@@ -621,11 +626,17 @@ const selectPartListData = () => {
     }).then(res => {
         // 从响应数据中获取 sysControlModelLists 和 total
         partList.value = res.data.sysControlModelLists || [];
-        total.value = res.data.total;
-        pageNum.value = res.data.pageNum;
+        // 确保 total 是数字类型
+        total.value = parseInt(res.data.total) || 0;
+        console.log('Total records:', total.value);
+        // 后端返回的是偏移量，需要转换为页码
+        // pageNum.value = res.data.pageNum;
+        // 使用当前查询表单中的页码，而不是后端返回的偏移量
+        pageNum.value = queryForm.value.pageNum;
         pageSize.value = res.data.pageSize;
     }).catch(err => {
         console.error(err);
+        total.value = 0; // 出错时重置 total
     }).finally(() => {
         loading.value = false;
     });
@@ -633,12 +644,25 @@ const selectPartListData = () => {
 
 
 /**
- * 分页查询
+ * 分页查询 - 页码变化
  * @param val 当前页码
  */
 const handleCurrentChange = (val) => {
     queryForm.value.pageNum = val
     pageNum.value = val
+    selectPartListData()
+}
+
+/**
+ * 分页查询 - 每页条数变化
+ * @param val 每页条数
+ */
+const handleSizeChange = (val) => {
+    queryForm.value.pageSize = val
+    pageSize.value = val
+    // 切换每页条数时，重置为第一页
+    queryForm.value.pageNum = 1
+    pageNum.value = 1
     selectPartListData()
 }
 
@@ -1335,16 +1359,31 @@ const loadDepartmentAndCostCenterOptions = () => {
                     </el-select>
                 </el-form-item>
                 <el-form-item :label="langText.manufactureDate" class="form-item">
-                    <el-date-picker
-                        v-model="queryForm.lifeCycleStart"
-                        type="date"
-                        :placeholder="langText.selectDate"
-                        format="YYYY-MM-DD"
-                        value-format="YYYY-MM-DD"
-                        class="input-field"
-                        :clearable="true"
-                        @change="confirmUserChange">
-                    </el-date-picker>
+                    <div style="display: flex; align-items: center;">
+                        <el-date-picker
+                            v-model="queryForm.lifeCycleStart"
+                            type="date"
+                            :placeholder="langText.startDate"
+                            format="YYYY-MM-DD"
+                            value-format="YYYY-MM-DD"
+                            class="input-field"
+                            style="width: 160px;"
+                            :clearable="true"
+                            @change="confirmUserChange">
+                        </el-date-picker>
+                        <span style="margin: 0 5px;">-</span>
+                        <el-date-picker
+                            v-model="queryForm.lifeCycleEnd"
+                            type="date"
+                            :placeholder="langText.endDate"
+                            format="YYYY-MM-DD"
+                            value-format="YYYY-MM-DD"
+                            class="input-field"
+                            style="width: 160px;"
+                            :clearable="true"
+                            @change="confirmUserChange">
+                        </el-date-picker>
+                    </div>
                 </el-form-item>
                 <el-form-item :label="langText.costCenter" class="form-item">
                     <el-select v-model="queryForm.costCenter" :placeholder="langText.enterCostCenter" class="input-field" filterable clearable>
@@ -1641,10 +1680,14 @@ const loadDepartmentAndCostCenterOptions = () => {
 
         <!-- 分页 -->
         <el-pagination
-            :current-page="pageNum.value"
+            :current-page="pageNum"
             :page-size="pageSize"
             :total="total"
-            @current-change="handleCurrentChange">
+            layout="total, sizes, prev, pager, next, jumper"
+            :page-sizes="[10, 20, 50, 100]"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            style="margin-top: 15px; justify-content: flex-start;">
         </el-pagination>
         
         <!-- 待删 -->

@@ -1,9 +1,7 @@
 package ink.usr.admin.controller;
 
 import com.github.pagehelper.Page;
-import ink.usr.admin.dao.DTO.SysControlAssignDTO;
-import ink.usr.admin.dao.DTO.SysControlDTO;
-import ink.usr.admin.dao.DTO.SysControlRecordDTO;
+import ink.usr.admin.dao.DTO.*;
 import ink.usr.admin.dao.VO.SysControlAssignVO;
 import ink.usr.admin.dao.VO.SysControlBillListVO;
 import ink.usr.admin.dao.VO.SysControlVO;
@@ -26,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ink.usr.admin.dao.DTO.SysControlRecordQueryDTO;
 
 import java.awt.*;
 import java.time.LocalDateTime;

@@ -121,13 +121,7 @@
           </div>
         </div>
         
-        <!-- AI助手按钮组 -->
-        <div class="ai-assistant-group" :class="{ 'hide-ai-assistant': isScrolled }">
-          <!-- AI助手弹窗按钮 -->
-          <button class="ai-assistant-button" @click="openDifyModal" title="SEG-AIBot">
-            <i class="fas fa-robot"></i>
-          </button>
-        </div>
+
         
         <!-- Favorites icon button - now next to search box -->
         <div class="favorites-wrapper" ref="favoritesWrapper" :class="{ 'hide-favorites': isScrolled }">
@@ -269,6 +263,29 @@
       </div>
     </div>
     
+    <!-- 全局悬浮AI助手按钮 -->
+    <div class="floating-ai-assistant">
+      <div class="ai-chat-box">
+        <div class="ai-chat-top">
+          <div 
+            v-for="(message, index) in visibleMessages" 
+            :key="`${message}-${messageIndex}-${index}`"
+            :class="['ai-chat-item', `ai-chat-show${index}`]"
+            :style="{ width: 'fit-content' }"
+          >
+            <span>{{ message }}</span>
+          </div>
+        </div>
+        <div class="ai-chat-bottom" style="pointer-events:auto;">
+          <div class="ai-avatar-container" @click="openDifyModal" title="SEG-AIBot">
+            <div class="ai-avatar-icon">
+        <i class="fas fa-robot"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Dify工作流模态框 -->
     <div class="dify-modal" v-if="showDifyModal" @click="closeDifyModal">
       <div class="dify-modal-content" @click.stop>
@@ -320,6 +337,14 @@ export default {
       currentDifySystem: null,
       // 数据统计相关
       sessionId: null,
+      // AI助手相关
+      aiChatMessages: [
+        'HELLO，欢迎来到SEG IT！',
+        '我是SEG-AIBot，有什么我可以帮您的吗？'
+      ],
+      visibleMessages: [],
+      messageIndex: 0,
+      messageTimer: null,
       flowerColors: [
         '#FF6B6B', '#FF85A1', '#FF9A8B', 
         '#FFC75F', '#F9F871', '#90D4F7', 
@@ -612,6 +637,9 @@ export default {
     document.addEventListener('click', this.handleOutsideClick)
     document.addEventListener('keydown', this.handleEscKey)
     
+    // 启动AI助手消息循环播放
+    this.startMessageLoop()
+    
     // 不再监听页面离开事件，取消停留时间统计
   },
   beforeUnmount() {
@@ -631,6 +659,11 @@ export default {
     
     if (this.tickerInterval) {
       clearInterval(this.tickerInterval)
+    }
+    
+    // 清理消息循环定时器
+    if (this.messageTimer) {
+      clearTimeout(this.messageTimer)
     }
   },
   methods: {
@@ -907,6 +940,37 @@ export default {
       this.showDifyModal = true;
       // 防止背景滚动
       document.body.style.overflow = 'hidden';
+    },
+    
+    // 启动消息循环播放
+    startMessageLoop() {
+      this.showNextMessage();
+    },
+    
+    // 显示下一条消息
+    showNextMessage() {
+      // 清空当前显示的消息
+      this.visibleMessages = [];
+      
+      // 延迟显示第一条消息
+      this.messageTimer = setTimeout(() => {
+        this.visibleMessages = [this.aiChatMessages[0]];
+        
+        // 延迟显示第二条消息
+        this.messageTimer = setTimeout(() => {
+          this.visibleMessages = [this.aiChatMessages[0], this.aiChatMessages[1]];
+          
+          // 3秒后清空所有消息并重新开始循环
+          this.messageTimer = setTimeout(() => {
+            this.visibleMessages = [];
+            
+            // 重新开始循环
+            this.messageTimer = setTimeout(() => {
+              this.showNextMessage();
+            }, 1000);
+          }, 3000);
+        }, 1000);
+      }, 500);
     },
     
     closeDifyModal() {
@@ -2947,38 +3011,106 @@ export default {
   }
 }
 
-/* AI助手按钮组样式 */
-.ai-assistant-group {
+/* 全局悬浮AI助手按钮样式 */
+.floating-ai-assistant {
+  position: fixed;
+  bottom: 80px;
+  right: 80px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.ai-chat-box {
   position: relative;
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.ai-chat-top {
+  margin-bottom: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 40px;
+  text-align: right;
+  padding: 8px 0;
+  gap: 4px;
+}
+
+.ai-chat-item {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.95));
+  color: #005389;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 83, 137, 0.15);
+  backdrop-filter: blur(10px);
+  opacity: 0.9;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  max-width: 320px;
+  width: fit-content;
+  min-width: 120px;
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  align-self: flex-end;
+  text-align: left;
 }
 
-.ai-assistant-group.hide-ai-assistant {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
+.ai-chat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 83, 137, 0.1), transparent);
+  transition: left 0.8s ease;
 }
 
-.ai-assistant-button {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #005389, #029165);
-  border: none;
+.ai-chat-item:hover::before {
+  left: 100%;
+}
+
+.ai-chat-bottom {
+  pointer-events: auto;
+}
+
+.ai-avatar-container {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  color: white;
-  font-size: 18px;
+  background: linear-gradient(135deg, #005389, #029165);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(0, 83, 137, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 83, 137, 0.4);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  animation: floatingPulse 3s infinite ease-in-out;
 }
 
-.ai-assistant-button::before {
+@keyframes floatingPulse {
+  0%, 100% {
+    box-shadow: 0 8px 25px rgba(0, 83, 137, 0.4);
+  }
+  50% {
+    box-shadow: 0 12px 35px rgba(0, 83, 137, 0.6);
+  }
+}
+
+.ai-avatar-container::before {
   content: '';
   position: absolute;
   top: 0;
@@ -2989,25 +3121,30 @@ export default {
   transition: left 0.5s ease;
 }
 
-.ai-assistant-button:hover::before {
+.ai-avatar-container:hover::before {
   left: 100%;
 }
 
-.ai-assistant-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 83, 137, 0.4);
-  background: linear-gradient(135deg, #0277BD, #00ACC1);
+.ai-avatar-container:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px rgba(0, 83, 137, 0.5);
 }
 
-.ai-assistant-button:active {
-  transform: scale(0.95);
+.ai-avatar-icon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  border-radius: 50%;
 }
 
-.ai-assistant-button i {
+.ai-avatar-icon i {
   animation: robotPulse 2s infinite ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
-
-
 
 @keyframes robotPulse {
   0%, 100% {
@@ -3018,20 +3155,102 @@ export default {
   }
 }
 
+
+
+/* 聊天消息动画 */
+.ai-chat-show0 {
+  animation: slideInFromRight 0.5s ease-out;
+}
+
+.ai-chat-show1 {
+  animation: slideInFromRight 0.5s ease-out 0.3s both;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 消息淡出动画 */
+.ai-chat-item {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+.ai-chat-item.fade-out {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.message-text {
+  display: inline-block;
+  word-wrap: break-word;
+  word-break: keep-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  hyphens: auto;
+}
+
 /* 响应式适配 */
 @media (max-width: 768px) {
-  .ai-assistant-button {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
+  .floating-ai-assistant {
+    bottom: 60px;
+    right: 60px;
+  }
+  
+  .ai-chat-item {
+    padding: 8px 14px;
+    font-size: 12px;
+    max-width: 260px;
+    min-width: 100px;
+  }
+  
+  .ai-avatar-container {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .ai-avatar-icon {
+    font-size: 24px;
   }
 }
 
 @media (max-width: 480px) {
-  .ai-assistant-button {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
+  .floating-ai-assistant {
+    bottom: 50px;
+    right: 50px;
+  }
+  
+  .ai-chat-item {
+    font-size: 11px;
+    padding: 6px 12px;
+    max-width: 220px;
+    min-width: 80px;
+  }
+  
+  .ai-avatar-container {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .ai-avatar-icon {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .ai-chat-top {
+    display: none;
+  }
+  
+  .floating-ai-assistant {
+    bottom: 40px;
+    right: 40px;
   }
 }
 </style> 

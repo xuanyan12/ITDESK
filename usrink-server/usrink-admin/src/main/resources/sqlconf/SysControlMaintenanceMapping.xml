@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysControlMaintenanceMapper">
+    <!-- 添加查询电脑修改记录列表的SQL -->
+    <select id="getControlMaintenanceList" resultType="ink.usr.admin.dao.VO.SysControlMaintenanceVO" parameterType="ink.usr.admin.dao.DTO.SysControlMaintenanceQueryDTO">
+        SELECT
+            scm.ciName,
+            scm.maintenanceRecord,
+            scm.updateTime,
+            sc.deviceClass,
+            sc.manufacture,
+            sc.modelOrVersion,
+            sc.pcClass,
+            sc.pcStatus,
+            sc.lifeCycleStart,
+            sc.vendor
+        FROM sys_control_maintenance as scm left join sys_control as sc on scm.ciName = sc.ciName
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND LOWER(scm.ciName) LIKE LOWER(CONCAT('%', #{ciName}, '%'))
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND scm.updateTime &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND scm.updateTime &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY scm.updateTime DESC
+    </select>
+
+    <!-- 添加查询电脑修改记录总数的SQL -->
+    <select id="getControlMaintenanceCount" resultType="java.lang.Integer" parameterType="ink.usr.admin.dao.DTO.SysControlMaintenanceQueryDTO">
+        SELECT COUNT(*)
+        FROM sys_control_maintenance
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND LOWER(ciName) LIKE LOWER(CONCAT('%', #{ciName}, '%'))
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND updateTime &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND updateTime &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+</mapper>
