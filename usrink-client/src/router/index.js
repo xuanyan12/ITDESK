@@ -8,6 +8,7 @@ import segOnelink from "@/views/public/seg-onelink.vue" // 添加SEG ONELINK页�
 import segAnalytics from "@/views/public/seg-analytics.vue" // 添加SEG ONELINK数据统计页面引入
 import qaPage from "@/views/public/qa-page.vue" // 添加QA页面引入
 import controlAsset from "@/views/other/control-asset.vue" // 添加电脑台账页面引入
+import controlMaintenance from "@/views/other/control-maintenance.vue" // 添加电脑维修记录页面引入
 import {createRouter, createWebHistory} from 'vue-router'
 import NProgress from 'nprogress'
 import loginUtil from "@/utils/LoginUtil";
@@ -35,9 +36,10 @@ const routes = [
     {path: '/login', component: usrFrameLogin},
     // 公开页面
     {path: '/public-page', component: publicApproval},
-    {path: '/seg-onelink', component: segOnelink}, // 添加SEG ONELINK路由
-    {path: '/seg-analytics', component: segAnalytics}, // 添加SEG ONELINK数据统计路由
+    {path: '/seg-onelink', component: segOnelink, meta:{ title:'SEG-OneLink' }}, // 添加SEG ONELINK路由
+    {path: '/seg-analytics', component: segAnalytics, meta:{  title:'SEG-OneLink' }}, // 添加SEG ONELINK数据统计路由
     {path: '/qa-page', component: qaPage}, // 添加QA页面路由
+    {path: '/control-maintenance', component: controlMaintenance}, // 添加电脑维修记录路由
     // 404 Notfound
     // 理论上，这里应该永远匹配不到，因为路由守卫前置拦截会把将要访问的路由重定向的对应的路由上
     // 比如访问了`/aaa`一个不存在的路由，
@@ -66,11 +68,14 @@ router.beforeEach(async (to) => {
     // 开启页面进度条
     NProgress.start()
 
+    // 设置页面标题
+    setPageTitle(to)
+
     // 获取授权状态
     let isAuth = loginUtil.isAuthenticated()
 
     // 添加不需要登录验证的白名单路径
-    const whiteList = ['/login', '/register', '/forget-password', '/public-page', '/seg-onelink', '/seg-analytics', '/qa-page']
+    const whiteList = ['/login', '/register', '/forget-password', '/public-page', '/seg-onelink', '/seg-analytics', '/qa-page', '/control-maintenance']
     
     // 判断是否在白名单中，如果是，直接放行
     if (whiteList.includes(to.path)) {
@@ -112,6 +117,20 @@ router.beforeEach(async (to) => {
         }
     }
 })
+
+/**
+ * 设置页面标题
+ * @param {Object} to 目标路由对象
+ */
+const setPageTitle = (to) => {
+    // 检查是否是seg-onelink相关的页面
+    if (to.meta && to.meta.title === 'SEG-OneLink') {
+        document.title = 'SEG-OneLink'
+    } else {
+        // 其他所有页面都使用IT管理系统标题
+        document.title = 'SEG-IT管理系统'
+    }
+}
 
 // 配置Router实例全局拦截器
 // 全局后置路由守卫，每一次路由跳转后都进入这个 afterEach 函数

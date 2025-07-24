@@ -1310,8 +1310,10 @@ export default {
         url: '/sysControl/getInternalComputerByUserName',
         params: { userName }
       }).then(response => {
+        console.log('获取我的电脑响应:', response);
         if (response.data) {
           myComputer.value = response.data;
+          console.log('我的电脑信息:', myComputer.value);
           
           // If there's computer information, set default selected computer
           if (response.data.ciName) {
@@ -1783,13 +1785,18 @@ export default {
         url: '/sysControl/getComputerListByUserName',
         params: { userName }
       }).then(response => {
+        console.log('获取电脑列表响应:', response);
         if (response.data && response.data.list && response.data.list.length > 0) {
           // Use returned string array directly
           computerList.value = response.data.list;
+          console.log('电脑列表:', computerList.value);
           // If there's a computer list and no computer is currently selected, default to select the first one
           if (response.data.list.length > 0 && !selectedComputer.value) {
             selectedComputer.value = response.data.list[0];
             applicationForm.ciName = response.data.list[0]; // Set computer name in application form
+            console.log('自动选择第一个电脑:', selectedComputer.value);
+            // 自动获取第一个电脑的详细信息
+            handleComputerSelect(response.data.list[0]);
           }
         } else {
           // If there's no computer list, clear related data
@@ -1828,9 +1835,11 @@ export default {
         url: '/sysControl/getComputerInfoByCiName',
         params: { ciName }
       }).then(response => {
+        console.log('获取电脑详细信息响应:', response);
         if (response.data) {
           // Update content in "My Computer" module
           myComputer.value = response.data;
+          console.log('更新后的电脑信息:', myComputer.value);
           
           // Update computer information in "Office PC Application" module
           // Auto-fill computer type, keeping original logic
