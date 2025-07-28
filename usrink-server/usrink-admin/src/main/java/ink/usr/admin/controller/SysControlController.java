@@ -438,7 +438,16 @@ public class SysControlController {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     cellValue = cell.getLocalDateTimeCellValue().toString();
                 } else {
-                    cellValue = String.valueOf(cell.getNumericCellValue());
+                    // 处理大数字，避免科学计数法格式
+                    double numericValue = cell.getNumericCellValue();
+                    // 如果数字是整数且很大，使用BigDecimal避免科学计数法
+                    if (numericValue == Math.floor(numericValue) && Math.abs(numericValue) >= 1e7) {
+                        // 使用BigDecimal确保大整数不被转换为科学计数法
+                        java.math.BigDecimal bd = new java.math.BigDecimal(numericValue);
+                        cellValue = bd.toPlainString();
+                    } else {
+                        cellValue = String.valueOf(numericValue);
+                    }
                 }
                 break;
             case BOOLEAN:
@@ -446,7 +455,14 @@ public class SysControlController {
                 break;
             case FORMULA:
                 try {
-                    cellValue = String.valueOf(cell.getNumericCellValue());
+                    // 对于公式，也使用相同的数字处理逻辑
+                    double numericValue = cell.getNumericCellValue();
+                    if (numericValue == Math.floor(numericValue) && Math.abs(numericValue) >= 1e7) {
+                        java.math.BigDecimal bd = new java.math.BigDecimal(numericValue);
+                        cellValue = bd.toPlainString();
+                    } else {
+                        cellValue = String.valueOf(numericValue);
+                    }
                 } catch (Exception e) {
                     cellValue = cell.getStringCellValue();
                 }
