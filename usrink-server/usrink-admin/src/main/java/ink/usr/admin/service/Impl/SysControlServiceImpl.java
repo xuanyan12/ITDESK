@@ -57,19 +57,24 @@ public class SysControlServiceImpl implements SysControlService {
     }
 
     public boolean updateSysControl(SysControlModel sysControlModel) {
-        // 1.先记录原有的数据
-        LocalDateTime now = LocalDateTime.now();
-        // 格式化为字符串：yyyy-MM-dd HH:mm:ss
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String formattedTime = now.format(formatter);
+        try {
+            // 1.先记录原有的数据
+            LocalDateTime now = LocalDateTime.now();
+            // 格式化为字符串：yyyy-MM-dd HH:mm:ss
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedTime = now.format(formatter);
 
-        SysControlRecordDTO sysControlRecordDTO = new SysControlRecordDTO();
-        BeanUtils.copyProperties(sysControlModel, sysControlRecordDTO);
-        sysControlRecordDTO.setUpdateTime(formattedTime);
-        sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
-        // 2.再更新新的数据
-        boolean flag = sysControlMapper.updateSysControl(sysControlModel);
-        return flag;
+            SysControlRecordDTO sysControlRecordDTO = new SysControlRecordDTO();
+            BeanUtils.copyProperties(sysControlModel, sysControlRecordDTO);
+            sysControlRecordDTO.setUpdateTime(formattedTime);
+            sysControlMapper.updateSysControlRecord(sysControlRecordDTO);
+            // 2.再更新新的数据
+            boolean flag = sysControlMapper.updateSysControl(sysControlModel);
+            return flag;
+        } catch (Exception e) {
+            log.error("更新电脑信息失败: {}", e.getMessage(), e);
+            throw new RuntimeException("更新电脑信息失败: " + e.getMessage());
+        }
     }
 
     public boolean deleteSysControl(long id) {

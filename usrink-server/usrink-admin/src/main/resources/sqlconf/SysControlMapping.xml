@@ -156,10 +156,10 @@
                 temp = #{temp},
             </if>
             <if test="pcStatus!=null">
-                pcStatus = #{pcStatus}
+                pcStatus = #{pcStatus},
             </if>
             <if test="price!=null">
-                price = #{price}
+                price = #{price},
             </if>
         </set>
         where id = #{id}

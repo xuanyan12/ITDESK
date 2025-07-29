@@ -82,8 +82,18 @@ public class SysControlController {
     @RequestMapping("/updateSysControl")
     @RequiresPermissions("sys:device:control:update")
     public Res updateSysControl(@RequestBody SysControlModel sysControlModel){
-        boolean flag = sysControlService.updateSysControl(sysControlModel);
-        return Res.success(flag);
+        try {
+            log.info("更新电脑信息: {}", sysControlModel);
+            boolean flag = sysControlService.updateSysControl(sysControlModel);
+            if (flag) {
+                return Res.success("更新成功");
+            } else {
+                return Res.error("更新失败");
+            }
+        } catch (Exception e) {
+            log.error("更新电脑信息失败: {}", e.getMessage(), e);
+            return Res.error("更新失败: " + e.getMessage());
+        }
     }
 
     /**
