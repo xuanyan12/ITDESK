@@ -12,6 +12,19 @@
         <el-form-item :label="langText.computerName">
           <el-input v-model="queryForm.ciName" :placeholder="langText.enterComputerName" clearable />
         </el-form-item>
+        <el-form-item :label="langText.applicant">
+          <el-input v-model="queryForm.applicant" :placeholder="langText.enterApplicant" clearable />
+        </el-form-item>
+        <el-form-item :label="langText.orderNumber">
+          <el-input v-model="queryForm.orderNumber" :placeholder="langText.enterOrderNumber" clearable />
+        </el-form-item>
+        <el-form-item :label="langText.maintenanceCategory">
+          <el-select v-model="queryForm.maintenanceCategory" :placeholder="langText.selectCategory" clearable style="width: 180px;">
+            <el-option :label="langText.allCategories" value="" />
+            <el-option :label="langText.qualityIssue" value="qualityIssueRepair" />
+            <el-option :label="langText.damageRepair" value="damageRepair" />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="langText.maintenanceDate">
           <el-date-picker
             v-model="queryForm.updateTimeRange"
@@ -40,14 +53,20 @@
       >
         <el-table-column type="index" :label="langText.sequence" width="80" />
         <el-table-column prop="ciName" :label="langText.computerName" width="160" />
-        <el-table-column prop="maintenanceRecord" :label="langText.maintenanceRecord" width="300" show-overflow-tooltip />
-        <el-table-column prop="pcStatus" :label="langText.computerStatus" width="120" />
-        <el-table-column prop="deviceClass" :label="langText.deviceType" width="120" />
-        <el-table-column prop="manufacture" :label="langText.manufacturer" width="120" />
-        <el-table-column prop="modelOrVersion" :label="langText.model" width="120" />
-        <el-table-column prop="lifeCycleStart" :label="langText.manufactureDate" width="120" />
-        <el-table-column prop="vendor" :label="langText.vendor" width="150" />
-        <el-table-column prop="updateTime" :label="langText.maintenanceTime" width="180" fixed="right" />
+        <el-table-column prop="applicant" :label="langText.applicant" width="120" />
+        <el-table-column prop="orderNumber" :label="langText.orderNumber" width="150" />
+        <el-table-column prop="maintenanceRecord" :label="langText.maintenanceRecord" width="250" show-overflow-tooltip />
+        <el-table-column prop="maintenanceCategory" :label="langText.maintenanceCategory" width="120">
+          <template #default="scope">
+            <el-tag :type="getMaintenanceCategoryType(scope.row.maintenanceCategory)">
+              {{ getMaintenanceCategoryText(scope.row.maintenanceCategory) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="problemDescription" :label="langText.problemDescription" width="200" show-overflow-tooltip />
+        <el-table-column prop="maintenanceResult" :label="langText.maintenanceResult" width="200" show-overflow-tooltip />
+        <el-table-column prop="maintenanceRemark" :label="langText.maintenanceRemark" width="150" show-overflow-tooltip />
+        <el-table-column prop="maintenanceTime" :label="langText.maintenanceTime" width="180" fixed="right" />
       </el-table>
       
       <!-- Pagination -->
@@ -81,6 +100,9 @@ const pageSize = ref(10)
 
 const queryForm = ref({
   ciName: '',
+  applicant: '',
+  orderNumber: '',
+  maintenanceCategory: '',
   updateTimeRange: [],
   startTime: '',
   endTime: '',
@@ -101,6 +123,15 @@ const langText = computed(() => {
     // 查询表单
     computerName: currentLang.value === 'zh' ? '电脑名' : 'Computer Name',
     enterComputerName: currentLang.value === 'zh' ? '输入电脑名' : 'Enter computer name',
+    applicant: currentLang.value === 'zh' ? '申请人' : 'Applicant',
+    enterApplicant: currentLang.value === 'zh' ? '输入申请人' : 'Enter applicant',
+    orderNumber: currentLang.value === 'zh' ? '维修订单号' : 'Order Number',
+    enterOrderNumber: currentLang.value === 'zh' ? '输入订单号' : 'Enter order number',
+    maintenanceCategory: currentLang.value === 'zh' ? '维修类别' : 'Maintenance Category',
+    selectCategory: currentLang.value === 'zh' ? '选择维修类别' : 'Select category',
+    allCategories: currentLang.value === 'zh' ? '全部类别' : 'All Categories',
+    qualityIssue: currentLang.value === 'zh' ? '质量问题维修' : 'Quality Issue Repair',
+    damageRepair: currentLang.value === 'zh' ? '人为损坏维修' : 'Damage Repair',
     maintenanceDate: currentLang.value === 'zh' ? '维修日期' : 'Maintenance Date',
     dateTo: currentLang.value === 'zh' ? '至' : 'to',
     startDate: currentLang.value === 'zh' ? '开始日期' : 'Start Date',
@@ -110,14 +141,14 @@ const langText = computed(() => {
     
     // 表格列名
     sequence: currentLang.value === 'zh' ? '序号' : 'No.',
+    applicant: currentLang.value === 'zh' ? '申请人' : 'Applicant',
+    orderNumber: currentLang.value === 'zh' ? '维修订单号' : 'Order Number',
     maintenanceRecord: currentLang.value === 'zh' ? '维修记录' : 'Maintenance Record',
-    computerStatus: currentLang.value === 'zh' ? '电脑状态' : 'Status',
-    deviceType: currentLang.value === 'zh' ? '设备类型' : 'Device Type',
-    manufacturer: currentLang.value === 'zh' ? '制造商' : 'Manufacturer',
-    model: currentLang.value === 'zh' ? '型号' : 'Model',
-    manufactureDate: currentLang.value === 'zh' ? '出厂时间' : 'Manufacture Date',
-    vendor: currentLang.value === 'zh' ? '供应商公司' : 'Vendor',
-    maintenanceTime: currentLang.value === 'zh' ? '维修时间' : 'Maintenance Time'
+    maintenanceCategory: currentLang.value === 'zh' ? '维修类别' : 'Maintenance Category',
+    problemDescription: currentLang.value === 'zh' ? '故障描述' : 'Problem Description',
+    maintenanceResult: currentLang.value === 'zh' ? '维修结果' : 'Maintenance Result',
+    maintenanceRemark: currentLang.value === 'zh' ? '维修备注' : 'Maintenance Remark',
+    maintenanceTime: currentLang.value === 'zh' ? '维修完成时间' : 'Maintenance Time'
   }
 });
 
@@ -138,6 +169,9 @@ const fetchMaintenanceList = () => {
   // 构建查询参数对象
   const params = {
     ciName: queryForm.value.ciName || '',
+    applicant: queryForm.value.applicant || '',
+    orderNumber: queryForm.value.orderNumber || '',
+    maintenanceCategory: queryForm.value.maintenanceCategory || '',
     startTime: queryForm.value.startTime || '',
     endTime: queryForm.value.endTime || '',
     pageNum: pageNum.value,
@@ -167,6 +201,9 @@ const fetchMaintenanceList = () => {
 // 重置搜索表单
 const resetForm = () => {
   queryForm.value.ciName = ''
+  queryForm.value.applicant = ''
+  queryForm.value.orderNumber = ''
+  queryForm.value.maintenanceCategory = ''
   queryForm.value.updateTimeRange = []
   queryForm.value.startTime = ''
   queryForm.value.endTime = ''
@@ -187,6 +224,20 @@ const handleCurrentChange = (val) => {
   pageNum.value = val
   queryForm.value.pageNum = val
   fetchMaintenanceList()
+}
+
+// 获取维修类别标签类型
+const getMaintenanceCategoryType = (category) => {
+  if (category === 'qualityIssueRepair') return 'success'
+  if (category === 'damageRepair') return 'warning'
+  return 'info'
+}
+
+// 获取维修类别文本
+const getMaintenanceCategoryText = (category) => {
+  if (category === 'qualityIssueRepair') return currentLang.value === 'zh' ? '质量问题维修' : 'Quality Issue Repair'
+  if (category === 'damageRepair') return currentLang.value === 'zh' ? '人为损坏维修' : 'Damage Repair'
+  return category || (currentLang.value === 'zh' ? '未知类别' : 'Unknown Category')
 }
 
 // 组件挂载时加载数据

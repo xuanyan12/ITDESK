@@ -9,13 +9,17 @@ import ink.usr.admin.dao.VO.SysApplyListVO;
 import ink.usr.admin.dao.VO.SysApprovalFlowVO;
 import ink.usr.admin.dao.VO.SysApprovalRequestListVO;
 import ink.usr.admin.dao.VO.SysApproversVO;
+import ink.usr.admin.dao.VO.SysMaintenanceApplyVO;
 import ink.usr.admin.service.*;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.core.utils.PageUtil;
 import ink.usr.common.model.mysql.SysApprovalFlowModel;
 import ink.usr.common.model.mysql.SysApprovalRequestModel;
+import ink.usr.common.model.mysql.SysApproverModel;
 import ink.usr.common.model.mysql.SysUserModel;
+import ink.usr.admin.mapper.SysMaintenanceApplyMapper;
+import ink.usr.common.model.mysql.SysMaintenanceApplyModel;
 import ink.usr.framework.shiro.domain.ShiroUserInfo;
 import ink.usr.framework.shiro.utils.ShiroUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +55,12 @@ public class SysApplyController {
 
     @Autowired
     private SysUserService sysUserService;
+    
+    @Autowired
+    private SysMaintenanceApplyMapper sysMaintenanceApplyMapper;
+    
+    @Autowired
+    private SysMaintenanceApplyService sysMaintenanceApplyService;
 
     @Autowired
     private EmailConfig emailConfig;
@@ -151,10 +161,9 @@ public class SysApplyController {
             // 发邮件给一级审批人
             // 1.获取一级审批人id
             Long approverId = sysApproverService.getApproverIdUseCostCenter(sysUserService.getUserIdByUserName(sysApplyRequestDTO.getUserName()), sysApplyRequestDTO.getCostCenter());
-            // 2.根据审批人id获取邮箱
-            // 通过审批人id获取其userId
-            Long userApproverId = sysApproverService.getApproverInfoByApproverId(approverId);
-            String approverEmail = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userApproverId)).getEmail();
+            // 2.根据审批人id获取邮箱（直接从sys_approver表获取）
+            SysApproverModel approverModel = sysApproverService.getApproverModelByApproverId(approverId);
+            String approverEmail = approverModel != null ? approverModel.getEmail() : null;
             
             // 获取申请人部门信息
             SysUserModel applicantUserInfo = sysUserService.getUserInfoByUserName(sysApplyRequestDTO.getUserName());
@@ -184,7 +193,11 @@ public class SysApplyController {
             String emailSubject = emailConfig.buildApplyEmailSubject(applicantName, applicantDepartment, sysApplyRequestDTO.getDeviceCategory());
             
             // 发送邮件
-            emailConfig.sendMail(approverEmail, emailSubject, emailContent);
+            if (approverEmail != null && !approverEmail.isEmpty()) {
+                emailConfig.sendMail(approverEmail, emailSubject, emailContent);
+            } else {
+                log.warn("审批人邮箱为空，无法发送邮件。审批人ID: {}", approverId);
+            }
             
             return Res.success("申请提交成功，已发送审批邮件");
         } catch (Exception e) {
@@ -198,46 +211,98 @@ public class SysApplyController {
      * @return
      */
     @RequestMapping("/getApprovalListById")
-    public Res getApprovalListById(@RequestParam("approvalType") Long approvalType){
-        ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
-        Long userId = shiroUserInfo.getUserId();
-        // 通过userId获得approverId
+    public Res getApprovalListById(@RequestParam("approvalType") Long approvalType,
+                                 @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                                 @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize){
+        try {
+            
+            ShiroUserInfo shiroUserInfo = ShiroUtil.getShiroUserInfo();
+            Long userId = shiroUserInfo.getUserId();
+            // 通过userId获得approverId
 
-        String costCenter = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userId)).getCostCenter();
-        Long approverId = sysApproverService.getApproverIdUseCostCenter(userId, costCenter);
-        // 通过approverId找到该用户所有的审批流
-        Page<Object> pages = PageUtil.startPage();
-        List<SysApprovalFlowVO> sysApprovalFlowList =  sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);
+            String costCenter = sysUserService.getUserInfoByUserName(sysUserService.getNameByUserId(userId)).getCostCenter();
+            Long approverId = sysApproverService.getApproverIdUseCostCenter(userId, costCenter);
+            
+            // 先不启动分页，获取所有审批流程数据
+            List<SysApprovalFlowVO> allApprovalFlows = sysApprovalFlowService.getApprovalFlowListByApproverId(approverId, approvalType);
 
-        // 遍历每一条flowList，找到每一条的approvalRequest的内容，并拼接为新的List
-        List<SysApprovalRequestListVO> newList = new ArrayList<>();
-        SysApprovalRequestModel sysApprovalRequestModel = null;
-        for(SysApprovalFlowVO singleOfList : sysApprovalFlowList){
-            SysApprovalRequestListVO objects = new SysApprovalRequestListVO();
-            Long approvalId = singleOfList.getApprovalId();
-            sysApprovalRequestModel = sysApprovalRequestService.getByApprovalId(approvalId);
-            // 找到申请人姓名并返回
-            String userName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getApplicant());
-            String responsibilityName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getResponsibility());
-            if(userName != null){
-                objects.setUserName(userName);
+            // 遍历所有审批流程，筛选出电脑申请
+            List<SysApprovalRequestListVO> allComputerApprovals = new ArrayList<>();
+            for(SysApprovalFlowVO singleOfList : allApprovalFlows){
+                Long approvalId = singleOfList.getApprovalId();
+                
+                // 先尝试查找电脑申请
+                SysApprovalRequestModel sysApprovalRequestModel = sysApprovalRequestService.getByApprovalId(approvalId);
+                
+                if(sysApprovalRequestModel != null){
+                    // 这是电脑申请
+                    SysApprovalRequestListVO objects = new SysApprovalRequestListVO();
+                    
+                    // 找到申请人姓名并返回
+                    String userName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getApplicant());
+                    String responsibilityName = sysUserService.getUserNickNameByUserId(sysApprovalRequestModel.getResponsibility());
+                    if(userName != null){
+                        objects.setUserName(userName);
+                    }
+                    objects.setResponsibilityName(responsibilityName);
+                    objects.setApproverId(singleOfList.getApproverId());
+                    objects.setFlowId(singleOfList.getFlowId());
+                    BeanUtils.copyProperties(sysApprovalRequestModel,objects);
+                    objects.setStatus(singleOfList.getStatus());
+                    objects.setStatus1Signal(singleOfList.getStatus1Signal());
+                    objects.setApprovalReason(singleOfList.getApprovalReason());
+                    allComputerApprovals.add(objects);
+                } else {
+                    // 尝试查找维修申请
+                    SysMaintenanceApplyModel maintenanceApplyModel = sysMaintenanceApplyMapper.selectApplyById(approvalId);
+                    if(maintenanceApplyModel != null){
+                        // 这是维修申请，跳过（因为电脑审批模块不应该显示维修申请）
+                        log.debug("跳过维修申请记录，approvalId: {}", approvalId);
+                        continue;
+                    } else {
+                        // 既不是电脑申请也不是维修申请，记录警告
+                        log.warn("未找到approvalId为{}的申请记录，跳过此条记录", approvalId);
+                        continue;
+                    }
+                }
             }
-            objects.setResponsibilityName(responsibilityName);
-            objects.setApproverId(singleOfList.getApproverId());
-            objects.setFlowId(singleOfList.getFlowId());
-            BeanUtils.copyProperties(sysApprovalRequestModel,objects);
-            objects.setStatus(singleOfList.getStatus());
-            objects.setStatus1Signal(singleOfList.getStatus1Signal());
-            objects.setApprovalReason(singleOfList.getApprovalReason());
-//            BeanUtils.copyProperties(singleOfList,objects);
-            newList.add(objects);
+            
+            // 对电脑申请按时间排序 - 根据审批类型选择排序字段
+            allComputerApprovals.sort((a, b) -> {
+                if (approvalType == 0) {
+                    // 待办审批：按创建时间倒序
+                    String timeA = a.getCreatedAt() != null ? a.getCreatedAt() : "";
+                    String timeB = b.getCreatedAt() != null ? b.getCreatedAt() : "";
+                    return timeB.compareTo(timeA); // 倒序
+                } else {
+                    // 审批历史：按更新时间倒序
+                    String timeA = a.getUpdatedAt() != null ? a.getUpdatedAt() : "";
+                    String timeB = b.getUpdatedAt() != null ? b.getUpdatedAt() : "";
+                    return timeB.compareTo(timeA); // 倒序
+                }
+            });
+            
+            // 计算总数
+            int total = allComputerApprovals.size();
+            
+            // 手动分页
+            int startIndex = (pageNum - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, total);
+            
+            List<SysApprovalRequestListVO> newList = new ArrayList<>();
+            if (startIndex < total) {
+                newList = allComputerApprovals.subList(startIndex, endIndex);
+            }
+
+            Dict result = Dict.create()
+                    .set("list", newList)
+                    .set("total", total);
+
+            return Res.success(result);
+        } catch (Exception e) {
+            log.error("获取电脑审批列表失败", e);
+            return Res.error("获取电脑审批列表失败: " + e.getMessage());
         }
-
-        Dict result = Dict.create()
-                .set("list", newList)
-                .set("total", pages.getTotal());
-
-        return Res.success(result);
     }
 
     /**
@@ -276,13 +341,24 @@ public class SysApplyController {
                 return Res.error("未找到对应的审批流程");
             }
             
-            // 获取申请详情
+            // 获取申请详情 - 先尝试电脑申请，如果没有再尝试维修申请
             SysApprovalRequestListVO requestModel = sysApprovalRequestService.getInfoByApprovalId(flowModel.getApprovalId());
-            if (requestModel == null) {
-                return Res.error("未找到申请详情");
+            
+            if (requestModel != null) {
+                // 找到电脑申请详情
+                requestModel.setStatus(flowModel.getStatus());
+                return Res.success(requestModel);
+            } else {
+                // 尝试获取维修申请详情
+                SysMaintenanceApplyVO maintenanceApply = sysMaintenanceApplyService.getApplyById(flowModel.getApprovalId());
+                if (maintenanceApply != null) {
+                    // 将维修申请转换为前端期望的格式
+                    SysApprovalRequestListVO convertedModel = convertMaintenanceToRequestVO(maintenanceApply, flowModel);
+                    return Res.success(convertedModel);
+                } else {
+                    return Res.error("未找到申请详情");
+                }
             }
-            requestModel.setStatus(flowModel.getStatus());
-            return Res.success(requestModel);
         } catch (Exception e) {
             log.error("获取临时审批信息失败", e);
             return Res.error("获取审批信息失败：" + e.getMessage());
@@ -503,5 +579,47 @@ public class SysApplyController {
             log.error("获取审批计数失败", e);
             return Res.error("获取审批计数失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 将维修申请转换为前端期望的SysApprovalRequestListVO格式
+     * @param maintenanceApply 维修申请
+     * @param flowModel 审批流模型
+     * @return 转换后的VO
+     */
+    private SysApprovalRequestListVO convertMaintenanceToRequestVO(SysMaintenanceApplyVO maintenanceApply, SysApprovalFlowModel flowModel) {
+        SysApprovalRequestListVO vo = new SysApprovalRequestListVO();
+        
+        // 基本信息映射
+        vo.setApprovalId(maintenanceApply.getMaintenanceId());
+        vo.setApplicant(maintenanceApply.getApplicant());
+        vo.setStatus(flowModel.getStatus());
+        vo.setCreatedAt(maintenanceApply.getCreateTime());
+        vo.setUpdatedAt(maintenanceApply.getUpdateTime());
+        
+        // 维修申请特有字段映射到电脑申请字段
+        vo.setDeviceCategory("维修申请"); // 申请类别显示为维修申请
+        vo.setDeviceType(maintenanceApply.getFixCategory()); // 设备类型显示维修类别
+        vo.setReason(maintenanceApply.getProblemDescription()); // 申请理由显示故障描述
+        vo.setCostCenter(maintenanceApply.getCostCenter());
+        vo.setCompany(maintenanceApply.getCompany());
+        vo.setCiName(maintenanceApply.getCiName());
+        
+        // 获取申请人姓名
+        try {
+            String applicantName = sysUserService.getUserNickNameByUserId(maintenanceApply.getApplicant());
+            vo.setUserName(applicantName != null ? applicantName : "未知申请人");
+        } catch (Exception e) {
+            vo.setUserName("未知申请人");
+        }
+        
+        // 获取责任人姓名
+        vo.setResponsibilityName(maintenanceApply.getResponsiblility());
+        
+        // 设置默认值
+        vo.setDeviceSituation("维修申请");
+        vo.setCompanySystem("");
+        
+        return vo;
     }
 }

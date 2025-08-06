@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.ComputerReportMapper">
+
+    <!-- 获取按公司和设备类型统计的数据 -->
+    <select id="getCompanyDeviceStatistics" 
+            resultType="ink.usr.admin.dao.VO.ComputerReportVO$CompanyDeviceStatistics"
+            parameterType="ink.usr.admin.dao.DTO.ComputerReportDTO">
+        SELECT 
+            c.company,
+            c.deviceClass,
+            COUNT(*) as totalCount,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 365 THEN 1 
+                ELSE 0 
+            END) as age0to1,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 365 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 730 THEN 1 
+                ELSE 0 
+            END) as age1to2,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 730 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1095 THEN 1 
+                ELSE 0 
+            END) as age2to3,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1095 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1460 THEN 1 
+                ELSE 0 
+            END) as age3to4,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1460 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1825 THEN 1 
+                ELSE 0 
+            END) as age4to5,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1825 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2190 THEN 1 
+                ELSE 0 
+            END) as age5to6,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2190 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2555 THEN 1 
+                ELSE 0 
+            END) as age6to7,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2555 
+                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2920 THEN 1 
+                ELSE 0 
+            END) as age7to8,
+            SUM(CASE 
+                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2920 THEN 1 
+                ELSE 0 
+            END) as age8plus,
+            ROUND(AVG(DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) / 365.25), 2) as avgAge
+        FROM sys_control c
+        <where>
+            <!-- 默认只统计内部员工 -->
+            <if test="internalOnly == null or internalOnly == true">
+                AND c.pcClass = 'Internal User'
+            </if>
+            
+            <!-- 过滤空的lifeCycleStart -->
+            AND c.lifeCycleStart IS NOT NULL 
+            AND c.lifeCycleStart != ''
+            AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') IS NOT NULL
+            
+            <!-- 过滤有效的设备类型 -->
+            AND c.deviceClass IN ('Standard Notebook', 'Performance Notebook', 'Standard Desktop', 'Performance Desktop')
+            
+            <!-- 公司筛选 -->
+            <if test="company != null and company != ''">
+                AND c.company = #{company}
+            </if>
+            
+            <!-- 设备类型筛选 -->
+            <if test="deviceClass != null and deviceClass != ''">
+                AND c.deviceClass = #{deviceClass}
+            </if>
+            
+            <!-- 年限筛选 -->
+            <if test="ageRange != null and ageRange != ''">
+                <choose>
+                    <when test="ageRange == '0-1'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 365
+                    </when>
+                    <when test="ageRange == '1-2'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 365 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 730
+                    </when>
+                    <when test="ageRange == '2-3'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 730 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1095
+                    </when>
+                    <when test="ageRange == '3-4'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1095 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1460
+                    </when>
+                    <when test="ageRange == '4-5'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1460 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1825
+                    </when>
+                    <when test="ageRange == '5-6'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1825 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2190
+                    </when>
+                    <when test="ageRange == '6-7'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2190 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2555
+                    </when>
+                    <when test="ageRange == '7-8'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2555 
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2920
+                    </when>
+                    <when test="ageRange == '8+'">
+                        AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2920
+                    </when>
+                </choose>
+            </if>
+        </where>
+        GROUP BY c.company, c.deviceClass
+        ORDER BY c.company, c.deviceClass
+    </select>
+
+    <!-- 获取按年限统计的数据 -->
+    <select id="getAgeRangeStatistics" 
+            resultType="ink.usr.admin.dao.VO.ComputerReportVO$AgeRangeStatistics"
+            parameterType="ink.usr.admin.dao.DTO.ComputerReportDTO">
+        SELECT 
+            age_range.ageRange,
+            COALESCE(SUM(CASE WHEN c.deviceClass = 'Standard Notebook' THEN 1 ELSE 0 END), 0) as standardNotebook,
+            COALESCE(SUM(CASE WHEN c.deviceClass = 'Performance Notebook' THEN 1 ELSE 0 END), 0) as performanceNotebook,
+            COALESCE(SUM(CASE WHEN c.deviceClass = 'Standard Desktop' THEN 1 ELSE 0 END), 0) as standardDesktop,
+            COALESCE(SUM(CASE WHEN c.deviceClass = 'Performance Desktop' THEN 1 ELSE 0 END), 0) as performanceDesktop,
+            COALESCE(COUNT(c.id), 0) as total
+        FROM (
+            SELECT '0-1年' as ageRange, 0 as min_days, 365 as max_days
+            UNION ALL SELECT '1-2年' as ageRange, 366 as min_days, 730 as max_days
+            UNION ALL SELECT '2-3年' as ageRange, 731 as min_days, 1095 as max_days
+            UNION ALL SELECT '3-4年' as ageRange, 1096 as min_days, 1460 as max_days
+            UNION ALL SELECT '4-5年' as ageRange, 1461 as min_days, 1825 as max_days
+            UNION ALL SELECT '5-6年' as ageRange, 1826 as min_days, 2190 as max_days
+            UNION ALL SELECT '6-7年' as ageRange, 2191 as min_days, 2555 as max_days
+            UNION ALL SELECT '7-8年' as ageRange, 2556 as min_days, 2920 as max_days
+            UNION ALL SELECT '8年以上' as ageRange, 2921 as min_days, 99999 as max_days
+        ) age_range
+        LEFT JOIN sys_control c ON (
+            DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) >= age_range.min_days
+            AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= age_range.max_days
+            <!-- 默认只统计内部员工 -->
+            <if test="internalOnly == null or internalOnly == true">
+                AND c.pcClass = 'Internal User'
+            </if>
+            AND c.lifeCycleStart IS NOT NULL 
+            AND c.lifeCycleStart != ''
+            AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') IS NOT NULL
+            AND c.deviceClass IN ('Standard Notebook', 'Performance Notebook', 'Standard Desktop', 'Performance Desktop')
+            
+            <!-- 公司筛选 -->
+            <if test="company != null and company != ''">
+                AND c.company = #{company}
+            </if>
+            
+            <!-- 设备类型筛选 -->
+            <if test="deviceClass != null and deviceClass != ''">
+                AND c.deviceClass = #{deviceClass}
+            </if>
+        )
+        GROUP BY age_range.ageRange, age_range.min_days
+        ORDER BY age_range.min_days
+    </select>
+
+</mapper>

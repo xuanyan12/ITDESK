@@ -1,5 +1,6 @@
 package ink.usr.admin.service;
 
+import ink.usr.common.model.mysql.SysApproverModel;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,13 @@ public interface SysApproverService {
     Long getApproverIdUseCostCenter(Long userId, String costCenter);
 
     Long getApproverInfoByApproverId(Long approverId);
+    
+    /**
+     * 获取完整的审批人信息
+     * @param approverId 审批人ID
+     * @return 审批人完整信息
+     */
+    SysApproverModel getApproverModelByApproverId(Long approverId);
     
     /**
      * 获取带有成本中心名称的审批人列表

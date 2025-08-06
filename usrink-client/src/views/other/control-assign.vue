@@ -3,12 +3,21 @@
     <el-card shadow="never" class="usr_card_override">
       <template #header>
         <div class="card-header">
-          <span>{{ t('订单管理') }}</span>
+          <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+            <el-tab-pane :label="t('订单管理')" name="order">
+              <span>{{ t('订单管理') }}</span>
+            </el-tab-pane>
+            <el-tab-pane :label="t('维修管理')" name="maintenance">
+              <span>{{ t('维修管理') }}</span>
+            </el-tab-pane>
+          </el-tabs>
         </div>
       </template>
       
-      <!-- Search Form -->
-      <el-form :model="queryForm" :inline="true" class="search-form">
+      <!-- 订单管理内容 -->
+      <div v-if="activeTab === 'order'">
+        <!-- Search Form -->
+        <el-form :model="queryForm" :inline="true" class="search-form">
         <el-form-item :label="t('电脑名')">
           <el-input v-model="queryForm.ciName" :placeholder="t('输入电脑名')" clearable />
         </el-form-item>
@@ -195,6 +204,136 @@
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
+      </div>
+    </div>
+
+      <!-- 维修管理内容 -->
+      <div v-if="activeTab === 'maintenance'">
+        <!-- 维修管理搜索表单 -->
+        <el-form :model="maintenanceQueryForm" :inline="true" class="search-form">
+          <el-form-item :label="t('电脑名')">
+            <el-input v-model="maintenanceQueryForm.ciName" :placeholder="t('输入电脑名')" clearable />
+          </el-form-item>
+          <el-form-item :label="t('维修类别')">
+            <el-select v-model="maintenanceQueryForm.fixCategory" :placeholder="t('选择维修类别')" clearable style="width: 180px;">
+              <el-option :label="t('全部')" value="" />
+              <el-option :label="t('质量问题维修')" value="质量问题维修" />
+              <el-option :label="t('人为问题维修')" value="人为问题维修" />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="t('维修状态')">
+            <el-select v-model="maintenanceQueryForm.orderStatus" :placeholder="t('选择维修状态')" clearable style="width: 180px;">
+              <el-option :label="t('全部')" value="" />
+              <el-option :label="t('待维修')" value="待维修" />
+              <el-option :label="t('维修中')" value="维修中" />
+              <el-option :label="t('维修完成')" value="维修完成" />
+              <el-option :label="t('已取消')" value="已取消" />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="t('申请人')">
+            <el-input v-model="maintenanceQueryForm.applicant" :placeholder="t('输入申请人')" clearable />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="fetchMaintenanceList">{{ t('搜索') }}</el-button>
+            <el-button @click="resetMaintenanceForm">{{ t('重置') }}</el-button>
+          </el-form-item>
+        </el-form>
+
+        <!-- 维修订单数据表格 -->
+        <el-table 
+          v-loading="maintenanceLoading" 
+          :data="maintenanceList" 
+          border 
+          style="width: 100%; overflow-x: auto;"
+          :table-layout="'fixed'"
+        >
+          <el-table-column type="index" :label="t('序号')" width="80" />
+          <el-table-column prop="orderNumber" :label="t('维修订单号')" width="150" />
+          <el-table-column prop="ciName" :label="t('电脑名')" width="160" />
+          <el-table-column prop="fixCategory" :label="t('维修类别')" width="150" />
+          <el-table-column prop="problemDescription" :label="t('故障描述')" width="200" show-overflow-tooltip />
+          <el-table-column prop="applicant" :label="t('申请人')" width="120" />
+          <el-table-column prop="costCenter" :label="t('成本中心')" width="120" />
+          <el-table-column prop="orderStatus" :label="t('维修状态')" width="120">
+            <template #default="scope">
+              <el-tag :type="getMaintenanceStatusTagType(scope.row.orderStatus)">
+                {{ getMaintenanceStatusText(scope.row.orderStatus) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" :label="t('创建时间')" width="160" />
+          <el-table-column :label="t('操作')" width="200" fixed="right">
+            <template #default="scope">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <!-- 待维修状态：显示开始维修和取消按钮 -->
+                <template v-if="scope.row.orderStatus === '待维修'">
+                  <el-button 
+                    type="primary" 
+                    size="small"
+                    @click="handleMaintenanceRepair(scope.row)"
+                  >
+                    {{ t('开始维修') }}
+                  </el-button>
+                  <el-button 
+                    type="danger" 
+                    size="small"
+                    @click="handleMaintenanceCancel(scope.row)"
+                  >
+                    {{ t('取消') }}
+                  </el-button>
+                </template>
+                <!-- 维修中状态：显示完成维修按钮 -->
+                <template v-else-if="scope.row.orderStatus === '维修中'">
+                  <el-button 
+                    type="success" 
+                    size="small"
+                    @click="handleMaintenanceRepair(scope.row)"
+                  >
+                    {{ t('完成维修') }}
+                  </el-button>
+                  <el-button 
+                    type="info" 
+                    size="small"
+                    @click="handleViewMaintenanceProgress(scope.row)"
+                  >
+                    {{ t('查看进度') }}
+                  </el-button>
+                </template>
+                <!-- 维修完成状态：显示查看详情按钮 -->
+                <el-button 
+                  v-else-if="scope.row.orderStatus === '维修完成'"
+                  type="success" 
+                  size="small"
+                  @click="handleViewMaintenanceDetail(scope.row)"
+                >
+                  {{ t('查看详情') }}
+                </el-button>
+                <!-- 其他状态：显示查看进度按钮 -->
+                <el-button 
+                  v-else
+                  type="info" 
+                  size="small"
+                  @click="handleViewMaintenanceProgress(scope.row)"
+                >
+                  {{ t('查看进度') }}
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <!-- 维修管理分页 -->
+        <div class="pagination-container">
+          <el-pagination
+            :current-page="maintenancePageNum"
+            :page-size="maintenancePageSize"
+            :page-sizes="[10, 20, 30, 50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="maintenanceTotal"
+            @size-change="handleMaintenanceSizeChange"
+            @current-change="handleMaintenanceCurrentChange"
+          />
+        </div>
       </div>
     </el-card>
 
@@ -560,6 +699,195 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 维修审批对话框 -->
+    <el-dialog v-model="maintenanceApprovalDialogVisible" :title="t('维修审批')" width="600px">
+      <div v-if="currentMaintenanceOrder">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item :label="t('维修订单号')">{{ currentMaintenanceOrder.orderNumber }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑名')">{{ currentMaintenanceOrder.ciName }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修类别')">{{ currentMaintenanceOrder.fixCategory }}</el-descriptions-item>
+          <el-descriptions-item :label="t('申请人')">{{ currentMaintenanceOrder.applicant }}</el-descriptions-item>
+          <el-descriptions-item :label="t('故障描述')" :span="2">{{ currentMaintenanceOrder.problemDescription }}</el-descriptions-item>
+        </el-descriptions>
+        
+        <el-form :model="approvalForm" style="margin-top: 20px;">
+          <el-form-item :label="t('审批结果')">
+            <el-radio-group v-model="approvalForm.status">
+              <el-radio value="已通过">{{ t('通过') }}</el-radio>
+              <el-radio value="已驳回">{{ t('驳回') }}</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item :label="t('审批意见')">
+            <el-input v-model="approvalForm.reason" type="textarea" :rows="3" :placeholder="t('请输入审批意见')" />
+          </el-form-item>
+        </el-form>
+      </div>
+      
+      <template #footer>
+        <el-button @click="maintenanceApprovalDialogVisible = false">{{ t('取消') }}</el-button>
+        <el-button type="primary" @click="submitMaintenanceApproval">{{ t('提交') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 维修操作对话框 -->
+    <el-dialog v-model="maintenanceOperationDialogVisible" :title="t('维修操作')" width="800px">
+      <div v-if="currentMaintenanceOrder">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item :label="t('维修订单号')">{{ currentMaintenanceOrder.orderNumber }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑名')">{{ currentMaintenanceOrder.ciName }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修类别')">{{ currentMaintenanceOrder.fixCategory }}</el-descriptions-item>
+          <el-descriptions-item :label="t('申请人')">{{ currentMaintenanceOrder.applicant }}</el-descriptions-item>
+          <el-descriptions-item :label="t('故障描述')" :span="2">{{ currentMaintenanceOrder.problemDescription }}</el-descriptions-item>
+        </el-descriptions>
+        
+        <el-form :model="maintenanceOperationForm" style="margin-top: 20px;">
+          <el-form-item :label="t('维修操作')">
+            <el-input v-model="maintenanceOperationForm.action" type="textarea" :rows="3" :placeholder="t('请输入维修操作内容')" />
+          </el-form-item>
+          <el-form-item :label="t('维修结果')">
+            <el-input v-model="maintenanceOperationForm.result" type="textarea" :rows="3" :placeholder="t('请输入维修结果')" />
+          </el-form-item>
+          <el-form-item :label="t('维修费用')">
+            <el-input-number v-model="maintenanceOperationForm.cost" :min="0" :precision="2" :step="0.01" />
+          </el-form-item>
+        </el-form>
+      </div>
+      
+      <template #footer>
+        <el-button @click="maintenanceOperationDialogVisible = false">{{ t('取消') }}</el-button>
+        <el-button type="primary" @click="submitMaintenanceOperation">{{ t('完成维修') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 维修表单对话框 -->
+    <el-dialog
+      v-model="maintenanceRepairDialogVisible"
+      :title="t('维修表单')"
+      width="80%"
+      class="assignment-detail-dialog"
+      destroy-on-close
+    >
+      <div v-if="currentMaintenanceOrder" class="assignment-detail-container">
+        <!-- 顶部概要信息 -->
+        <div class="detail-header">
+          <div class="assignment-title">
+            <span class="computer-name">{{ t('维修表单') }}</span>
+            <el-tag class="status-tag" type="warning">
+              {{ getMaintenanceStatusText(currentMaintenanceOrder.orderStatus) }}
+            </el-tag>
+          </div>
+          <div class="assignment-info">
+            <span class="info-item">
+              <i class="el-icon-desktop"></i> {{ t('电脑名') }}: {{ currentMaintenanceOrder.ciName }}
+            </span>
+            <span class="info-item">
+              <i class="el-icon-user"></i> {{ t('申请人') }}: {{ currentMaintenanceOrder.applicant }}
+            </span>
+            <span class="info-item">
+              <i class="el-icon-document"></i> {{ t('维修订单号') }}: {{ currentMaintenanceOrder.orderNumber }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 故障描述信息 -->
+        <div class="search-container">
+          <div class="fault-description">
+            <h4>{{ t('故障描述') }}</h4>
+            <div class="description-content">
+              {{ currentMaintenanceOrder.problemDescription || t('暂无') }}
+            </div>
+            <div class="repair-category">
+              <span class="label">{{ t('维修类别') }}:</span>
+              <el-tag type="info" size="small">{{ currentMaintenanceOrder.fixCategory }}</el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- 维修内容选择区域 -->
+        <div class="table-container">
+          <div class="maintenance-selection">
+            <h4>{{ t('维修内容选择') }}</h4>
+            <div class="selection-grid">
+              <el-checkbox-group v-model="selectedMaintenanceItems" @change="handleMaintenanceItemChange">
+                <el-checkbox :label="t('维修主板')" value="维修主板" />
+                <el-checkbox :label="t('维修键盘')" value="维修键盘" />
+                <el-checkbox :label="t('维修显示器')" value="维修显示器" />
+                <el-checkbox :label="t('维修鼠标')" value="维修鼠标" />
+                <el-checkbox :label="t('维修电源')" value="维修电源" />
+                <el-checkbox :label="t('维修硬盘')" value="维修硬盘" />
+                <el-checkbox :label="t('维修内存')" value="维修内存" />
+                <el-checkbox :label="t('维修散热器')" value="维修散热器" />
+                <el-checkbox :label="t('维修网卡')" value="维修网卡" />
+                <el-checkbox :label="t('其他维修')" value="其他维修" />
+              </el-checkbox-group>
+            </div>
+          </div>
+          
+          <el-form :model="maintenanceRepairForm" style="margin-top: 20px;" :rules="maintenanceRepairRules" ref="maintenanceRepairFormRef" label-width="120px">
+            <el-form-item :label="t('维修内容')" prop="maintenanceContent">
+              <el-input 
+                v-model="maintenanceRepairForm.maintenanceContent" 
+                type="textarea" 
+                :rows="3" 
+                :placeholder="t('选择上方维修项目后将自动填充，也可手动输入，多项请用分号(;)分隔')" 
+              />
+            </el-form-item>
+            <el-form-item :label="t('维修结果')" prop="maintenanceResult">
+              <el-input v-model="maintenanceRepairForm.maintenanceResult" type="textarea" :rows="3" :placeholder="t('请描述维修后的结果，是否解决了问题')" />
+            </el-form-item>
+            <el-form-item :label="t('备注')">
+              <el-input v-model="maintenanceRepairForm.remark" type="textarea" :rows="2" :placeholder="t('其他需要说明的事项')" />
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="assignment-actions">
+          <div class="action-buttons">
+            <el-button @click="maintenanceRepairDialogVisible = false" size="large">{{ t('取消') }}</el-button>
+            <el-button type="primary" @click="submitMaintenanceRepair" size="large">{{ t('完成维修') }}</el-button>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 维修详情对话框 -->
+    <el-dialog v-model="maintenanceDetailDialogVisible" :title="t('维修详情')" width="800px">
+      <div v-if="currentMaintenanceOrder">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item :label="t('维修订单号')">{{ currentMaintenanceOrder.orderNumber }}</el-descriptions-item>
+          <el-descriptions-item :label="t('电脑名')">{{ currentMaintenanceOrder.ciName }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修类别')">{{ currentMaintenanceOrder.fixCategory }}</el-descriptions-item>
+          <el-descriptions-item :label="t('申请人')">{{ currentMaintenanceOrder.applicant }}</el-descriptions-item>
+          <el-descriptions-item :label="t('故障描述')" :span="2">{{ currentMaintenanceOrder.problemDescription }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修操作')" :span="2">{{ currentMaintenanceOrder.maintenanceAction || t('暂无') }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修结果')" :span="2">{{ currentMaintenanceOrder.maintenanceResult || t('暂无') }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修费用')">{{ currentMaintenanceOrder.maintenanceCost || 0 }}</el-descriptions-item>
+          <el-descriptions-item :label="t('维修完成时间')">{{ currentMaintenanceOrder.maintenanceCompleteTime || t('暂无') }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      
+      <template #footer>
+        <el-button @click="maintenanceDetailDialogVisible = false">{{ t('关闭') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 维修进度对话框 -->
+    <el-dialog v-model="maintenanceProgressDialogVisible" :title="t('维修进度')" width="600px">
+      <div v-if="currentMaintenanceOrder">
+        <el-steps :active="getMaintenanceStepActive(currentMaintenanceOrder.orderStatus)" direction="vertical">
+          <el-step :title="t('申请提交')" :description="currentMaintenanceOrder.createTime" />
+          <el-step :title="t('审批处理')" :description="getApprovalDescription(currentMaintenanceOrder)" />
+          <el-step :title="t('维修执行')" :description="getMaintenanceDescription(currentMaintenanceOrder)" />
+          <el-step :title="t('维修完成')" :description="currentMaintenanceOrder.maintenanceCompleteTime || t('待完成')" />
+        </el-steps>
+      </div>
+      
+      <template #footer>
+        <el-button @click="maintenanceProgressDialogVisible = false">{{ t('关闭') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -683,7 +1011,77 @@ const translations = {
   "条记录": { en: "records", zh: "条记录" },
   "数据量较大，导出可能需要较长时间": { en: "Large amount of data, export may take some time", zh: "数据量较大，导出可能需要较长时间" },
   "确认导出": { en: "Confirm Export", zh: "确认导出" },
-  "取消": { en: "Cancel", zh: "取消" }
+  "维修管理": { en: "Maintenance Management", zh: "维修管理" },
+  "维修类别": { en: "Maintenance Category", zh: "维修类别" },
+  "选择维修类别": { en: "Select Maintenance Category", zh: "选择维修类别" },
+  "维修表单": { en: "Maintenance Form", zh: "维修表单" },
+  "维修内容": { en: "Maintenance Content", zh: "维修内容" },
+  "请详细描述维修的具体内容，包括更换的零件、维修的方法等": { en: "Please describe the maintenance details, including replaced parts and methods", zh: "请详细描述维修的具体内容，包括更换的零件、维修的方法等" },
+  "维修结果": { en: "Maintenance Result", zh: "维修结果" },
+  "请描述维修后的结果，是否解决了问题": { en: "Please describe the result after maintenance, whether the problem is solved", zh: "请描述维修后的结果，是否解决了问题" },
+  "维修费用": { en: "Maintenance Cost", zh: "维修费用" },
+  "其他需要说明的事项": { en: "Other matters to be explained", zh: "其他需要说明的事项" },
+  "完成维修": { en: "Complete Maintenance", zh: "完成维修" },
+  "维修": { en: "Repair", zh: "维修" },
+  "开始维修": { en: "Start Maintenance", zh: "开始维修" },
+  "取消": { en: "Cancel", zh: "取消" },
+  "确定要取消这个维修订单吗？": { en: "Are you sure to cancel this maintenance order?", zh: "确定要取消这个维修订单吗？" },
+  "确认取消": { en: "Confirm Cancel", zh: "确认取消" },
+  "维修订单已取消": { en: "Maintenance order cancelled", zh: "维修订单已取消" },
+  "取消维修订单失败": { en: "Failed to cancel maintenance order", zh: "取消维修订单失败" },
+  "维修完成，订单状态已更新": { en: "Maintenance completed, order status updated", zh: "维修完成，订单状态已更新" },
+  "维修提交失败": { en: "Maintenance submission failed", zh: "维修提交失败" },
+  "请完善表单信息": { en: "Please complete the form information", zh: "请完善表单信息" },
+  "质量问题维修": { en: "Quality Issue Repair", zh: "质量问题维修" },
+  "人为问题维修": { en: "Human Issue Repair", zh: "人为问题维修" },
+  "维修状态": { en: "Maintenance Status", zh: "维修状态" },
+  "选择维修状态": { en: "Select Maintenance Status", zh: "选择维修状态" },
+  "待审批": { en: "Pending Approval", zh: "待审批" },
+  "审批中": { en: "Under Approval", zh: "审批中" },
+  "维修中": { en: "Under Maintenance", zh: "维修中" },
+  "维修完成": { en: "Maintenance Completed", zh: "维修完成" },
+  "已取消": { en: "Cancelled", zh: "已取消" },
+  "维修订单号": { en: "Maintenance Order No.", zh: "维修订单号" },
+  "故障描述": { en: "Problem Description", zh: "故障描述" },
+  "维修审批": { en: "Maintenance Approval", zh: "维修审批" },
+  "审批结果": { en: "Approval Result", zh: "审批结果" },
+  "通过": { en: "Approve", zh: "通过" },
+  "驳回": { en: "Reject", zh: "驳回" },
+  "审批意见": { en: "Approval Comments", zh: "审批意见" },
+  "请输入审批意见": { en: "Please enter approval comments", zh: "请输入审批意见" },
+  "提交": { en: "Submit", zh: "提交" },
+  "维修操作": { en: "Maintenance Operation", zh: "维修操作" },
+  "请输入维修操作内容": { en: "Please enter maintenance operation", zh: "请输入维修操作内容" },
+  "维修结果": { en: "Maintenance Result", zh: "维修结果" },
+  "请输入维修结果": { en: "Please enter maintenance result", zh: "请输入维修结果" },
+  "维修费用": { en: "Maintenance Cost", zh: "维修费用" },
+  "完成维修": { en: "Complete Maintenance", zh: "完成维修" },
+  "维修详情": { en: "Maintenance Details", zh: "维修详情" },
+  "维修完成时间": { en: "Maintenance Completion Time", zh: "维修完成时间" },
+  "关闭": { en: "Close", zh: "关闭" },
+  "维修进度": { en: "Maintenance Progress", zh: "维修进度" },
+  "申请提交": { en: "Application Submitted", zh: "申请提交" },
+  "审批处理": { en: "Approval Processing", zh: "审批处理" },
+  "维修执行": { en: "Maintenance Execution", zh: "维修执行" },
+  "待完成": { en: "Pending", zh: "待完成" },
+  "已审批": { en: "Approved", zh: "已审批" },
+  "待维修": { en: "Pending Maintenance", zh: "待维修" },
+  "已完成": { en: "Completed", zh: "已完成" },
+  "取消": { en: "Cancel", zh: "取消" },
+  "请选择维修内容": { en: "Please select maintenance content", zh: "请选择维修内容" },
+  "维修主板": { en: "Repair Motherboard", zh: "维修主板" },
+  "维修键盘": { en: "Repair Keyboard", zh: "维修键盘" },
+  "维修显示器": { en: "Repair Monitor", zh: "维修显示器" },
+  "维修鼠标": { en: "Repair Mouse", zh: "维修鼠标" },
+  "维修电源": { en: "Repair Power Supply", zh: "维修电源" },
+  "维修硬盘": { en: "Repair Hard Drive", zh: "维修硬盘" },
+  "维修内存": { en: "Repair Memory", zh: "维修内存" },
+  "维修散热器": { en: "Repair Cooler", zh: "维修散热器" },
+  "维修网卡": { en: "Repair Network Card", zh: "维修网卡" },
+  "其他维修": { en: "Other Repair", zh: "其他维修" },
+  "维修内容选择": { en: "Maintenance Content Selection", zh: "维修内容选择" },
+  "选择上方维修项目后将自动填充，也可手动输入，多项请用分号(;)分隔": { en: "Will auto-fill after selecting above items, or input manually. Use semicolon (;) to separate multiple items", zh: "选择上方维修项目后将自动填充，也可手动输入，多项请用分号(;)分隔" },
+  "暂无": { en: "None", zh: "暂无" }
 };
 
 // 翻译函数
@@ -747,6 +1145,69 @@ const computerQueryForm = ref({
   pageNum: 1,
   pageSize: 10
 })
+
+// 维修管理相关数据
+const activeTab = ref('order')
+
+// 维修管理查询表单
+const maintenanceQueryForm = ref({
+  ciName: '',           // 电脑名
+  fixCategory: '',      // 维修类别
+  orderStatus: '',      // 维修状态
+  applicant: '',        // 申请人
+  costCenter: '',       // 成本中心
+  company: ''           // 公司
+})
+
+// 维修订单列表
+const maintenanceList = ref([])
+const maintenanceLoading = ref(false)
+const maintenancePageNum = ref(1)
+const maintenancePageSize = ref(10)
+const maintenanceTotal = ref(0)
+
+// 维修管理对话框
+const maintenanceApprovalDialogVisible = ref(false)
+const maintenanceOperationDialogVisible = ref(false)
+const maintenanceDetailDialogVisible = ref(false)
+const maintenanceProgressDialogVisible = ref(false)
+const maintenanceRepairDialogVisible = ref(false)
+const currentMaintenanceOrder = ref(null)
+
+// 维修审批表单
+const approvalForm = ref({
+  status: '已通过',
+  reason: ''
+})
+
+// 维修操作表单
+const maintenanceOperationForm = ref({
+  action: '',
+  result: '',
+  cost: 0
+})
+
+// 维修表单
+const maintenanceRepairForm = ref({
+  maintenanceContent: '',
+  maintenanceResult: '',
+  remark: ''
+})
+
+// 维修项目选择
+const selectedMaintenanceItems = ref([])
+
+// 维修表单验证规则
+const maintenanceRepairRules = {
+  maintenanceContent: [
+    { required: true, message: '请选择维修内容', trigger: 'change' }
+  ],
+  maintenanceResult: [
+    { required: true, message: '请填写维修结果', trigger: 'blur' }
+  ]
+}
+
+const maintenanceRepairFormRef = ref(null)
 
 // 获取状态对应的Tag类型
 const getStatusTagType = (status) => {
@@ -1386,6 +1847,317 @@ const formatDataForExport = (data) => {
     return exportObj
   })
 }
+
+// 维修管理相关方法
+
+// 标签页切换处理
+const handleTabChange = (tabName) => {
+  activeTab.value = tabName;
+  if (tabName === 'maintenance') {
+    // 切换到维修管理时，加载维修订单列表
+    fetchMaintenanceList();
+  } else {
+    // 切换到订单管理时，加载订单列表
+    fetchAssignmentList();
+  }
+};
+
+// 获取维修订单列表
+const fetchMaintenanceList = () => {
+  maintenanceLoading.value = true;
+  const params = {
+    pageNum: maintenancePageNum.value,
+    pageSize: maintenancePageSize.value,
+    ...maintenanceQueryForm.value
+  };
+  
+  httpUtil.get("/sysMaintenanceOrder/getOrderList", { params }).then(res => {
+    if (res.data && res.data.list) {
+      maintenanceList.value = res.data.list;
+      maintenanceTotal.value = res.data.total || 0;
+    } else {
+      maintenanceList.value = [];
+      maintenanceTotal.value = 0;
+    }
+  }).catch(err => {
+    console.error("获取维修订单列表失败", err);
+    ElMessage.error("获取维修订单列表失败");
+  }).finally(() => {
+    maintenanceLoading.value = false;
+  });
+};
+
+// 重置维修查询表单
+const resetMaintenanceForm = () => {
+  maintenanceQueryForm.value = {
+    ciName: '',
+    fixCategory: '',
+    orderStatus: '',
+    applicant: '',
+    costCenter: '',
+    company: ''
+  };
+  maintenancePageNum.value = 1;
+  fetchMaintenanceList();
+};
+
+// 维修管理分页处理
+const handleMaintenanceSizeChange = (val) => {
+  maintenancePageSize.value = val;
+  fetchMaintenanceList();
+};
+
+const handleMaintenanceCurrentChange = (val) => {
+  maintenancePageNum.value = val;
+  fetchMaintenanceList();
+};
+
+// 获取维修状态标签类型
+const getMaintenanceStatusTagType = (status) => {
+  if (status === '待审批') return 'warning';
+  if (status === '审批中') return 'primary';
+  if (status === '维修中') return 'warning';
+  if (status === '维修完成') return 'success';
+  if (status === '已取消') return 'info';
+  return '';
+};
+
+// 获取维修状态文本
+const getMaintenanceStatusText = (status) => {
+  return status || t('未知');
+};
+
+
+
+// 维修操作处理
+const handleMaintenanceOperation = (row) => {
+  maintenanceOperationDialogVisible.value = true;
+  currentMaintenanceOrder.value = row;
+  maintenanceOperationForm.value = {
+    action: '',
+    result: '',
+    cost: 0
+  };
+};
+
+// 维修处理
+const handleMaintenanceRepair = (row) => {
+  if (row.orderStatus === '待维修') {
+    // 开始维修：将状态从"待维修"改为"维修中"
+    startMaintenance(row);
+  } else if (row.orderStatus === '维修中') {
+    // 完成维修：打开维修表单
+    maintenanceRepairDialogVisible.value = true;
+    currentMaintenanceOrder.value = row;
+    maintenanceRepairForm.value = {
+      maintenanceContent: '',
+      maintenanceResult: '',
+      remark: ''
+    };
+    // 重置维修项目选择
+    selectedMaintenanceItems.value = [];
+  }
+};
+
+// 开始维修
+const startMaintenance = (row) => {
+  const params = {
+    orderId: row.orderId,
+    orderStatus: '维修中'
+  };
+  
+  httpUtil.post('/sysMaintenanceOrder/updateOrderStatus', params, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then(res => {
+    if (res.code === 200) {
+      ElMessage.success('已开始维修，状态已更新');
+      fetchMaintenanceList();
+    } else {
+      ElMessage.error(res.message || '状态更新失败');
+    }
+  }).catch(err => {
+    console.error('状态更新失败', err);
+    ElMessage.error('状态更新失败');
+  });
+};
+
+// 处理维修项目选择变化
+const handleMaintenanceItemChange = (checkedItems) => {
+  // 用分号连接选中的维修项目
+  maintenanceRepairForm.value.maintenanceContent = checkedItems.join(';');
+};
+
+// 取消维修处理
+const handleMaintenanceCancel = (row) => {
+  ElMessageBox.confirm(
+    '确定要取消这个维修订单吗？',
+    '确认取消',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  ).then(() => {
+    const params = {
+      orderId: row.orderId,
+      orderStatus: '已取消'
+    };
+    
+    httpUtil.post('/sysMaintenanceOrder/updateOrderStatus', params, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (res.code === 200) {
+        ElMessage.success('维修订单已取消');
+        fetchMaintenanceList();
+      } else {
+        ElMessage.error(res.message || '取消维修订单失败');
+      }
+    }).catch(err => {
+      console.error('取消维修订单失败', err);
+      ElMessage.error('取消维修订单失败');
+    });
+  }).catch(() => {
+    // 用户取消操作
+  });
+};
+
+// 查看维修详情
+const handleViewMaintenanceDetail = (row) => {
+  maintenanceDetailDialogVisible.value = true;
+  currentMaintenanceOrder.value = row;
+};
+
+// 查看维修进度
+const handleViewMaintenanceProgress = (row) => {
+  maintenanceProgressDialogVisible.value = true;
+  currentMaintenanceOrder.value = row;
+};
+
+// 提交维修审批
+const submitMaintenanceApproval = () => {
+  if (!approvalForm.value.status) {
+    ElMessage.warning('请选择审批结果');
+    return;
+  }
+  
+  const params = {
+    orderId: currentMaintenanceOrder.value.orderId,
+    status: approvalForm.value.status,
+    reason: approvalForm.value.reason
+  };
+  
+  httpUtil.post('/sysMaintenanceOrder/approveOrder', params, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then(res => {
+    if (res.code === 200) {
+      ElMessage.success('审批提交成功');
+      maintenanceApprovalDialogVisible.value = false;
+      fetchMaintenanceList();
+    } else {
+      ElMessage.error(res.message || '审批提交失败');
+    }
+  }).catch(err => {
+    console.error('审批提交失败', err);
+    ElMessage.error('审批提交失败');
+  });
+};
+
+// 提交维修操作
+const submitMaintenanceOperation = () => {
+  if (!maintenanceOperationForm.value.action || !maintenanceOperationForm.value.result) {
+    ElMessage.warning('请填写维修操作和结果');
+    return;
+  }
+  
+  const params = {
+    orderId: currentMaintenanceOrder.value.orderId,
+    action: maintenanceOperationForm.value.action,
+    result: maintenanceOperationForm.value.result,
+    cost: maintenanceOperationForm.value.cost
+  };
+  
+  httpUtil.post('/sysMaintenanceOrder/operateMaintenance', params, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then(res => {
+    if (res.code === 200) {
+      ElMessage.success('维修操作提交成功');
+      maintenanceOperationDialogVisible.value = false;
+      fetchMaintenanceList();
+    } else {
+      ElMessage.error(res.message || '维修操作提交失败');
+    }
+  }).catch(err => {
+    console.error('维修操作提交失败', err);
+    ElMessage.error('维修操作提交失败');
+  });
+};
+
+// 提交维修表单
+const submitMaintenanceRepair = () => {
+  maintenanceRepairFormRef.value.validate((valid) => {
+    if (valid) {
+      const params = {
+        orderId: currentMaintenanceOrder.value.orderId,
+        maintenanceAction: maintenanceRepairForm.value.maintenanceContent,
+        maintenanceResult: maintenanceRepairForm.value.maintenanceResult,
+        maintenanceCost: 0, // 设置默认值，因为我们已经移除了维修费用字段
+        maintenanceRemark: maintenanceRepairForm.value.remark,
+        orderStatus: '维修完成'
+      };
+      
+      httpUtil.post('/sysMaintenanceOrder/completeMaintenance', params, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(res => {
+        if (res.code === 200) {
+          ElMessage.success('维修完成，订单状态已更新');
+          maintenanceRepairDialogVisible.value = false;
+          fetchMaintenanceList();
+        } else {
+          ElMessage.error(res.message || '维修提交失败');
+        }
+      }).catch(err => {
+        console.error('维修提交失败', err);
+        ElMessage.error('维修提交失败');
+      });
+    } else {
+      ElMessage.warning('请完善表单信息');
+    }
+  });
+};
+
+// 获取维修步骤激活状态
+const getMaintenanceStepActive = (status) => {
+  if (status === '待审批') return 1;
+  if (status === '审批中') return 2;
+  if (status === '维修中') return 3;
+  if (status === '维修完成') return 4;
+  return 1;
+};
+
+// 获取审批描述
+const getApprovalDescription = (order) => {
+  if (order.orderStatus === '维修完成') return order.approvalTime || t('已审批');
+  if (order.orderStatus === '维修中') return order.approvalTime || t('已审批');
+  if (order.orderStatus === '审批中') return t('审批中');
+  return t('待审批');
+};
+
+// 获取维修描述
+const getMaintenanceDescription = (order) => {
+  if (order.orderStatus === '维修完成') return order.maintenanceCompleteTime || t('已完成');
+  if (order.orderStatus === '维修中') return t('维修中');
+  return t('待维修');
+};
 </script>
 
 <style scoped>
@@ -2468,5 +3240,122 @@ const formatDataForExport = (data) => {
 .tech-confirm-btn:hover .tech-btn-icon {
   opacity: 1;
   transform: translateX(0);
+}
+
+/* 维修表单专用样式 */
+.fault-description {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #20b2aa;
+  margin-bottom: 0;
+}
+
+.fault-description h4 {
+  margin: 0 0 15px 0;
+  color: #20b2aa;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.description-content {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  margin-bottom: 15px;
+  color: #333;
+  line-height: 1.6;
+  min-height: 60px;
+}
+
+.repair-category {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.repair-category .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.maintenance-selection {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e4e7ed;
+}
+
+.maintenance-selection h4 {
+  margin: 0 0 20px 0;
+  color: #20b2aa;
+  font-size: 16px;
+  font-weight: 600;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #20b2aa;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.selection-grid :deep(.el-checkbox) {
+  margin-right: 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+.selection-grid :deep(.el-checkbox:hover) {
+  border-color: #20b2aa;
+  background-color: rgba(32, 178, 170, 0.05);
+}
+
+.selection-grid :deep(.el-checkbox.is-checked) {
+  border-color: #20b2aa;
+  background-color: rgba(32, 178, 170, 0.1);
+}
+
+.selection-grid :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #20b2aa;
+  border-color: #20b2aa;
+}
+
+.selection-grid :deep(.el-checkbox__label) {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.selection-grid :deep(.el-checkbox.is-checked .el-checkbox__label) {
+  color: #20b2aa;
+}
+
+/* 表单样式统一 */
+.table-container :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #333;
+}
+
+.table-container :deep(.el-textarea__inner) {
+  border-radius: 8px;
+  border: 1px solid rgba(32, 178, 170, 0.2);
+  transition: all 0.3s ease;
+}
+
+.table-container :deep(.el-textarea__inner:hover) {
+  border-color: rgba(32, 178, 170, 0.4);
+}
+
+.table-container :deep(.el-textarea__inner:focus) {
+  border-color: #20b2aa;
+  box-shadow: 0 0 0 2px rgba(32, 178, 170, 0.2);
 }
 </style>

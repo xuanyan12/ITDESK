@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysMaintenanceOrderMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="ink.usr.common.model.mysql.SysMaintenanceOrderModel">
+        <id column="orderId" property="orderId" jdbcType="BIGINT"/>
+        <result column="maintenanceId" property="maintenanceId" jdbcType="BIGINT"/>
+        <result column="orderNumber" property="orderNumber" jdbcType="VARCHAR"/>
+        <result column="orderType" property="orderType" jdbcType="VARCHAR"/>
+        <result column="costCenter" property="costCenter" jdbcType="VARCHAR"/>
+        <result column="applicant" property="applicant" jdbcType="VARCHAR"/>
+        <result column="ciName" property="ciName" jdbcType="VARCHAR"/>
+        <result column="problemDescription" property="problemDescription" jdbcType="VARCHAR"/>
+        <result column="maintenanceTime" property="maintenanceTime" jdbcType="VARCHAR"/>
+        <result column="maintenanceRemark" property="maintenanceRemark" jdbcType="VARCHAR"/>
+        <result column="orderStatus" property="orderStatus" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+        <result column="updateTime" property="updateTime" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        orderId, maintenanceId, orderNumber, orderType, costCenter, applicant, ciName,
+        problemDescription, maintenanceTime, maintenanceRemark, orderStatus, createTime, updateTime
+    </sql>
+
+    <!-- 插入维修订单 -->
+    <insert id="insertOrder" parameterType="ink.usr.common.model.mysql.SysMaintenanceOrderModel" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO sys_maintenance_order (
+            maintenanceId, orderNumber, orderType, costCenter, applicant, ciName,
+            problemDescription, maintenanceTime, maintenanceRemark, orderStatus, createTime, updateTime
+        ) VALUES (
+            #{maintenanceId}, #{orderNumber}, #{orderType}, #{costCenter}, #{applicant}, #{ciName},
+            #{problemDescription}, #{maintenanceTime}, #{maintenanceRemark}, #{orderStatus}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 根据ID查询维修订单 -->
+    <select id="selectOrderById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_order
+        WHERE orderId = #{orderId}
+    </select>
+
+    <!-- 根据维修申请ID查询维修订单 -->
+    <select id="selectOrderByMaintenanceId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_order
+        WHERE maintenanceId = #{maintenanceId}
+    </select>
+
+    <!-- 查询所有维修订单 -->
+    <select id="selectAllOrders" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_order
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 根据状态查询维修订单 -->
+    <select id="selectOrdersByStatus" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_order
+        WHERE orderStatus = #{orderStatus}
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 根据审批人查询维修订单 -->
+    <select id="selectOrdersByApprover" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT DISTINCT o.<include refid="Base_Column_List"/>
+        FROM sys_maintenance_order o
+        INNER JOIN sys_maintenance_approval a ON o.orderId = a.orderId
+        WHERE a.approverId = #{approverId}
+        ORDER BY o.createTime DESC
+    </select>
+
+    <!-- 更新维修订单 -->
+    <update id="updateOrder" parameterType="ink.usr.common.model.mysql.SysMaintenanceOrderModel">
+        UPDATE sys_maintenance_order
+        SET maintenanceId = #{maintenanceId},
+            orderNumber = #{orderNumber},
+            orderType = #{orderType},
+            costCenter = #{costCenter},
+            applicant = #{applicant},
+            ciName = #{ciName},
+            problemDescription = #{problemDescription},
+            maintenanceTime = #{maintenanceTime},
+            maintenanceRemark = #{maintenanceRemark},
+            orderStatus = #{orderStatus},
+            updateTime = #{updateTime}
+        WHERE orderId = #{orderId}
+    </update>
+
+    <!-- 更新订单状态 -->
+    <update id="updateOrderStatus">
+        UPDATE sys_maintenance_order
+        SET orderStatus = #{orderStatus},
+            updateTime = NOW()
+        WHERE orderId = #{orderId}
+    </update>
+
+
+
+    <!-- 删除维修订单 -->
+    <delete id="deleteOrder" parameterType="java.lang.Long">
+        DELETE FROM sys_maintenance_order
+        WHERE orderId = #{orderId}
+    </delete>
+
+    <!-- 根据条件查询维修订单列表（分页） -->
+    <select id="selectOrderList" parameterType="ink.usr.admin.dao.DTO.SysMaintenanceOrderDTO" resultType="java.util.Map">
+        SELECT 
+            o.orderId,
+            o.maintenanceId,
+            o.orderNumber,
+            o.orderType,
+            o.costCenter,
+            COALESCE(u.userNick, u.userName, o.applicant) AS applicant,
+            o.ciName,
+            o.problemDescription,
+            o.maintenanceTime,
+            o.maintenanceRemark,
+            o.orderStatus,
+            o.createTime,
+            o.updateTime,
+            a.fixCategory,
+            a.company
+        FROM sys_maintenance_order o
+        LEFT JOIN sys_maintenance_apply a ON o.maintenanceId = a.maintenanceId
+        LEFT JOIN sys_user u ON o.applicant = u.userId
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND o.ciName LIKE CONCAT('%', #{ciName}, '%')
+            </if>
+            <if test="fixCategory != null and fixCategory != ''">
+                AND a.fixCategory = #{fixCategory}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND o.orderStatus = #{orderStatus}
+            </if>
+            <if test="applicant != null and applicant != ''">
+                AND (u.userNick LIKE CONCAT('%', #{applicant}, '%') OR u.userName LIKE CONCAT('%', #{applicant}, '%'))
+            </if>
+            <if test="company != null and company != ''">
+                AND a.company LIKE CONCAT('%', #{company}, '%')
+            </if>
+        </where>
+        ORDER BY o.createTime DESC
+        <if test="pageNum != null and pageSize != null">
+            LIMIT #{pageSize} OFFSET #{pageNum}
+        </if>
+    </select>
+
+    <!-- 根据条件查询维修订单总数 -->
+    <select id="selectOrderCount" parameterType="ink.usr.admin.dao.DTO.SysMaintenanceOrderDTO" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_maintenance_order o
+        LEFT JOIN sys_maintenance_apply a ON o.maintenanceId = a.maintenanceId
+        LEFT JOIN sys_user u ON o.applicant = u.userId
+        <where>
+            <if test="ciName != null and ciName != ''">
+                AND o.ciName LIKE CONCAT('%', #{ciName}, '%')
+            </if>
+            <if test="fixCategory != null and fixCategory != ''">
+                AND a.fixCategory = #{fixCategory}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND o.orderStatus = #{orderStatus}
+            </if>
+            <if test="applicant != null and applicant != ''">
+                AND (u.userNick LIKE CONCAT('%', #{applicant}, '%') OR u.userName LIKE CONCAT('%', #{applicant}, '%'))
+            </if>
+            <if test="company != null and company != ''">
+                AND a.company LIKE CONCAT('%', #{company}, '%')
+            </if>
+        </where>
+    </select>
+
+</mapper> 

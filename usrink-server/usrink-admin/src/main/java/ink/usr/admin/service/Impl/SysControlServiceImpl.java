@@ -219,6 +219,10 @@ public class SysControlServiceImpl implements SysControlService {
             Long approvalId = sysAllocateDeviceDTO.getApprovalId();
             if(approvalId!=null){
                 SysApprovalRequestModel approvalRequestModel = sysApplyMapper.getByApprovalId(approvalId);
+                if(approvalRequestModel == null){
+                    log.warn("未找到approvalId为{}的申请记录", approvalId);
+                    return false;
+                }
                 String ciName = approvalRequestModel.getCiName();
                 String deviceCategory = approvalRequestModel.getDeviceCategory();
                 SysControlModel computerInfo = null;

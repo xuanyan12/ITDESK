@@ -15,4 +15,6 @@ public class SysApplyListVO extends SysApprovalRequestModel {
     private String responsibilityName;
     // 分配状态
     private String assignStatus;
+    // 维修类别
+    private String fixCategory;
 }

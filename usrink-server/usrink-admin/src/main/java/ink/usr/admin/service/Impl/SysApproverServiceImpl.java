@@ -52,6 +52,11 @@ public class SysApproverServiceImpl implements SysApproverService {
     }
     
     @Override
+    public SysApproverModel getApproverModelByApproverId(Long approverId) {
+        return sysApproverMapper.getApproverInfoByApproverId(approverId);
+    }
+    
+    @Override
     public List<Map<String, Object>> getApproverListWithCostCenter(Long userId) {
         // 获取用户的审批人ID列表
         List<Long> approverIds = getApproverIdList(userId);

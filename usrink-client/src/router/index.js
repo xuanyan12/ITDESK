@@ -9,6 +9,9 @@ import segAnalytics from "@/views/public/seg-analytics.vue" // 添加SEG ONELINK
 import qaPage from "@/views/public/qa-page.vue" // 添加QA页面引入
 import controlAsset from "@/views/other/control-asset.vue" // 添加电脑台账页面引入
 import controlMaintenance from "@/views/other/control-maintenance.vue" // 添加电脑维修记录页面引入
+import apply from "@/views/other/apply.vue" // 添加电脑申请页面引入
+import maintenanceApply from "@/views/other/maintenance-apply.vue" // 添加维修申请页面引入
+import computerReport from "@/views/other/computer-report.vue" // 添加电脑报表页面引入
 import {createRouter, createWebHistory} from 'vue-router'
 import NProgress from 'nprogress'
 import loginUtil from "@/utils/LoginUtil";
@@ -40,6 +43,9 @@ const routes = [
     {path: '/seg-analytics', component: segAnalytics, meta:{  title:'SEG-OneLink' }}, // 添加SEG ONELINK数据统计路由
     {path: '/qa-page', component: qaPage}, // 添加QA页面路由
     {path: '/control-maintenance', component: controlMaintenance}, // 添加电脑维修记录路由
+    {path: '/apply', component: apply}, // 添加电脑申请路由
+    {path: '/maintenance-apply', component: maintenanceApply}, // 添加维修申请路由
+    {path: '/computer-report', component: computerReport}, // 添加电脑报表路由
     // 404 Notfound
     // 理论上，这里应该永远匹配不到，因为路由守卫前置拦截会把将要访问的路由重定向的对应的路由上
     // 比如访问了`/aaa`一个不存在的路由，
@@ -75,7 +81,7 @@ router.beforeEach(async (to) => {
     let isAuth = loginUtil.isAuthenticated()
 
     // 添加不需要登录验证的白名单路径
-    const whiteList = ['/login', '/register', '/forget-password', '/public-page', '/seg-onelink', '/seg-analytics', '/qa-page', '/control-maintenance']
+    const whiteList = ['/login', '/register', '/forget-password', '/public-page', '/seg-onelink', '/seg-analytics', '/qa-page', '/control-maintenance', '/apply', '/maintenance-apply']
     
     // 判断是否在白名单中，如果是，直接放行
     if (whiteList.includes(to.path)) {

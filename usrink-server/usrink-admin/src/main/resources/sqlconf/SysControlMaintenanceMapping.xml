@@ -5,45 +5,101 @@
     <!-- 添加查询电脑修改记录列表的SQL -->
     <select id="getControlMaintenanceList" resultType="ink.usr.admin.dao.VO.SysControlMaintenanceVO" parameterType="ink.usr.admin.dao.DTO.SysControlMaintenanceQueryDTO">
         SELECT
+            scm.id,
+            scm.orderNumber,
             scm.ciName,
+            COALESCE(u.userNick, u.userName, scm.applicant) AS applicant,
+            scm.maintenanceCategory,
+            scm.problemDescription,
+            scm.maintenanceResult,
             scm.maintenanceRecord,
+            scm.maintenanceRemark,
+            scm.maintenanceTime,
+            scm.createTime,
             scm.updateTime,
-            sc.deviceClass,
-            sc.manufacture,
-            sc.modelOrVersion,
-            sc.pcClass,
-            sc.pcStatus,
-            sc.lifeCycleStart,
-            sc.vendor
-        FROM sys_control_maintenance as scm left join sys_control as sc on scm.ciName = sc.ciName
+            scm.status
+        FROM sys_control_maintenance as scm
+        LEFT JOIN sys_user u ON scm.applicant = u.userId
         <where>
             <if test="ciName != null and ciName != ''">
                 AND LOWER(scm.ciName) LIKE LOWER(CONCAT('%', #{ciName}, '%'))
             </if>
+            <if test="applicant != null and applicant != ''">
+                AND (LOWER(u.userNick) LIKE LOWER(CONCAT('%', #{applicant}, '%')) OR LOWER(u.userName) LIKE LOWER(CONCAT('%', #{applicant}, '%')))
+            </if>
+            <if test="orderNumber != null and orderNumber != ''">
+                AND scm.orderNumber LIKE CONCAT('%', #{orderNumber}, '%')
+            </if>
+            <if test="maintenanceCategory != null and maintenanceCategory != ''">
+                AND scm.maintenanceCategory = #{maintenanceCategory}
+            </if>
             <if test="startTime != null and startTime != ''">
-                AND scm.updateTime &gt;= #{startTime}
+                AND scm.maintenanceTime &gt;= #{startTime}
             </if>
             <if test="endTime != null and endTime != ''">
-                AND scm.updateTime &lt;= #{endTime}
+                AND scm.maintenanceTime &lt;= #{endTime}
+            </if>
+            <if test="status != null">
+                AND scm.status = #{status}
             </if>
         </where>
-        ORDER BY scm.updateTime DESC
+        ORDER BY scm.maintenanceTime DESC
     </select>
 
     <!-- 添加查询电脑修改记录总数的SQL -->
     <select id="getControlMaintenanceCount" resultType="java.lang.Integer" parameterType="ink.usr.admin.dao.DTO.SysControlMaintenanceQueryDTO">
         SELECT COUNT(*)
-        FROM sys_control_maintenance
+        FROM sys_control_maintenance scm
+        LEFT JOIN sys_user u ON scm.applicant = u.userId
         <where>
             <if test="ciName != null and ciName != ''">
-                AND LOWER(ciName) LIKE LOWER(CONCAT('%', #{ciName}, '%'))
+                AND LOWER(scm.ciName) LIKE LOWER(CONCAT('%', #{ciName}, '%'))
+            </if>
+            <if test="applicant != null and applicant != ''">
+                AND (LOWER(u.userNick) LIKE LOWER(CONCAT('%', #{applicant}, '%')) OR LOWER(u.userName) LIKE LOWER(CONCAT('%', #{applicant}, '%')))
+            </if>
+            <if test="orderNumber != null and orderNumber != ''">
+                AND scm.orderNumber LIKE CONCAT('%', #{orderNumber}, '%')
+            </if>
+            <if test="maintenanceCategory != null and maintenanceCategory != ''">
+                AND scm.maintenanceCategory = #{maintenanceCategory}
             </if>
             <if test="startTime != null and startTime != ''">
-                AND updateTime &gt;= #{startTime}
+                AND scm.maintenanceTime &gt;= #{startTime}
             </if>
             <if test="endTime != null and endTime != ''">
-                AND updateTime &lt;= #{endTime}
+                AND scm.maintenanceTime &lt;= #{endTime}
+            </if>
+            <if test="status != null">
+                AND scm.status = #{status}
             </if>
         </where>
     </select>
+
+    <!-- 插入维修记录 -->
+    <insert id="insertMaintenanceRecord" parameterType="ink.usr.common.model.mysql.SysControlMaintenanceModel">
+        INSERT INTO sys_control_maintenance (
+            orderNumber,
+            ciName,
+            applicant,
+            maintenanceCategory,
+            problemDescription,
+            maintenanceResult,
+            maintenanceRecord,
+            maintenanceRemark,
+            maintenanceTime,
+            status
+        ) VALUES (
+            #{orderNumber},
+            #{ciName},
+            #{applicant},
+            #{maintenanceCategory},
+            #{problemDescription},
+            #{maintenanceResult},
+            #{maintenanceRecord},
+            #{maintenanceRemark},
+            #{maintenanceTime},
+            #{status}
+        )
+    </insert>
 </mapper>

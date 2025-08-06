@@ -45,4 +45,11 @@ public interface SysApprovalFlowService {
      * @return 审批流数量
      */
     int getApprovalFlowCountByApproverId(Long approverId, Long approvalType);
+    
+    /**
+     * 根据审批ID获取所有相关的审批流
+     * @param approvalId 审批ID
+     * @return 审批流列表
+     */
+    List<SysApprovalFlowModel> getApprovalFlowsByApprovalId(Long approvalId);
 }

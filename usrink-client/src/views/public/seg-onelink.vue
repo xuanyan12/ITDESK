@@ -277,11 +277,7 @@
           </div>
         </div>
         <div class="ai-chat-bottom" style="pointer-events:auto;">
-          <div class="ai-avatar-container" @click="openDifyModal" title="SEG-AIBot">
-            <div class="ai-avatar-icon">
-        <i class="fas fa-robot"></i>
-            </div>
-          </div>
+          <img src="/Robot.gif" alt="智小格" class="ai-avatar-container" @click="openDifyModal" title="智小格">
         </div>
       </div>
     </div>
@@ -299,6 +295,27 @@
           <iframe
             v-if="currentDifySystem"
             :src="currentDifySystem.url"
+            style="width: 100%; height: 100%; border: none;"
+            frameborder="0"
+            allow="microphone">
+          </iframe>
+        </div>
+      </div>
+    </div>
+    
+    <!-- AI-OCR模态框 -->
+    <div class="dify-modal" v-if="showOcrModal" @click="closeOcrModal">
+      <div class="dify-modal-content" @click.stop>
+        <div class="dify-modal-header">
+          <div></div>
+          <button class="dify-close-btn" @click="closeOcrModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="dify-modal-body">
+          <iframe
+            v-if="currentOcrSystem"
+            :src="currentOcrSystem.url"
             style="width: 100%; height: 100%; border: none;"
             frameborder="0"
             allow="microphone">
@@ -335,12 +352,15 @@ export default {
       // Dify模态框相关
       showDifyModal: false,
       currentDifySystem: null,
+      // AI-OCR模态框相关
+      showOcrModal: false,
+      currentOcrSystem: null,
       // 数据统计相关
       sessionId: null,
       // AI助手相关
       aiChatMessages: [
         'HELLO，欢迎来到SEG IT！',
-        '我是SEG-AIBot，有什么我可以帮您的吗？'
+        '我是智小格，问小格，秒解惑！'
       ],
       visibleMessages: [],
       messageIndex: 0,
@@ -519,6 +539,20 @@ export default {
         // IT System (IT系统)
         {
           category: 'IT系统 (IT System)',
+          name: 'IT管理系统',
+          description: 'IT系统管理中心',
+          url: 'http://cngvwms01:5055',
+          icon: 'fas fa-cogs'
+        },
+        {
+          category: 'IT系统 (IT System)',
+          name: 'AI-OCR',
+          description: '表格内容提取',
+          url: 'http://csd22602:8089/workflow/w2WBUIWXTCZ3UpWm',
+          icon: 'fas fa-eye'
+        },
+        {
+          category: 'IT系统 (IT System)',
           name: 'Matrix42',
           description: 'IT支持流程及IT资产管理',
           url: 'https://it-portal.seg-automotive.com/',
@@ -544,14 +578,8 @@ export default {
           description: '通用流程管理',
           url: 'https://seg-automotive.my.salesforce.com/',
           icon: 'fas fa-tasks'
-        },
-        {
-          category: 'IT系统 (IT System)',
-          name: 'IT管理系统',
-          description: 'IT系统管理中心',
-          url: 'http://cngvwms01:5055',
-          icon: 'fas fa-cogs'
         }
+        
       ],
     }
   },
@@ -835,6 +863,12 @@ export default {
         this.recordSystemClick(system);
       }
       
+      // 检查是否是AI-OCR系统，如果是则打开模态框
+      if (system && system.name === 'AI-OCR') {
+        this.openOcrModal();
+        return;
+      }
+      
       if (this.enableFlowerTransition && system) {
         this.showFlowerTransition(system);
       } else {
@@ -933,11 +967,24 @@ export default {
     openDifyModal() {
       // 固定的Dify系统配置
       this.currentDifySystem = {
-        name: 'SEG-AIBot',
+        name: '智小格',
         icon: 'fas fa-robot',
         url: 'http://csd22602:8089/chat/6e55ev5WVAzUrj3d'
       };
       this.showDifyModal = true;
+      // 防止背景滚动
+      document.body.style.overflow = 'hidden';
+    },
+    
+    // AI-OCR模态框处理方法
+    openOcrModal() {
+      // 固定的AI-OCR系统配置
+      this.currentOcrSystem = {
+        name: 'AI-OCR',
+        icon: 'fas fa-eye',
+        url: 'http://csd22602:8089/workflow/w2WBUIWXTCZ3UpWm'
+      };
+      this.showOcrModal = true;
       // 防止背景滚动
       document.body.style.overflow = 'hidden';
     },
@@ -980,9 +1027,19 @@ export default {
       document.body.style.overflow = 'auto';
     },
     
+    closeOcrModal() {
+      this.showOcrModal = false;
+      this.currentOcrSystem = null;
+      // 恢复背景滚动
+      document.body.style.overflow = 'auto';
+    },
+    
     handleEscKey(event) {
       if (event.key === 'Escape' && this.showDifyModal) {
         this.closeDifyModal();
+      }
+      if (event.key === 'Escape' && this.showOcrModal) {
+        this.closeOcrModal();
       }
     },
     // Favorites management
@@ -3051,8 +3108,8 @@ export default {
   font-family: 'Montserrat', sans-serif;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 83, 137, 0.15);
-  backdrop-filter: blur(10px);
-  opacity: 0.9;
+  backdrop-filter: blur(5px);
+  opacity: 0.95;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -3086,74 +3143,36 @@ export default {
 }
 
 .ai-avatar-container {
-  width: 64px;
-  height: 64px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #005389, #029165);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 25px rgba(0, 83, 137, 0.4);
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
-  animation: floatingPulse 3s infinite ease-in-out;
+  object-fit: cover;
+  image-rendering: auto;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 
+    0 8px 25px rgba(0, 83, 137, 0.3),
+    0 0 20px rgba(0, 83, 137, 0.1);
 }
 
-@keyframes floatingPulse {
-  0%, 100% {
-    box-shadow: 0 8px 25px rgba(0, 83, 137, 0.4);
-  }
-  50% {
-    box-shadow: 0 12px 35px rgba(0, 83, 137, 0.6);
-  }
-}
 
-.ai-avatar-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: left 0.5s ease;
-}
-
-.ai-avatar-container:hover::before {
-  left: 100%;
-}
 
 .ai-avatar-container:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 30px rgba(0, 83, 137, 0.5);
+  transform: translateZ(0) scale(1.05);
+  box-shadow: 
+    0 12px 35px rgba(0, 83, 137, 0.4),
+    0 0 30px rgba(0, 83, 137, 0.2);
 }
 
-.ai-avatar-icon {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 28px;
-  border-radius: 50%;
-}
 
-.ai-avatar-icon i {
-  animation: robotPulse 2s infinite ease-in-out;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
 
-@keyframes robotPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
+
 
 
 
@@ -3211,12 +3230,17 @@ export default {
   }
   
   .ai-avatar-container {
-    width: 56px;
-    height: 56px;
+    width: 70px;
+    height: 70px;
   }
   
   .ai-avatar-icon {
     font-size: 24px;
+  }
+  
+  .ai-robot-gif {
+    width: 100%;
+    height: 100%;
   }
 }
 
@@ -3234,12 +3258,17 @@ export default {
   }
   
   .ai-avatar-container {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
   }
   
   .ai-avatar-icon {
     font-size: 20px;
+  }
+  
+  .ai-robot-gif {
+    width: 100%;
+    height: 100%;
   }
 }
 

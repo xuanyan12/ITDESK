@@ -7,11 +7,15 @@ import ink.usr.admin.mapper.SysControlMaintenanceMapper;
 import ink.usr.admin.service.SysControlMaintenanceService;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.utils.PageUtil;
+import ink.usr.common.model.mysql.SysControlMaintenanceModel;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -57,5 +61,35 @@ public class SysControlMaintenanceServiceImpl implements SysControlMaintenanceSe
     public int selectCountNum(SysControlMaintenanceQueryDTO sysControlMaintenanceQueryDTO) {
         int controlMaintenanceCount = sysControlMaintenanceMapper.getControlMaintenanceCount(sysControlMaintenanceQueryDTO);
         return controlMaintenanceCount;
+    }
+    
+    @Override
+    @Transactional
+    public boolean saveMaintenanceRecord(String orderNumber, String ciName, String applicant, 
+                                       String maintenanceCategory, String problemDescription,
+                                       String maintenanceResult, String maintenanceRecord, 
+                                       String maintenanceRemark, String maintenanceTime) {
+        try {
+            SysControlMaintenanceModel record = new SysControlMaintenanceModel();
+            record.setOrderNumber(orderNumber);
+            record.setCiName(ciName);
+            record.setApplicant(applicant);
+            record.setMaintenanceCategory(maintenanceCategory);
+            record.setProblemDescription(problemDescription);
+            record.setMaintenanceResult(maintenanceResult);
+            record.setMaintenanceRecord(maintenanceRecord);
+            record.setMaintenanceRemark(maintenanceRemark);
+            record.setMaintenanceTime(maintenanceTime);
+            record.setStatus(1); // 默认有效状态
+            
+            int result = sysControlMaintenanceMapper.insertMaintenanceRecord(record);
+            log.info("保存维修记录: 订单号={}, 电脑名={}, 申请人={}, 结果={}", 
+                orderNumber, ciName, applicant, result > 0 ? "成功" : "失败");
+            return result > 0;
+        } catch (Exception e) {
+            log.error("保存维修记录失败: 订单号={}, 电脑名={}, 申请人={}", 
+                orderNumber, ciName, applicant, e);
+            return false;
+        }
     }
 }

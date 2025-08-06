@@ -886,4 +886,649 @@ public class EmailConfig {
     public String buildTempAssignmentEmailSubject() {
         return "SEG IT电脑管理系统 - 电脑已暂分配待领取";
     }
+    
+    /**
+     * 构建维修申请审批邮件内容（HTML格式）
+     * @param applicantName 申请人姓名
+     * @param applicantDepartment 申请人部门
+     * @param fixCategory 维修类别
+     * @param problemDescription 故障描述
+     * @param ciName 电脑名称
+     * @param approvalUrl 审批链接
+     * @param applyTime 申请时间
+     * @return HTML格式邮件内容
+     */
+    public String buildMaintenanceApplyEmailContent(
+            String applicantName,
+            String applicantDepartment,
+            String fixCategory,
+            String problemDescription,
+            String ciName,
+            String approvalUrl,
+            String applyTime
+    ) {
+        StringBuilder html = new StringBuilder();
+        
+        html.append("<!DOCTYPE html>")
+            .append("<html>")
+            .append("<head>")
+            .append("<meta charset=\"UTF-8\">")
+            .append("<style type=\"text/css\">")
+            .append("table { border-collapse: collapse; }")
+            .append("</style>")
+            .append("</head>")
+            .append("<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif;\">");
+        
+        // 主容器table
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f8f9fa;\">")
+            .append("<tr>")
+            .append("<td align=\"center\" style=\"padding: 20px;\">")
+            
+            // 邮件内容table
+            .append("<table width=\"600\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border: 1px solid #005389;\">")
+            
+            // 头部
+            .append("<tr>")
+            .append("<td style=\"background-color: #005389; padding: 30px; text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #ffffff; font-size: 24px; font-weight: bold; text-align: center;\">🔧 电脑维修申请审批通知</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            // 主体内容
+            .append("<tr>")
+            .append("<td style=\"padding: 30px;\">")
+            
+            // 问候语
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"font-size: 16px; color: #333; text-align: center; padding-bottom: 20px;\">")
+            .append("您好，有一条新的电脑维修申请已分配给您进行审批，关键信息如下：")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 关键信息区域
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td>")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"8\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td width=\"30%\" style=\"font-weight: bold; color: #005389;\">申请人：</td>")
+            .append("<td style=\"color: #333;\">").append(applicantName).append("</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">申请类别：</td>")
+            .append("<td style=\"color: #333;\">维修申请</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">维修类型：</td>")
+            .append("<td style=\"color: #333;\">").append(getFixCategoryDisplayName(fixCategory)).append("</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">申请时间：</td>")
+            .append("<td style=\"color: #333;\">").append(applyTime).append("</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">电脑名称：</td>")
+            .append("<td style=\"color: #333;\">").append(ciName != null ? ciName : "未指定").append("</td>")
+            .append("</tr>");
+        
+        
+        html.append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>");
+        
+        // 故障描述区域
+        if (problemDescription != null && !problemDescription.isEmpty()) {
+            html.append("<table width=\"100%\" border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+                .append("<tr>")
+                .append("<td>")
+                .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+                .append("<tr>")
+                .append("<td style=\"font-weight: bold; color: #005389; font-size: 16px; text-align: center; padding-bottom: 12px;\">🔍 故障描述</td>")
+                .append("</tr>")
+                .append("<tr>")
+                .append("<td style=\"padding: 15px; color: #333; border: 1px solid #ddd; background-color: #f9f9f9;\">").append(problemDescription).append("</td>")
+                .append("</tr>")
+                .append("</table>")
+                .append("</td>")
+                .append("</tr>")
+                .append("</table>");
+        }
+        
+        // 审批按钮区域
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"25\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #005389; font-size: 16px; font-weight: bold; text-align: center; padding-bottom: 20px;\">请点击以下按钮查看详情并进行审批：</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">")
+            .append("<table border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"background-color: #005389; margin: 0 auto;\">")
+            .append("<tr>")
+            .append("<td>")
+            .append("<a href=\"").append(approvalUrl).append("\" style=\"color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px;\">🔧 立即审批</a>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            .append("</td>")
+            .append("</tr>")
+            
+            // 底部
+            .append("<tr>")
+            .append("<td style=\"background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center; padding-bottom: 5px;\">此邮件由 SEG IT电脑管理系统 自动发送，请勿回复</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">Copyright © 2025 SEG IT Department. All Rights Reserved</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            .append("</table>") // 结束邮件内容table
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>"); // 结束主容器table
+        
+        html.append("</body>")
+            .append("</html>");
+        
+        return html.toString();
+    }
+    
+    /**
+     * 构建维修申请审批邮件主题
+     * @param applicantName 申请人姓名
+     * @param applicantDepartment 申请人部门
+     * @return 邮件主题
+     */
+    public String buildMaintenanceApplyEmailSubject(String applicantName, String applicantDepartment) {
+        return String.format("SEG IT电脑管理系统 - 新增维修申请待审批 - %s", applicantName);
+    }
+    
+    /**
+     * 构建维修申请拒绝邮件内容（HTML格式）
+     * @param applicantName 申请人姓名
+     * @param fixCategory 维修类别
+     * @param applyTime 申请时间
+     * @param rejectReason 拒绝原因
+     * @param rejectTime 拒绝时间
+     * @return HTML格式邮件内容
+     */
+    public String buildMaintenanceRejectionEmailContent(
+            String applicantName,
+            String fixCategory,
+            String applyTime,
+            String rejectReason,
+            String rejectTime
+    ) {
+        StringBuilder html = new StringBuilder();
+        
+        html.append("<!DOCTYPE html>")
+            .append("<html>")
+            .append("<head>")
+            .append("<meta charset=\"UTF-8\">")
+            .append("<style type=\"text/css\">")
+            .append("table { border-collapse: collapse; }")
+            .append("</style>")
+            .append("</head>")
+            .append("<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif;\">");
+        
+        // 主容器table
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f8f9fa;\">")
+            .append("<tr>")
+            .append("<td align=\"center\" style=\"padding: 20px;\">")
+            
+            // 邮件内容table
+            .append("<table width=\"600\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border: 1px solid #005389;\">")
+            
+            // 头部
+            .append("<tr>")
+            .append("<td style=\"background-color: #005389; padding: 30px; text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #ffffff; font-size: 24px; font-weight: bold; text-align: center;\">❌ 电脑维修申请被拒绝通知</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            // 主体内容
+            .append("<tr>")
+            .append("<td style=\"padding: 30px;\">")
+            
+            // 问候语
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"font-size: 16px; color: #333; text-align: center; padding-bottom: 20px;\">")
+            .append("您好，<strong style=\"color: #005389;\">").append(applicantName).append("</strong><br><br>")
+            .append("您的电脑维修申请请求已于 <strong style=\"color: #005389;\">").append(rejectTime).append("</strong> <strong style=\"color: #dc3545;\">被拒绝</strong><br>")
+            .append("以下是您的申请信息与审批理由：")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 申请信息区域
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td>")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"8\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td width=\"30%\" style=\"font-weight: bold; color: #005389;\">申请时间：</td>")
+            .append("<td style=\"color: #333;\">").append(applyTime).append("</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">申请类别：</td>")
+            .append("<td style=\"color: #333;\">维修申请</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">维修类型：</td>")
+            .append("<td style=\"color: #333;\">").append(getFixCategoryDisplayName(fixCategory)).append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 拒绝原因
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td>")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389; font-size: 16px; text-align: center; padding-bottom: 12px;\">📝 拒绝原因</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"padding: 15px; color: #333; text-align: center;\">").append(rejectReason != null ? rejectReason : "未提供具体原因").append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 联系提示区域
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"25\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #666; font-size: 15px; text-align: center; padding-bottom: 15px;\">如有疑问，请联系IT部门或重新提交申请</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"color: #005389; font-weight: bold; font-size: 14px; text-align: center;\">📧 联系IT部门获取更多帮助</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            .append("</td>")
+            .append("</tr>")
+            
+            // 底部
+            .append("<tr>")
+            .append("<td style=\"background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center; padding-bottom: 5px;\">此邮件由 SEG IT电脑管理系统 自动发送，请勿回复</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">Copyright © 2025 SEG IT Department. All Rights Reserved</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            .append("</table>") // 结束邮件内容table
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>"); // 结束主容器table
+        
+        html.append("</body>")
+            .append("</html>");
+        
+        return html.toString();
+    }
+    
+    /**
+     * 构建维修申请拒绝邮件主题
+     * @return 邮件主题
+     */
+    public String buildMaintenanceRejectionEmailSubject() {
+        return "SEG IT电脑管理系统 - 您的维修申请请求已被拒绝";
+    }
+    
+    /**
+     * 构建维修申请通过邮件内容（HTML格式）
+     * @param applicantName 申请人姓名
+     * @param applicantDepartment 申请人部门
+     * @param fixCategory 维修类型
+     * @param approvalTime 审批通过时间
+     * @return HTML格式邮件内容
+     */
+    public String buildMaintenanceApprovalPassedEmailContent(
+            String applicantName,
+            String applicantDepartment,
+            String fixCategory,
+            String approvalTime
+    ) {
+        StringBuilder html = new StringBuilder();
+        
+        html.append("<!DOCTYPE html>")
+            .append("<html>")
+            .append("<head>")
+            .append("<meta charset=\"UTF-8\">")
+            .append("<style type=\"text/css\">")
+            .append("table { border-collapse: collapse; }")
+            .append("</style>")
+            .append("</head>")
+            .append("<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif;\">");
+        
+        // 主容器table
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f8f9fa;\">")
+            .append("<tr>")
+            .append("<td align=\"center\" style=\"padding: 20px;\">")
+            
+            // 邮件内容table
+            .append("<table width=\"600\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border: 1px solid #005389;\">")
+            
+            // 头部
+            .append("<tr>")
+            .append("<td style=\"background-color: #005389; padding: 30px; text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #ffffff; font-size: 24px; font-weight: bold; text-align: center;\">✅ 电脑维修申请已批准通知</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            // 主体内容
+            .append("<tr>")
+            .append("<td style=\"padding: 30px;\">")
+            
+            // 问候语
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"font-size: 16px; color: #333; text-align: center; padding-bottom: 20px;\">")
+            .append("您好，<strong style=\"color: #005389;\">").append(applicantName).append("</strong>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 状态信息区域
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"25\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389; font-size: 18px; text-align: center; padding-bottom: 15px;\">🎉 维修申请审批通过</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"color: #333; font-size: 16px; text-align: center;\">")
+            .append("您的电脑维修申请请求已于 <strong style=\"color: #005389;\">").append(approvalTime).append("</strong> 审批通过，<br>")
+            .append("流程已进入维修处理阶段，请携带需要维修的设备到IT部门处理，<br>")
+            .append("维修完成后会通过邮件另行通知。")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 维修类型信息
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td>")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"8\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td width=\"30%\" style=\"font-weight: bold; color: #005389;\">维修类型：</td>")
+            .append("<td style=\"color: #333;\">").append(getFixCategoryDisplayName(fixCategory)).append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            // 提示信息区域
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"25\" cellspacing=\"0\" style=\"margin: 20px 0;\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #666; font-size: 15px; text-align: center;\">")
+            .append("感谢您的耐心等待，如有任何疑问请联系IT部门<br>")
+            .append("🔧 我们会在维修完成后第一时间通知您")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            
+            .append("</td>")
+            .append("</tr>")
+            
+            // 底部
+            .append("<tr>")
+            .append("<td style=\"background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center; padding-bottom: 5px;\">此邮件由 SEG IT电脑管理系统 自动发送，请勿回复</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">Copyright © 2025 SEG IT Department. All Rights Reserved</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            .append("</table>") // 结束邮件内容table
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>"); // 结束主容器table
+        
+        html.append("</body>")
+            .append("</html>");
+        
+        return html.toString();
+    }
+    
+    /**
+     * 构建维修申请通过邮件主题
+     * @return 邮件主题
+     */
+    public String buildMaintenanceApprovalPassedEmailSubject() {
+        return "SEG IT电脑管理系统 - 维修申请请求已批准&等待处理";
+    }
+    
+    /**
+     * 构建维修申请提交成功邮件内容（HTML格式）
+     * @param applicantName 申请人姓名
+     * @param applicantDepartment 申请人部门
+     * @param fixCategory 维修类别
+     * @param submitTime 提交时间
+     * @return HTML格式邮件内容
+     */
+    public String buildMaintenanceSubmitSuccessEmailContent(
+            String applicantName,
+            String applicantDepartment,
+            String fixCategory,
+            String submitTime
+    ) {
+        StringBuilder html = new StringBuilder();
+        
+        html.append("<!DOCTYPE html>")
+            .append("<html>")
+            .append("<head>")
+            .append("<meta charset=\"UTF-8\">")
+            .append("<style type=\"text/css\">")
+            .append("table { border-collapse: collapse; }")
+            .append("</style>")
+            .append("</head>")
+            .append("<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif;\">");
+
+        // 主容器table
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f8f9fa;\">")
+            .append("<tr>")
+            .append("<td align=\"center\" style=\"padding: 20px;\">")
+            
+            // 邮件内容table
+            .append("<table width=\"600\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border: 1px solid #005389;\">")
+            
+            // 头部
+            .append("<tr>")
+            .append("<td style=\"background-color: #005389; padding: 30px; text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #ffffff; font-size: 24px; font-weight: bold; text-align: center;\">🔧 维修申请提交成功</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            // 正文
+            .append("<tr>")
+            .append("<td style=\"padding: 30px;\">")
+            
+            // 问候语
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"font-size: 16px; color: #333; text-align: center; padding-bottom: 20px;\">")
+            .append("尊敬的 ").append(applicantName).append("，<br><br>")
+            .append("您的电脑维修申请已成功提交！我们将尽快为您安排审批和处理。")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>");
+
+        // 申请信息
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"15\" cellspacing=\"0\" style=\"margin: 20px 0; background-color: #f8f9fa; border-left: 4px solid #005389;\">")
+            .append("<tr>")
+            .append("<td>")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"8\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td width=\"30%\" style=\"font-weight: bold; color: #005389;\">申请类别：</td>")
+            .append("<td style=\"color: #333;\">").append(getFixCategoryDisplayName(fixCategory)).append("</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"font-weight: bold; color: #005389;\">提交时间：</td>")
+            .append("<td style=\"color: #333;\">").append(submitTime).append("</td>")
+            .append("</tr>");
+
+        // 根据维修类别显示不同信息
+        if ("qualityIssueRepair".equals(fixCategory) || "质量问题维修".equals(fixCategory)) {
+            html.append("<tr>")
+                .append("<td style=\"font-weight: bold; color: #005389;\">处理状态：</td>")
+                .append("<td style=\"color: #28a745; font-weight: bold;\">✅ 已自动审批通过</td>")
+                .append("</tr>");
+        } else {
+            html.append("<tr>")
+                .append("<td style=\"font-weight: bold; color: #005389;\">处理状态：</td>")
+                .append("<td style=\"color: #ffc107; font-weight: bold;\">⏳ 等待审批中</td>")
+                .append("</tr>");
+        }
+
+        html.append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>");
+
+        // 后续流程说明
+        html.append("<table width=\"100%\" border=\"0\" cellpadding=\"20\" cellspacing=\"0\" style=\"margin: 20px 0; background-color: #e7f3ff; border-radius: 8px;\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"color: #005389; font-size: 16px; font-weight: bold; text-align: center; padding-bottom: 15px;\">📝 后续流程</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"color: #333; font-size: 14px; line-height: 1.6; text-align: left;\">");
+
+        if ("qualityIssueRepair".equals(fixCategory) || "质量问题维修".equals(fixCategory)) {
+            html.append("由于您的申请属于质量问题维修，系统已自动审批通过。<br>")
+                .append("IT部门将很快联系您安排维修事宜，请保持设备待修状态。");
+        } else {
+            html.append("1. 您的申请将首先由成本中心主管进行审批<br>")
+                .append("2. 审批通过后将转至IT部门进行处理<br>")
+                .append("3. 整个流程的进展将通过邮件及时通知您");
+        }
+
+        html.append("</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>");
+
+        // 结束内容区域
+        html.append("</td>")
+            .append("</tr>")
+            
+            // 底部
+            .append("<tr>")
+            .append("<td style=\"background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px;\">")
+            .append("<table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">")
+            .append("<tr>")
+            .append("<td style=\"text-align: center; padding-bottom: 5px;\">此邮件由 SEG IT电脑管理系统 自动发送，请勿回复</td>")
+            .append("</tr>")
+            .append("<tr>")
+            .append("<td style=\"text-align: center;\">Copyright © 2025 SEG IT Department. All Rights Reserved</td>")
+            .append("</tr>")
+            .append("</table>")
+            .append("</td>")
+            .append("</tr>")
+            
+            .append("</table>") // 结束邮件内容table
+            .append("</td>")
+            .append("</tr>")
+            .append("</table>"); // 结束主容器table
+
+        html.append("</body>")
+            .append("</html>");
+
+        return html.toString();
+    }
+    
+    /**
+     * 构建维修申请提交成功邮件主题
+     * @param applicantName 申请人姓名
+     * @param fixCategory 维修类别
+     * @return 邮件主题
+     */
+    public String buildMaintenanceSubmitSuccessEmailSubject(String applicantName, String fixCategory) {
+        String categoryName = getFixCategoryDisplayName(fixCategory);
+        return String.format("SEG IT电脑管理系统 - %s申请提交成功 - %s", categoryName, applicantName);
+    }
+    
+    /**
+     * 获取维修类别显示名称
+     * @param fixCategory 维修类别代码
+     * @return 显示名称
+     */
+    private String getFixCategoryDisplayName(String fixCategory) {
+        if ("qualityIssueRepair".equals(fixCategory)) {
+            return "质量问题维修";
+        } else if ("humanIssueRepair".equals(fixCategory) || "damageRepair".equals(fixCategory)) {
+            return "人为问题维修";
+        } else {
+            return fixCategory != null ? fixCategory : "未知类型";
+        }
+    }
 }

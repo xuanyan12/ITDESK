@@ -3,12 +3,17 @@
     <!-- 审批记录 -->
     <el-card shadow="never" class="usr_card_override top">
       <div class="approval-tabs">
-        <el-button 
-          :type="approvalType === 0 ? 'primary' : 'default'" 
-          @click="switchApprovalType(0)">{{ langText.pendingApprovals }}</el-button>
-        <el-button 
-          :type="approvalType === 1 ? 'primary' : 'default'" 
-          @click="switchApprovalType(1)">{{ langText.approvalHistory }}</el-button>
+        <!-- 新增审批类型切换按钮 -->
+        <div class="approval-type-tabs">
+          <el-button 
+            class="computer-approval-btn"
+            :type="approvalCategory === 'computer' ? 'primary' : 'default'" 
+            @click="switchApprovalCategory('computer')">{{ langText.computerApproval }}</el-button>
+          <el-button 
+            class="repair-approval-btn"
+            :type="approvalCategory === 'repair' ? 'primary' : 'default'" 
+            @click="switchApprovalCategory('repair')">{{ langText.repairApproval }}</el-button>
+        </div>
         
         <!-- 添加审批人选择下拉框 -->
         <div class="approver-selector">
@@ -27,37 +32,86 @@
         </div>
       </div>
       
-      <h3>{{ langText.deviceApprovalRecords }}</h3>
+      <!-- 审批状态切换tabs - 放到电脑审批和维修审批下面 -->
+      <div class="approval-status-container">
+        <el-tabs v-model="approvalType" @tab-change="handleTabChange" class="approval-status-tabs">
+          <el-tab-pane :label="langText.pendingApprovals" :name="0"></el-tab-pane>
+          <el-tab-pane :label="langText.approvalHistory" :name="1"></el-tab-pane>
+        </el-tabs>
+      </div>
+      
+      <!-- 移除设备审批记录标题 -->
       <div class="table-container">
         <el-table 
           :data="approvalList" 
           :loading="loading" 
           style="width: 100%;" 
           :cell-style="{ padding: '12px 0' }">
-          <el-table-column :label="langText.applicationTime" prop="createdAt" width="180"></el-table-column>
-          <el-table-column :label="langText.updateTime" prop="updatedAt" width="180"></el-table-column>
-          <el-table-column :label="langText.applicant" prop="userName" width="100"></el-table-column>
-          <el-table-column :label="langText.responsible" prop="responsibilityName" width="100"></el-table-column>
-          <el-table-column :label="langText.computerType" prop="deviceType" width="180">
-            <template #default="{ row }">
-              {{ getDeviceTypeName(row.deviceType) }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="langText.computerToReplace" prop="ciName" width="160">
-            <template #default="{ row }">
-              {{ row.ciName || langText.applyForNewComputer }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="langText.applicationReason" prop="reason" show-overflow-tooltip min-width="180"></el-table-column>
-          <el-table-column :label="langText.approvalReason" prop="approvalReason" show-overflow-tooltip min-width="180" v-if="approvalType === 1">
-            <template #default="{ row }">
-              {{ row.approvalReason || '' }}
-            </template>
-          </el-table-column>
+          <!-- 电脑审批表格列 -->
+          <template v-if="approvalCategory === 'computer'">
+            <el-table-column :label="langText.applicationTime" prop="createdAt" width="180"></el-table-column>
+            <el-table-column :label="langText.updateTime" prop="updatedAt" width="180"></el-table-column>
+            <el-table-column :label="langText.applicant" prop="userName" width="100"></el-table-column>
+            <el-table-column :label="langText.responsible" prop="responsibilityName" width="100"></el-table-column>
+            <el-table-column :label="langText.computerType" prop="deviceType" width="180">
+              <template #default="{ row }">
+                {{ getDeviceTypeName(row.deviceType) }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.computerToReplace" prop="ciName" width="160">
+              <template #default="{ row }">
+                {{ row.ciName || langText.applyForNewComputer }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.applicationReason" prop="reason" show-overflow-tooltip min-width="180"></el-table-column>
+            <el-table-column :label="langText.approvalReason" prop="approvalReason" show-overflow-tooltip min-width="180" v-if="approvalType === 1">
+              <template #default="{ row }">
+                {{ row.approvalReason || '' }}
+              </template>
+            </el-table-column>
+          </template>
+          
+          <!-- 维修审批表格列 -->
+          <template v-if="approvalCategory === 'repair'">
+            <el-table-column :label="langText.applicationTime" prop="createTime" width="180"></el-table-column>
+            <el-table-column :label="langText.updateTime" prop="updateTime" width="180"></el-table-column>
+            <el-table-column :label="langText.applicant" prop="applicantName" width="100">
+              <template #default="{ row }">
+                {{ row.applicantName || row.approverName || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.responsible" prop="responsiblePerson" width="100">
+              <template #default="{ row }">
+                {{ row.responsiblePerson || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.computerName" prop="ciName" width="160">
+              <template #default="{ row }">
+                {{ row.ciName || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.maintenanceType" prop="orderType" width="120">
+              <template #default="{ row }">
+                {{ getMaintenanceTypeName(row.orderType) }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.problemDescription" prop="problemDescription" show-overflow-tooltip min-width="200">
+              <template #default="{ row }">
+                {{ row.problemDescription || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="langText.approvalReason" prop="approvalReason" show-overflow-tooltip min-width="180" v-if="approvalType === 1">
+              <template #default="{ row }">
+                {{ row.approvalReason || '' }}
+              </template>
+            </el-table-column>
+          </template>
+          
+          <!-- 通用列 -->
           <el-table-column :label="langText.status" prop="status" width="140" align="center">
             <template #default="{ row }">
-              <el-tag :type="statusTagType(row.status)">
-                {{ getLocalizedStatus(row.status) }}
+              <el-tag :type="statusTagType(approvalCategory === 'repair' ? row.approvalStatus : row.status)">
+                {{ getLocalizedStatus(approvalCategory === 'repair' ? row.approvalStatus : row.status) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -66,8 +120,8 @@
               <el-button 
                 type="primary" 
                 text 
-                @click="viewApprovalDetails(row)"
-                :class="{ 'flow-not-reached': row.status === '审批中' && row.status1Signal === 0 }">
+                @click="handleActionClick(row)"
+                :class="{ 'flow-not-reached': (approvalCategory === 'repair' ? row.approvalStatus : row.status) === '审批中' && row.status1Signal === 0 }">
                 {{ getActionButtonText(row) }}
               </el-button>
             </template>
@@ -99,58 +153,97 @@
         <!-- 顶部概要信息 -->
         <div class="detail-header">
           <div class="application-title">
-            <span class="computer-name">{{ selectedApproval.ciName || langText.applyForNewComputer }}</span>
-            <el-tag class="status-tag" :type="statusTagType(selectedApproval.status)">
-              {{ getLocalizedStatus(selectedApproval.status) }}
+            <span class="computer-name">{{ approvalCategory === 'computer' ? (selectedApproval.ciName || langText.applyForNewComputer) : selectedApproval.ciName }}</span>
+            <el-tag class="status-tag" :type="statusTagType(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus)">
+              {{ getLocalizedStatus(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) }}
             </el-tag>
           </div>
           <div class="application-info">
             <span class="info-item">
-              <i class="el-icon-user"></i> {{ langText.applicant }}: {{ selectedApproval.userName }}
+              <i class="el-icon-user"></i> {{ langText.applicant }}: {{ approvalCategory === 'computer' ? selectedApproval.userName : (selectedApproval.applicantName || selectedApproval.approverName) }}
             </span>
             <span class="info-item">
-              <i class="el-icon-date"></i> {{ langText.applicationTime }}: {{ selectedApproval.createdAt }}
+              <i class="el-icon-date"></i> {{ langText.applicationTime }}: {{ approvalCategory === 'computer' ? selectedApproval.createdAt : selectedApproval.createTime }}
             </span>
           </div>
         </div>
 
         <!-- 详细信息 -->
         <div class="detail-content">
-          <el-descriptions :column="2" border size="default" class="detail-descriptions">
-            <el-descriptions-item :label="langText.applicationType" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.deviceCategory }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.computerType" label-class-name="item-label" content-class-name="item-content">
-              {{ getDeviceTypeName(selectedApproval.deviceType) }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.costCenter" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.costCenter }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.company" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.company }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.responsible" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.responsibilityName }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.computerSituation" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.deviceSituation }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.companySystem" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.companySystem }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="langText.updateTime" label-class-name="item-label" content-class-name="item-content">
-              {{ selectedApproval.updatedAt }}
-            </el-descriptions-item>
-          </el-descriptions>
+          <!-- 电脑审批详情 -->
+          <template v-if="approvalCategory === 'computer'">
+            <el-descriptions :column="2" border size="default" class="detail-descriptions">
+              <el-descriptions-item :label="langText.applicationType" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.deviceCategory }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.computerType" label-class-name="item-label" content-class-name="item-content">
+                {{ getDeviceTypeName(selectedApproval.deviceType) }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.costCenter" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.costCenter }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.company" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.company }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.responsible" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.responsibilityName }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.computerSituation" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.deviceSituation }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.companySystem" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.companySystem }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.updateTime" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.updatedAt }}
+              </el-descriptions-item>
+            </el-descriptions>
+            
+            <!-- 申请理由区域 -->
+            <div class="reason-section">
+              <div class="reason-title">{{ langText.applicationReason }}</div>
+              <div class="reason-content">{{ selectedApproval.reason }}</div>
+            </div>
+          </template>
           
-          <!-- 申请理由区域 -->
-          <div class="reason-section">
-            <div class="reason-title">{{ langText.applicationReason }}</div>
-            <div class="reason-content">{{ selectedApproval.reason }}</div>
-          </div>
+          <!-- 维修审批详情 -->
+          <template v-if="approvalCategory === 'repair'">
+            <el-descriptions :column="2" border size="default" class="detail-descriptions">
+              <el-descriptions-item :label="langText.applicant" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.applicantName || selectedApproval.approverName }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.responsible" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.responsiblePerson }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.computerName" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.ciName }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.maintenanceType" label-class-name="item-label" content-class-name="item-content">
+                {{ getMaintenanceTypeName(selectedApproval.orderType) }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.costCenter" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.costCenter }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.orderStatus" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.orderStatus }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.applicationTime" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.createTime }}
+              </el-descriptions-item>
+              <el-descriptions-item :label="langText.updateTime" label-class-name="item-label" content-class-name="item-content">
+                {{ selectedApproval.updateTime }}
+              </el-descriptions-item>
+            </el-descriptions>
+            
+            <!-- 故障描述区域 -->
+            <div class="reason-section">
+              <div class="reason-title">{{ langText.problemDescription }}</div>
+              <div class="reason-content">{{ selectedApproval.problemDescription }}</div>
+            </div>
+          </template>
           
           <!-- 审批理由区域 - 仅当状态不是"审批中"时显示 -->
-          <div v-if="selectedApproval.status !== '审批中' && selectedApproval.approvalReason" class="reason-section approval-reason-section">
+          <div v-if="(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) !== '审批中' && selectedApproval.approvalReason" class="reason-section approval-reason-section">
             <div class="reason-title">{{ langText.approvalReason }}</div>
             <div class="reason-content">{{ selectedApproval.approvalReason }}</div>
           </div>
@@ -159,7 +252,7 @@
         <!-- 根据状态显示不同内容 -->
         <div class="approval-actions">
           <!-- 如果状态是"审批中"且status1Signal不为0，显示审批按钮 -->
-          <template v-if="selectedApproval.status === '审批中' && selectedApproval.status1Signal !== 0">
+          <template v-if="(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) === '审批中' && selectedApproval.status1Signal !== 0">
             <div class="action-buttons">
               <el-button type="success" size="large" @click="approveApplication(true)">
                 <i class="el-icon-check"></i> {{ langText.approve }}
@@ -171,7 +264,7 @@
           </template>
           
           <!-- 如果状态是"审批中"但status1Signal为0，显示流程未到达 -->
-          <template v-else-if="selectedApproval.status === '审批中' && selectedApproval.status1Signal === 0">
+          <template v-else-if="(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) === '审批中' && selectedApproval.status1Signal === 0">
             <div class="approval-waiting">
               <i class="el-icon-warning"></i>
               {{ langText.approvalNotReached }}
@@ -179,15 +272,15 @@
           </template>
           
           <!-- 如果状态不是"审批中"和"Pending"，显示审批历史 -->
-          <template v-else-if="selectedApproval.status !== 'Pending'">
-            <div :class="['approval-history', getApprovalHistoryClass(selectedApproval.status)]">
-              <i :class="selectedApproval.status.includes('通过') ? 'el-icon-check' : 'el-icon-close'"></i>
-              {{ langText.approvalHistoryMessage }}: {{ getLocalizedStatus(selectedApproval.status) }}
+          <template v-else-if="(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) !== 'Pending'">
+            <div :class="['approval-history', getApprovalHistoryClass(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus)]">
+              <i :class="(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus).includes('通过') ? 'el-icon-check' : 'el-icon-close'"></i>
+              {{ langText.approvalHistoryMessage }}: {{ getLocalizedStatus(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) }}
             </div>
           </template>
           
           <!-- 保留原有的Pending状态处理 -->
-          <template v-else-if="selectedApproval.status === 'Pending'">
+          <template v-else-if="(approvalCategory === 'computer' ? selectedApproval.status : selectedApproval.approvalStatus) === 'Pending'">
             <div class="action-buttons">
               <el-button type="success" size="large" @click="approveApplication(true)" :disabled="selectedApproval.status1Signal === 0">
                 <i class="el-icon-check"></i> {{ langText.agree }}
@@ -243,6 +336,7 @@ export default {
     const selectedApproval = ref({});
     const total = ref(0);
     const approvalType = ref(0); // 默认显示待办审批
+    const approvalCategory = ref('computer'); // 默认显示电脑审批
     const approverList = ref([]); // 存储审批人列表（包含ID和成本中心名称）
     const selectedApproverId = ref(null); // 当前选中的审批人ID
     const approvalReason = ref('');
@@ -256,6 +350,8 @@ export default {
     const langText = computed(() => {
       return {
         // 顶部按钮和标题
+        computerApproval: currentLang.value === 'zh' ? '电脑审批' : 'Computer Approval',
+        repairApproval: currentLang.value === 'zh' ? '维修审批' : 'Repair Approval',
         pendingApprovals: currentLang.value === 'zh' ? '待办审批' : 'Pending Approvals',
         approvalHistory: currentLang.value === 'zh' ? '审批历史' : 'Approval History',
         selectApproverIdentity: currentLang.value === 'zh' ? '选择审批身份' : 'Select Approver Identity',
@@ -276,6 +372,7 @@ export default {
         
         // 操作按钮
         view: currentLang.value === 'zh' ? '查看' : 'View',
+        viewDetails: currentLang.value === 'zh' ? '查看详情' : 'View Details',
         approve: currentLang.value === 'zh' ? '审批通过' : 'Approve',
         reject: currentLang.value === 'zh' ? '审批不通过' : 'Reject',
         agree: currentLang.value === 'zh' ? '同意' : 'Agree',
@@ -291,6 +388,12 @@ export default {
         companySystem: currentLang.value === 'zh' ? '公司系统' : 'Company System',
         approvalNotReached: currentLang.value === 'zh' ? '上一级审批尚未完成，流程未到达' : 'Previous approval not complete, process not reached',
         approvalHistoryMessage: currentLang.value === 'zh' ? '您已进行审批，审批历史为' : 'You have already approved, history is',
+        
+        // 维修相关
+        computerName: currentLang.value === 'zh' ? '电脑名称' : 'Computer Name',
+        maintenanceType: currentLang.value === 'zh' ? '维修类别' : 'Maintenance Type',
+        problemDescription: currentLang.value === 'zh' ? '故障描述' : 'Problem Description',
+        orderStatus: currentLang.value === 'zh' ? '订单状态' : 'Order Status',
         
         // 拒绝理由弹窗
         enterRejectReason: currentLang.value === 'zh' ? '请输入审批不通过理由' : 'Please Enter Rejection Reason',
@@ -321,6 +424,7 @@ export default {
       pageNum: 1,
       pageSize: 10,
       approvalType: 0, // 默认为待办审批
+      approvalCategory: 'computer', // 默认为电脑审批
       approverId: null // 添加审批人ID参数
     });
 
@@ -369,21 +473,67 @@ export default {
       fetchApprovalList();
     };
 
+    // 处理tab切换
+    const handleTabChange = (tabName) => {
+      approvalType.value = parseInt(tabName);
+      pageData.approvalType = parseInt(tabName);
+      pageData.pageNum = 1; // 切换类型时重置页码
+      fetchApprovalList();
+    };
+
+    // 切换审批类别（电脑审批/维修审批）
+    const switchApprovalCategory = (category) => {
+      approvalCategory.value = category;
+      pageData.approvalCategory = category;
+      pageData.pageNum = 1; // 切换类别时重置页码
+      fetchApprovalList();
+    };
+
     // 获取审批记录
     const fetchApprovalList = () => {
       if (!pageData.approverId) {
         return; // 如果没有审批人ID，不进行请求
       }
       loading.value = true;
-      const pageData1 = { ...pageData};
-      httpUtil.post("/sysApply/getApprovalListById", pageData1).then((res) => {
-        approvalList.value = res.data.list || [];
-        total.value = res.data.total || 0;
-      }).catch(err => {
-        console.error("获取审批记录失败", err);
-      }).finally(() => {
-        loading.value = false;
-      });
+      
+      if (pageData.approvalCategory === 'computer') {
+        // 获取电脑审批记录，传递所有分页参数
+        const params = {
+          approvalType: pageData.approvalType,
+          pageNum: pageData.pageNum,
+          pageSize: pageData.pageSize
+        };
+        httpUtil.get("/sysApply/getApprovalListById", { params }).then((res) => {
+          approvalList.value = res.data.list || [];
+          total.value = res.data.total || 0;
+        }).catch(err => {
+          console.error("获取电脑审批记录失败", err);
+        }).finally(() => {
+          loading.value = false;
+        });
+      } else if (pageData.approvalCategory === 'repair') {
+        // 获取维修审批记录，传递approvalType和分页参数
+        const params = {
+          approvalType: pageData.approvalType,
+          pageNum: pageData.pageNum,
+          pageSize: pageData.pageSize
+        };
+        httpUtil.get("/sysMaintenanceApproval/getApprovalsByApprover", { params }).then((res) => {
+          if (res.data && res.data.list) {
+            approvalList.value = res.data.list || [];
+            total.value = res.data.total || 0;
+          } else {
+            approvalList.value = [];
+            total.value = 0;
+          }
+        }).catch(err => {
+          console.error("获取维修审批记录失败", err);
+          approvalList.value = [];
+          total.value = 0;
+        }).finally(() => {
+          loading.value = false;
+        });
+      }
     };
 
     // 处理页码变化
@@ -394,10 +544,36 @@ export default {
 
     // 获取操作按钮文本
     const getActionButtonText = (row) => {
-      if (row.status === '审批中') {
-        return row.status1Signal === 0 ? langText.value.flowNotReached : langText.value.approvalAction;
+      const status = approvalCategory.value === 'repair' ? row.approvalStatus : row.status;
+      
+      if (approvalType.value === 0) {
+        // 待办审批
+        if (status === '审批中') {
+          return row.status1Signal === 0 ? langText.value.approvalNotReached : langText.value.approvalAction;
+        }
+        return langText.value.approvalAction;
+      } else {
+        // 审批历史
+        return langText.value.viewDetails;
       }
-      return langText.value.view;
+    };
+
+    // 处理操作按钮点击
+    const handleActionClick = (row) => {
+      if (approvalType.value === 0) {
+        // 待办审批：直接进行审批操作
+        selectedApproval.value = { ...row };
+        if (row.status1Signal === 0) {
+          // 流程未到达，显示提示
+          ElMessage.warning(langText.value.approvalNotComplete);
+        } else {
+          // 流程已到达，显示审批对话框
+          approvalDialogVisible.value = true;
+        }
+      } else {
+        // 审批历史：查看详情
+        viewApprovalDetails(row);
+      }
     };
 
     // 查看审批详情
@@ -426,38 +602,76 @@ export default {
     
     // 提交审批
     const submitApproval = (isApproved, reason) => {
+      // 获取当前状态
+      const currentStatus = pageData.approvalCategory === 'computer' ? 
+        selectedApproval.value.status : selectedApproval.value.approvalStatus;
+      
       // 更新状态文本，兼容新旧两种状态命名
       const status = isApproved ? 
-        (selectedApproval.value.status === "审批中" ? "审批通过" : "已通过") : 
-        (selectedApproval.value.status === "审批中" ? "审批不通过" : "已驳回");
+        (currentStatus === "审批中" ? "审批通过" : "已通过") : 
+        (currentStatus === "审批中" ? "审批不通过" : "已驳回");
       
-      const data = {
-        id: selectedApproval.value.approvalId,
-        flowId: selectedApproval.value.flowId,
-        status: status,
-        approvedAt: new Date().toISOString(),
-        reason: reason,
-      };
-      
-      httpUtil.post("/sysApply/processApproval", data, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }).then((res) => {
-        if (res.code === 200) {
-          ElMessage.success(res.msg || langText.value.approvalSuccess);
-          fetchApprovalList();
-          approvalDialogVisible.value = false;
-          rejectDialogVisible.value = false;
-          // 清空审批理由
-          approvalReason.value = '';
-        } else {
-          ElMessage.error(res.msg || langText.value.approvalFailed);
-        }
-      }).catch(err => {
-        console.error("审批操作失败", err);
-        ElMessage.error(langText.value.approvalProcessFailed + ': ' + (err.message || '未知错误'));
-      });
+      if (pageData.approvalCategory === 'computer') {
+        // 电脑审批
+        const data = {
+          id: selectedApproval.value.approvalId,
+          flowId: selectedApproval.value.flowId,
+          status: status,
+          approvedAt: new Date().toISOString(),
+          reason: reason,
+        };
+        
+        httpUtil.post("/sysApply/processApproval", data, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then((res) => {
+          if (res.code === 200) {
+            ElMessage.success(res.msg || langText.value.approvalSuccess);
+            fetchApprovalList();
+            approvalDialogVisible.value = false;
+            rejectDialogVisible.value = false;
+            // 清空审批理由
+            approvalReason.value = '';
+          } else {
+            ElMessage.error(res.msg || langText.value.approvalFailed);
+          }
+        }).catch(err => {
+          console.error("电脑审批操作失败", err);
+          ElMessage.error(langText.value.approvalProcessFailed + ': ' + (err.message || '未知错误'));
+        });
+      } else if (pageData.approvalCategory === 'repair') {
+        // 维修审批 - 使用与电脑审批相同的API
+        const data = {
+          id: selectedApproval.value.orderId, // 维修申请的maintenanceId
+          flowId: selectedApproval.value.approvalId, // 审批流程ID
+          status: status,
+          approvedAt: new Date().toISOString(),
+          reason: reason,
+        };
+        
+        console.log("维修审批请求数据:", data);
+        
+        httpUtil.post("/sysApply/processApproval", data, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then((res) => {
+          if (res.code === 200) {
+            ElMessage.success(res.msg || langText.value.approvalSuccess);
+            fetchApprovalList();
+            approvalDialogVisible.value = false;
+            rejectDialogVisible.value = false;
+            // 清空审批理由
+            approvalReason.value = '';
+          } else {
+            ElMessage.error(res.msg || langText.value.approvalFailed);
+          }
+        }).catch(err => {
+          console.error("维修审批操作失败", err);
+          ElMessage.error(langText.value.approvalProcessFailed + ': ' + (err.message || '未知错误'));
+        });
+      }
     };
     
     // 确认提交拒绝理由
@@ -506,6 +720,17 @@ export default {
       return types[type] || type;
     };
 
+    // 获取维修类型名称
+    const getMaintenanceTypeName = (type) => {
+      const types = {
+        'qualityIssueRepair': '质量问题维修',
+        'humanIssueRepair': '人为问题维修',
+        'Quality Issue Repair': '质量问题维修',
+        'Human Issue Repair': '人为问题维修'
+      };
+      return types[type] || type;
+    };
+
     onMounted(() => {
       // 首先获取审批人列表，然后获取审批列表
       fetchApproverList();
@@ -518,13 +743,18 @@ export default {
       selectedApproval,
       viewApprovalDetails,
       approveApplication,
+      handleActionClick,
       statusTagType,
       getDeviceTypeName,
+      getMaintenanceTypeName,
       pageData,
       total,
       handleCurrentChange,
       approvalType,
+      approvalCategory,
       switchApprovalType,
+      handleTabChange,
+      switchApprovalCategory,
       getApprovalHistoryClass,
       getActionButtonText,
       approverList,
@@ -601,35 +831,151 @@ export default {
 .approval-tabs {
   margin-bottom: 20px;
   display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* 审批类型切换按钮组 - 主要切换按钮 */
+.approval-type-tabs {
+  display: flex;
   gap: 15px;
-  align-items: center;
+  margin-right: 30px;
 }
 
-.approval-tabs .el-button--primary {
-  background: linear-gradient(135deg, #005389, #029165);
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 83, 137, 0.2);
+/* 电脑审批和维修审批按钮的统一样式 - 使用更强的选择器确保样式不被覆盖 */
+.approval-type-tabs .computer-approval-btn,
+.approval-type-tabs .repair-approval-btn {
+  font-size: 16px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  min-width: 120px !important;
+  height: 48px !important;
+  border-radius: 10px !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 选中状态 - 两个按钮都使用相同的蓝色渐变 */
+.approval-type-tabs .computer-approval-btn.el-button--primary,
+.approval-type-tabs .repair-approval-btn.el-button--primary {
+  background: linear-gradient(135deg, #005389, #029165) !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(0, 83, 137, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.approval-type-tabs .computer-approval-btn.el-button--primary:hover,
+.approval-type-tabs .repair-approval-btn.el-button--primary:hover {
+  background: linear-gradient(135deg, #0068ab, #02a674) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 25px rgba(0, 83, 137, 0.35) !important;
+}
+
+/* 未选中状态 - 两个按钮都使用相同的白色背景和蓝色边框 */
+.approval-type-tabs .computer-approval-btn.el-button--default,
+.approval-type-tabs .repair-approval-btn.el-button--default {
+  border: 2px solid rgba(0, 83, 137, 0.3) !important;
+  color: #005389 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.approval-type-tabs .computer-approval-btn.el-button--default:hover,
+.approval-type-tabs .repair-approval-btn.el-button--default:hover {
+  border-color: #005389 !important;
+  color: #005389 !important;
+  background-color: rgba(0, 83, 137, 0.05) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 15px rgba(0, 83, 137, 0.15) !important;
+}
+
+/* 使用:deep()确保样式穿透Element Plus组件 */
+.approval-type-tabs :deep(.computer-approval-btn),
+.approval-type-tabs :deep(.repair-approval-btn) {
+  font-size: 16px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  min-width: 120px !important;
+  height: 48px !important;
+  border-radius: 10px !important;
+  transition: all 0.3s ease !important;
+}
+
+.approval-type-tabs :deep(.computer-approval-btn.el-button--primary),
+.approval-type-tabs :deep(.repair-approval-btn.el-button--primary) {
+  background: linear-gradient(135deg, #005389, #029165) !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(0, 83, 137, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.approval-type-tabs :deep(.computer-approval-btn.el-button--default),
+.approval-type-tabs :deep(.repair-approval-btn.el-button--default) {
+  border: 2px solid rgba(0, 83, 137, 0.3) !important;
+  color: #005389 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+
+
+/* 审批状态切换tabs容器 */
+.approval-status-container {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* 审批状态切换tabs样式 - 与订单管理保持一致 */
+.approval-status-tabs {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+:deep(.approval-status-tabs .el-tabs__header) {
+  background: transparent !important;
+  border-bottom: 1px solid #e4e7ed !important;
+  padding: 0;
+  margin: 0;
+}
+
+:deep(.approval-status-tabs .el-tabs__nav) {
+  border: none !important;
+}
+
+:deep(.approval-status-tabs .el-tabs__item) {
+  height: 40px;
+  line-height: 40px;
+  color: #606266;
+  font-size: 14px;
+  font-weight: 500;
+  border: none !important;
   transition: all 0.3s ease;
+  position: relative;
+  padding: 0 20px;
+  margin-right: 0;
 }
 
-.approval-tabs .el-button--primary:hover {
-  background: linear-gradient(135deg, #0068ab, #02a674);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 83, 137, 0.3);
+:deep(.approval-status-tabs .el-tabs__item:hover) {
+  color: #409eff;
 }
 
-.approval-tabs .el-button--default {
-  border: 1px solid rgba(0, 83, 137, 0.3);
-  color: #005389;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+:deep(.approval-status-tabs .el-tabs__item.is-active) {
+  color: #409eff;
+  background: transparent !important;
+  border: none !important;
 }
 
-.approval-tabs .el-button--default:hover {
-  border-color: #005389;
-  color: #005389;
-  background-color: rgba(0, 83, 137, 0.05);
+:deep(.approval-status-tabs .el-tabs__active-bar) {
+  background-color: #409eff !important;
+  height: 2px !important;
+}
+
+:deep(.approval-status-tabs .el-tabs__content) {
+  padding: 0;
+  background-color: transparent;
+}
+
+:deep(.approval-status-tabs .el-tabs__nav-wrap::after) {
+  display: none;
 }
 
 /* 审批人选择下拉框样式 */
@@ -1362,6 +1708,30 @@ export default {
   .approval-tabs {
     flex-direction: column;
     align-items: stretch;
+    gap: 15px;
+  }
+  
+  .approval-type-tabs {
+    margin-right: 0;
+    justify-content: center;
+  }
+  
+  .approval-status-container {
+    margin-top: 15px;
+  }
+  
+  /* 在小屏幕上调整按钮大小 */
+  .approval-type-tabs .el-button {
+    font-size: 14px;
+    padding: 10px 20px;
+    min-width: 100px;
+    height: 42px;
+  }
+  
+  /* 在小屏幕上调整tabs样式 */
+  :deep(.approval-status-tabs .el-tabs__item) {
+    font-size: 13px;
+    padding: 0 15px;
   }
   
   .approver-selector {

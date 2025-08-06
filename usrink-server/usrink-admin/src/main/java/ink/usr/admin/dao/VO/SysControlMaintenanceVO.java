@@ -1,34 +1,12 @@
 package ink.usr.admin.dao.VO;
 
 import ink.usr.common.model.mysql.SysControlMaintenanceModel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class SysControlMaintenanceVO extends SysControlMaintenanceModel {
-
-    // 电脑使用情况
-    private String pcClass;
-
-    // 电脑状态
-    private String pcStatus;
-
-    // 电脑类型
-    private String deviceClass;
-
-    // 制造商
-    private String manufacture;
-
-    // 电脑型号
-    private String modelOrVersion;
-
-    // 出厂时间
-    private String lifeCycleStart;
-
-    // 供应商公司
-    private String vendor;
-
+    // 维修记录VO - 只包含维修相关信息，不包含设备详细信息
+    // 所有字段都已继承自SysControlMaintenanceModel
 }

@@ -38,7 +38,7 @@
       <div class="tech-card">
         <div class="tech-card-header">
           <div class="tech-indicator"></div>
-          <h3>设备申请详情</h3>
+          <h3>{{ isMaintenanceApply ? '维修申请详情' : '设备申请详情' }}</h3>
         </div>
         
         <div class="tech-card-body">
@@ -56,7 +56,7 @@
               <div class="tech-info-value">{{ approvalData.deviceCategory }}</div>
             </div>
             <div class="tech-info-item">
-              <div class="tech-info-label">电脑类型</div>
+              <div class="tech-info-label">{{ isMaintenanceApply ? '维修类别' : '电脑类型' }}</div>
               <div class="tech-info-value">{{ approvalData.deviceType }}</div>
             </div>
             <div class="tech-info-item">
@@ -71,16 +71,16 @@
               <div class="tech-info-label">责任人</div>
               <div class="tech-info-value">{{ approvalData.responsibilityName }}</div>
             </div>
-            <div class="tech-info-item">
+            <div class="tech-info-item" v-if="!isMaintenanceApply">
               <div class="tech-info-label">电脑情形</div>
               <div class="tech-info-value">{{ approvalData.deviceSituation }}</div>
             </div>
-            <div class="tech-info-item">
+            <div class="tech-info-item" v-if="!isMaintenanceApply">
               <div class="tech-info-label">公司系统</div>
               <div class="tech-info-value">{{ approvalData.companySystem }}</div>
             </div>
             <div v-if="approvalData.ciName" class="tech-info-item">
-              <div class="tech-info-label">需要更换的电脑</div>
+              <div class="tech-info-label">{{ isMaintenanceApply ? '需要维修的电脑' : '需要更换的电脑' }}</div>
               <div class="tech-info-value">{{ approvalData.ciName }}</div>
             </div>
             <div class="tech-info-item">
@@ -90,7 +90,7 @@
           </div>
           
           <div class="tech-reason-section">
-            <div class="tech-info-label">申请理由</div>
+            <div class="tech-info-label">{{ isMaintenanceApply ? '故障描述' : '申请理由' }}</div>
             <div class="tech-reason-content">{{ approvalData.reason }}</div>
           </div>
         </div>
@@ -177,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { BASE_URL, RES_STATUS_CODE } from '@/utils/Constant'
@@ -208,6 +208,11 @@ const showSuccessDialog = ref(false)
 const approvalReason = ref('')
 const showRejectDialog = ref(false)
 const lastApproveAction = ref('approve')
+
+// 判断是否为维修申请
+const isMaintenanceApply = computed(() => {
+  return approvalData.value.deviceCategory === '维修申请'
+})
 
 // 从URL获取参数
 const getUrlParams = () => {

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysMaintenanceApprovalMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="ink.usr.common.model.mysql.SysMaintenanceApprovalModel">
+        <id column="approvalId" property="approvalId" jdbcType="BIGINT"/>
+        <result column="orderId" property="orderId" jdbcType="BIGINT"/>
+        <result column="approverId" property="approverId" jdbcType="BIGINT"/>
+        <result column="approverName" property="approverName" jdbcType="VARCHAR"/>
+        <result column="approvalLevel" property="approvalLevel" jdbcType="INTEGER"/>
+        <result column="approvalStatus" property="approvalStatus" jdbcType="VARCHAR"/>
+        <result column="approvalTime" property="approvalTime" jdbcType="VARCHAR"/>
+        <result column="approvalReason" property="approvalReason" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+        <result column="updateTime" property="updateTime" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        approvalId, orderId, approverId, approverName, approvalLevel, approvalStatus,
+        approvalTime, approvalReason, createTime, updateTime
+    </sql>
+
+    <!-- 插入维修审批 -->
+    <insert id="insertApproval" parameterType="ink.usr.common.model.mysql.SysMaintenanceApprovalModel" useGeneratedKeys="true" keyProperty="approvalId">
+        INSERT INTO sys_maintenance_approval (
+            orderId, approverId, approverName, approvalLevel, approvalStatus,
+            approvalTime, approvalReason, createTime, updateTime
+        ) VALUES (
+            #{orderId}, #{approverId}, #{approverName}, #{approvalLevel}, #{approvalStatus},
+            #{approvalTime}, #{approvalReason}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 根据ID查询维修审批 -->
+    <select id="selectApprovalById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_approval
+        WHERE approvalId = #{approvalId}
+    </select>
+
+    <!-- 根据订单ID查询维修审批 -->
+    <select id="selectApprovalsByOrderId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_approval
+        WHERE orderId = #{orderId}
+        ORDER BY approvalLevel ASC
+    </select>
+
+    <!-- 根据审批人ID查询维修审批 -->
+    <select id="selectApprovalsByApproverId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_approval
+        WHERE approverId = #{approverId}
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 根据订单ID和审批级别查询维修审批 -->
+    <select id="selectApprovalByOrderIdAndLevel" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_approval
+        WHERE orderId = #{orderId} AND approvalLevel = #{approvalLevel}
+    </select>
+
+    <!-- 查询所有维修审批 -->
+    <select id="selectAllApprovals" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_approval
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 根据状态查询维修审批 -->
+    <select id="selectApprovalsByStatus" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_approval
+        WHERE approvalStatus = #{approvalStatus}
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 更新维修审批 -->
+    <update id="updateApproval" parameterType="ink.usr.common.model.mysql.SysMaintenanceApprovalModel">
+        UPDATE sys_maintenance_approval
+        SET orderId = #{orderId},
+            approverId = #{approverId},
+            approverName = #{approverName},
+            approvalLevel = #{approvalLevel},
+            approvalStatus = #{approvalStatus},
+            approvalTime = #{approvalTime},
+            approvalReason = #{approvalReason},
+            updateTime = #{updateTime}
+        WHERE approvalId = #{approvalId}
+    </update>
+
+    <!-- 更新审批状态 -->
+    <update id="updateApprovalStatus">
+        UPDATE sys_maintenance_approval
+        SET approvalStatus = #{approvalStatus},
+            approvalTime = #{approvalTime},
+            approvalReason = #{approvalReason},
+            updateTime = NOW()
+        WHERE approvalId = #{approvalId}
+    </update>
+
+    <!-- 删除维修审批 -->
+    <delete id="deleteApproval" parameterType="java.lang.Long">
+        DELETE FROM sys_maintenance_approval
+        WHERE approvalId = #{approvalId}
+    </delete>
+
+    <!-- 根据订单ID删除维修审批 -->
+    <delete id="deleteApprovalsByOrderId" parameterType="java.lang.Long">
+        DELETE FROM sys_maintenance_approval
+        WHERE orderId = #{orderId}
+    </delete>
+
+</mapper> 
