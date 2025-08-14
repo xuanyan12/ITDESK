@@ -36,9 +36,24 @@ public class ComputerReportServiceImpl implements ComputerReportService {
             List<ComputerReportVO.AgeRangeStatistics> ageRangeStats = 
                 computerReportMapper.getAgeRangeStatistics(dto);
             result.setAgeRangeStats(ageRangeStats);
+
+            // 统计一人多台电脑的用户数量
+            Integer multiDeviceUserCount = computerReportMapper.getMultiDeviceUserCount(dto);
+            result.setMultiDeviceUserCount(multiDeviceUserCount == null ? 0 : multiDeviceUserCount);
+
+            // 按季度统计到期需报废的数量
+            List<ComputerReportVO.QuarterScrapStatistics> quarterScrapStats =
+                computerReportMapper.getQuarterScrapStatistics(dto);
+            result.setQuarterScrapStats(quarterScrapStats);
+
+            // 各公司四类电脑在用数量按年份统计
+            List<ComputerReportVO.YearlyInUseStatistics> yearlyInUseStats =
+                computerReportMapper.getYearlyInUseStatistics(dto);
+            result.setYearlyInUseStats(yearlyInUseStats);
             
-            log.info("电脑报表数据获取成功，公司设备统计: {} 条，年限统计: {} 条", 
-                companyDeviceStats.size(), ageRangeStats.size());
+            log.info("电脑报表数据获取成功，公司设备统计: {} 条，年限统计: {} 条，一人多台用户数: {}，季度报废统计: {} 条", 
+                companyDeviceStats.size(), ageRangeStats.size(), result.getMultiDeviceUserCount(),
+                quarterScrapStats == null ? 0 : quarterScrapStats.size());
             
             return result;
             

@@ -27,4 +27,18 @@ public class ComputerReportDTO {
      * 是否只统计内部员工（默认true）
      */
     private Boolean internalOnly = true;
+
+    /**
+     * 员工类型筛选
+     * 可选值："Internal User" | "External User" | "All"
+     * 若填写该字段，则优先生效；当为"All"时，不限定pcClass；
+     * 若该字段为空，则回退使用 internalOnly 逻辑。
+     */
+    private String employeeType;
+
+    /**
+     * 统计参考日期（仅用于“设备类型年限分布”和“详细统计数据”）
+     * 格式：yyyy-MM-dd；为空时按当前日期
+     */
+    private String statDate;
 }

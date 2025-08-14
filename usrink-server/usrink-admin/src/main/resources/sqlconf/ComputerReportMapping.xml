@@ -12,55 +12,164 @@
             c.deviceClass,
             COUNT(*) as totalCount,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 365 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 365 THEN 1 
                 ELSE 0 
             END) as age0to1,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 365 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 730 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 365 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 730 THEN 1 
                 ELSE 0 
             END) as age1to2,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 730 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1095 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 730 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 1095 THEN 1 
                 ELSE 0 
             END) as age2to3,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1095 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1460 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 1095 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 1460 THEN 1 
                 ELSE 0 
             END) as age3to4,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1460 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 1825 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 1460 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 1825 THEN 1 
                 ELSE 0 
             END) as age4to5,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 1825 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2190 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 1825 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 2190 THEN 1 
                 ELSE 0 
             END) as age5to6,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2190 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2555 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 2190 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 2555 THEN 1 
                 ELSE 0 
             END) as age6to7,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2555 
-                     AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= 2920 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 2555 
+                     AND DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &lt;= 2920 THEN 1 
                 ELSE 0 
             END) as age7to8,
             SUM(CASE 
-                WHEN DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &gt; 2920 THEN 1 
+                WHEN DATEDIFF(
+                    <choose>
+                      <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                      <otherwise>CURDATE()</otherwise>
+                    </choose>,
+                    STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+                ) &gt; 2920 THEN 1 
                 ELSE 0 
             END) as age8plus,
-            ROUND(AVG(DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) / 365.25), 2) as avgAge
+            ROUND(AVG(DATEDIFF(
+                <choose>
+                  <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                  <otherwise>CURDATE()</otherwise>
+                </choose>,
+                STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) / 365.25), 2) as avgAge
         FROM sys_control c
         <where>
-            <!-- 默认只统计内部员工 -->
-            <if test="internalOnly == null or internalOnly == true">
-                AND c.pcClass = 'Internal User'
-            </if>
+            <!-- 员工类型优先筛选；为空时回退到 internalOnly 逻辑；employeeType='All' 不加限制 -->
+            <choose>
+                <when test="employeeType == 'Other'">
+                    AND c.pcClass != 'Internal User'
+                </when>
+                <when test="employeeType != null and employeeType != '' and employeeType != 'All'">
+                    AND c.pcClass = #{employeeType}
+                </when>
+                <when test="(employeeType == null or employeeType == '') and (internalOnly == null or internalOnly == true)">
+                    AND c.pcClass = 'Internal User'
+                </when>
+            </choose>
             
             <!-- 过滤空的lifeCycleStart -->
             AND c.lifeCycleStart IS NOT NULL 
@@ -147,12 +256,32 @@
             UNION ALL SELECT '8年以上' as ageRange, 2921 as min_days, 99999 as max_days
         ) age_range
         LEFT JOIN sys_control c ON (
-            DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) >= age_range.min_days
-            AND DATEDIFF(CURDATE(), STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) &lt;= age_range.max_days
-            <!-- 默认只统计内部员工 -->
-            <if test="internalOnly == null or internalOnly == true">
-                AND c.pcClass = 'Internal User'
-            </if>
+            DATEDIFF(
+              <choose>
+                <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                <otherwise>CURDATE()</otherwise>
+              </choose>,
+              STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+            ) >= age_range.min_days
+            AND DATEDIFF(
+              <choose>
+                <when test="statDate != null and statDate != ''">STR_TO_DATE(#{statDate}, '%Y-%m-%d')</when>
+                <otherwise>CURDATE()</otherwise>
+              </choose>,
+              STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')
+            ) &lt;= age_range.max_days
+            <!-- 员工类型优先筛选；为空时回退到 internalOnly 逻辑；employeeType='All' 不加限制 -->
+            <choose>
+                <when test="employeeType == 'Other'">
+                    AND c.pcClass != 'Internal User'
+                </when>
+                <when test="employeeType != null and employeeType != '' and employeeType != 'All'">
+                    AND c.pcClass = #{employeeType}
+                </when>
+                <when test="(employeeType == null or employeeType == '') and (internalOnly == null or internalOnly == true)">
+                    AND c.pcClass = 'Internal User'
+                </when>
+            </choose>
             AND c.lifeCycleStart IS NOT NULL 
             AND c.lifeCycleStart != ''
             AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') IS NOT NULL
@@ -171,5 +300,136 @@
         GROUP BY age_range.ageRange, age_range.min_days
         ORDER BY age_range.min_days
     </select>
+
+  <!-- 统计一人多台电脑的用户数量：同一 ntAccount 名下设备数量 > 1 即视为一人多台 -->
+  <select id="getMultiDeviceUserCount"
+          resultType="java.lang.Integer"
+          parameterType="ink.usr.admin.dao.DTO.ComputerReportDTO">
+    SELECT COUNT(*)
+    FROM (
+      SELECT c.ntAccount
+      FROM sys_control c
+      <where>
+        <!-- 员工类型优先筛选；为空时回退到 internalOnly 逻辑；employeeType='All' 不加限制 -->
+        <choose>
+          <when test="employeeType == 'Other'">
+            AND c.pcClass != 'Internal User'
+          </when>
+          <when test="employeeType != null and employeeType != '' and employeeType != 'All'">
+            AND c.pcClass = #{employeeType}
+          </when>
+          <when test="(employeeType == null or employeeType == '') and (internalOnly == null or internalOnly == true)">
+            AND c.pcClass = 'Internal User'
+          </when>
+        </choose>
+
+        <!-- 仅统计有效用户与有效设备类型 -->
+        AND c.ntAccount IS NOT NULL
+        AND c.ntAccount != ''
+        AND c.deviceClass IN ('Standard Notebook', 'Performance Notebook', 'Standard Desktop', 'Performance Desktop')
+
+        <!-- 可选：公司筛选 -->
+        <if test="company != null and company != ''">
+          AND c.company = #{company}
+        </if>
+
+        <!-- 可选：设备类型筛选 -->
+        <if test="deviceClass != null and deviceClass != ''">
+          AND c.deviceClass = #{deviceClass}
+        </if>
+
+        <!-- 同时在用的定义：限定在用状态（排除报废/闲置等） -->
+        AND (c.pcStatus = 'In Use')
+      </where>
+      GROUP BY c.ntAccount
+      HAVING COUNT(DISTINCT (CASE WHEN c.serialNumber IS NOT NULL AND c.serialNumber != '' THEN c.serialNumber ELSE c.ciName END)) &gt; 1
+    ) t
+  </select>
+
+  <!-- 各公司四类电脑在用数量按年份统计（基于 lifeCycleStart 的年份） -->
+  <select id="getYearlyInUseStatistics"
+          resultType="ink.usr.admin.dao.VO.ComputerReportVO$YearlyInUseStatistics"
+          parameterType="ink.usr.admin.dao.DTO.ComputerReportDTO">
+    SELECT
+      c.company,
+      YEAR(STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d')) AS year,
+      SUM(CASE WHEN c.deviceClass = 'Standard Notebook' THEN 1 ELSE 0 END) AS standardNotebook,
+      SUM(CASE WHEN c.deviceClass = 'Performance Notebook' THEN 1 ELSE 0 END) AS performanceNotebook,
+      SUM(CASE WHEN c.deviceClass = 'Standard Desktop' THEN 1 ELSE 0 END) AS standardDesktop,
+      SUM(CASE WHEN c.deviceClass = 'Performance Desktop' THEN 1 ELSE 0 END) AS performanceDesktop,
+      COUNT(c.id) AS total
+    FROM sys_control c
+    <where>
+      c.lifeCycleStart IS NOT NULL
+      AND c.lifeCycleStart != ''
+      AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') IS NOT NULL
+      AND c.pcStatus = 'In Use'
+      AND c.deviceClass IN ('Standard Notebook', 'Performance Notebook', 'Standard Desktop', 'Performance Desktop')
+      <choose>
+        <when test="employeeType == 'Other'">
+          AND c.pcClass != 'Internal User'
+        </when>
+        <when test="employeeType != null and employeeType != '' and employeeType != 'All'">
+          AND c.pcClass = #{employeeType}
+        </when>
+        <when test="(employeeType == null or employeeType == '') and (internalOnly == null or internalOnly == true)">
+          AND c.pcClass = 'Internal User'
+        </when>
+      </choose>
+      <if test="company != null and company != ''">
+        AND c.company = #{company}
+      </if>
+      <if test="deviceClass != null and deviceClass != ''">
+        AND c.deviceClass = #{deviceClass}
+      </if>
+    </where>
+    GROUP BY c.company, YEAR(STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d'))
+    ORDER BY c.company, YEAR(STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d'))
+  </select>
+  <!-- 按季度统计未来四个季度内达到6年的设备数量（排除报废，只统计在用/有效设备）。
+       使用 LEFT JOIN 并将过滤条件放入 ON 中，保证无数据的季度也返回 0。 -->
+  <select id="getQuarterScrapStatistics"
+          resultType="ink.usr.admin.dao.VO.ComputerReportVO$QuarterScrapStatistics"
+          parameterType="ink.usr.admin.dao.DTO.ComputerReportDTO">
+    SELECT CONCAT(YEAR(q.quarter_start), '年', DATE_FORMAT(q.quarter_start, '%c月'), '-', DATE_FORMAT(q.quarter_end, '%c月')) AS quarter,
+           COUNT(c.id) AS total
+    FROM (
+      SELECT 
+        STR_TO_DATE(CONCAT(YEAR(d), '-', LPAD(((QUARTER(d)-1)*3 + 1), 2, '0'), '-01'), '%Y-%m-%d') AS quarter_start,
+        LAST_DAY(STR_TO_DATE(CONCAT(YEAR(d), '-', LPAD(((QUARTER(d)-1)*3 + 3), 2, '0'), '-01'), '%Y-%m-%d')) AS quarter_end
+      FROM (
+        SELECT CURDATE() AS d
+        UNION ALL SELECT DATE_ADD(CURDATE(), INTERVAL 1 QUARTER)
+        UNION ALL SELECT DATE_ADD(CURDATE(), INTERVAL 2 QUARTER)
+        UNION ALL SELECT DATE_ADD(CURDATE(), INTERVAL 3 QUARTER)
+      ) t
+    ) q
+    LEFT JOIN sys_control c 
+      ON c.lifeCycleStart IS NOT NULL 
+      AND c.lifeCycleStart != '' 
+      AND STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d') IS NOT NULL
+      AND DATE_ADD(STR_TO_DATE(c.lifeCycleStart, '%Y-%m-%d'), INTERVAL 6 YEAR) BETWEEN q.quarter_start AND q.quarter_end
+      AND c.pcStatus = 'In Use'
+      AND c.deviceClass IN ('Standard Notebook', 'Performance Notebook', 'Standard Desktop', 'Performance Desktop')
+      <choose>
+        <when test="employeeType == 'Other'">
+          AND c.pcClass != 'Internal User'
+        </when>
+        <when test="employeeType != null and employeeType != '' and employeeType != 'All'">
+          AND c.pcClass = #{employeeType}
+        </when>
+        <when test="(employeeType == null or employeeType == '') and (internalOnly == null or internalOnly == true)">
+          AND c.pcClass = 'Internal User'
+        </when>
+      </choose>
+      <if test="company != null and company != ''">
+        AND c.company = #{company}
+      </if>
+      <if test="deviceClass != null and deviceClass != ''">
+        AND c.deviceClass = #{deviceClass}
+      </if>
+    GROUP BY q.quarter_start, q.quarter_end
+    ORDER BY q.quarter_start
+  </select>
 
 </mapper>

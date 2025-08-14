@@ -25,4 +25,21 @@ public interface ComputerReportMapper {
      * @return 统计结果
      */
     List<ComputerReportVO.AgeRangeStatistics> getAgeRangeStatistics(ComputerReportDTO dto);
+
+    /**
+     * 统计一人多台电脑的用户数量
+     * @param dto 查询参数
+     * @return 用户数量（拥有>1台设备的用户数）
+     */
+    Integer getMultiDeviceUserCount(ComputerReportDTO dto);
+
+    /**
+     * 统计未来若干季度内达到6年的设备数量（按季度汇总）
+     */
+    List<ComputerReportVO.QuarterScrapStatistics> getQuarterScrapStatistics(ComputerReportDTO dto);
+
+    /**
+     * 各公司四类电脑在用数量按年份统计
+     */
+    List<ComputerReportVO.YearlyInUseStatistics> getYearlyInUseStatistics(ComputerReportDTO dto);
 }

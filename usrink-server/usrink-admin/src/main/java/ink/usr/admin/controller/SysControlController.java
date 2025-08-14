@@ -2,8 +2,8 @@ package ink.usr.admin.controller;
 
 import com.github.pagehelper.Page;
 import ink.usr.admin.dao.DTO.*;
-import ink.usr.admin.dao.VO.SysControlAssignVO;
-import ink.usr.admin.dao.VO.SysControlBillListVO;
+// import ink.usr.admin.dao.VO.SysControlAssignVO;
+// import ink.usr.admin.dao.VO.SysControlBillListVO;
 import ink.usr.admin.dao.VO.SysControlVO;
 import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.service.SysControlService;
@@ -11,7 +11,7 @@ import ink.usr.admin.service.SysUserService;
 import ink.usr.common.core.domain.Dict;
 import ink.usr.common.core.domain.Res;
 import ink.usr.common.core.utils.PageUtil;
-import ink.usr.common.model.mysql.SysControlAssignModel;
+// import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
 import ink.usr.common.model.mysql.SysUserModel;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +21,13 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+// import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
+// import java.awt.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+// import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
@@ -385,16 +385,13 @@ public class SysControlController {
                 }
                 
                 try {
-                    // 查询数据库中是否存在该ciName（排除pcStatus为Scrapped的记录）
-                    List<SysControlModel> existingComputers = sysControlService.selectNonScrappedComputersByCiName(ciName);
-                    
-                    if (existingComputers != null && !existingComputers.isEmpty()) {
+                    // 查询数据库中是否存在该ciName（包含所有状态，包括已报废）
+                    SysControlModel existingComputer = sysControlService.getComputerInfoByCiName(ciName);
+
+                    if (existingComputer != null) {
                         // 存在记录，执行更新操作 - 使用现有记录作为基础，只更新Excel中的非空字段
-                        SysControlModel existingComputer = existingComputers.get(0);
-                        
-                        // 将Excel中的非空字段更新到现有记录上
                         updateExistingComputerWithExcelData(existingComputer, computerModel, headerIndexMap);
-                        
+
                         boolean updateResult = sysControlService.updateSysControl(existingComputer);
                         if (updateResult) {
                             updateCount++;

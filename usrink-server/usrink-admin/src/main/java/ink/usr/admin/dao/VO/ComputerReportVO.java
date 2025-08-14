@@ -20,6 +20,21 @@ public class ComputerReportVO {
     private List<AgeRangeStatistics> ageRangeStats;
     
     /**
+     * 一人多台电脑的用户数量（同一用户名同时分配/在用的电脑数量>1）
+     */
+    private Integer multiDeviceUserCount;
+
+    /**
+     * 各季度待报废（达到6年）设备数量
+     */
+    private List<QuarterScrapStatistics> quarterScrapStats;
+    
+    /**
+     * 各公司在用数量按年份统计
+     */
+    private List<YearlyInUseStatistics> yearlyInUseStats;
+    
+    /**
      * 公司和设备类型统计
      */
     @Data
@@ -50,5 +65,28 @@ public class ComputerReportVO {
         private Integer standardDesktop;          // Standard Desktop数量
         private Integer performanceDesktop;       // Performance Desktop数量
         private Integer total;                    // 总计
+    }
+
+    /**
+     * 季度待报废统计
+     */
+    @Data
+    public static class QuarterScrapStatistics {
+        private String quarter;                   // 形如 2025Q1
+        private Integer total;                    // 数量
+    }
+
+    /**
+     * 按年份统计在用数量（按公司分组，四类设备分列）
+     */
+    @Data
+    public static class YearlyInUseStatistics {
+        private String company;                   // 公司
+        private Integer year;                     // 年份
+        private Integer standardNotebook;         // Standard Notebook数量
+        private Integer performanceNotebook;      // Performance Notebook数量
+        private Integer standardDesktop;          // Standard Desktop数量
+        private Integer performanceDesktop;       // Performance Desktop数量
+        private Integer total;                    // 合计
     }
 }
