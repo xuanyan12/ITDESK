@@ -21,4 +21,7 @@ public class SysAllocateDeviceDTO extends SysControlModel {
     
     // 电脑归属情况（用于设备领取）
     private String pcClass;
+    
+    // 申请类型（用于区分普通申请和共享电脑申请）
+    private String deviceCategory;
 }

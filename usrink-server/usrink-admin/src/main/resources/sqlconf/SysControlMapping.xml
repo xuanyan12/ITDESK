@@ -285,8 +285,15 @@
                 AND (LOWER(c.company) LIKE CONCAT('%', LOWER(#{company}), '%'))
             </if>
 
-            <!-- 6. 固定条件：只查询状态为 "To be assigned" 的电脑 -->
-            AND c.pcStatus = 'To be assigned'
+            <!-- 6. 根据申请类型进行不同的筛选 -->
+            <!-- 如果指定了pcClass，则按电脑归属筛选（用于共享电脑申请） -->
+            <if test="pcClass != null and pcClass != ''">
+                AND c.pcClass = #{pcClass}
+            </if>
+            <!-- 如果没有指定pcClass，则按电脑状态筛选（用于普通申请） -->
+            <if test="pcClass == null or pcClass == ''">
+                AND c.pcStatus = 'To be assigned'
+            </if>
         </where>
     </select>
 

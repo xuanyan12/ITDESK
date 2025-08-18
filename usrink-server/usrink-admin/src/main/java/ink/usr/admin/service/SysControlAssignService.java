@@ -38,4 +38,12 @@ public interface SysControlAssignService {
      * @return 是否成功
      */
     boolean deleteOrder(Long approvalId);
+    
+    /**
+     * 归还共享电脑
+     * @param approvalId 订单号
+     * @param ciName 电脑名
+     * @return 是否成功
+     */
+    boolean returnSharedComputer(Long approvalId, String ciName);
 }

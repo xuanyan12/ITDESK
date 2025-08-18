@@ -11,4 +11,7 @@ import lombok.NoArgsConstructor;
 public class SysControlAssignDTO extends SysControlAssignModel {
     // 电脑的归属人ntAccount
     private String ntAccount;
+    
+    // 电脑归属情况（用于共享电脑申请筛选）
+    private String pcClass;
 }

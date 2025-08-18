@@ -134,102 +134,148 @@ public class SysControlServiceImpl implements SysControlService {
             // 格式化为字符串：yyyy-MM-dd HH:mm:ss
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String formattedTime = now.format(formatter);
-            // pcStatus修改为In Use
-            sysControlModel.setPcStatus("In Use");
-            // 通过applicant找到ntAccount并赋值进去
-            String userNtAccount = sysUserMapper.getUserInfoByUserName(sysUserMapper.getNameByUserId(sysAllocateDeviceDTO.getApplicant())).getResponsibility();
-            sysControlModel.setNtAccount(userNtAccount);
-            // 如果isTemp为1，将temp置为1，否则置为0。
-            if(sysAllocateDeviceDTO.getIsTemp() != null){
-                if(sysAllocateDeviceDTO.getIsTemp() == 1){
-                    sysControlModel.setTemp(1);
-                }
-                else {
-                    sysControlModel.setTemp(0);
-                }
-            }
-            // 通过ntAccount找到对应的数据，将用户字段赋值进去
-            SysUserModel userInfo = sysUserMapper.getUserInfoByUserName(userNtAccount);
-            if(userInfo!=null){
-
-                // 解析userNick设置firstName和lastName
-                if (userInfo.getUserNick() != null && !userInfo.getUserNick().isEmpty()) {
-                    String userNick = userInfo.getUserNick();
-
-                    // 处理FIXED-TERM前缀
-                    if (userNick.startsWith("FIXED-TERM ")) {
-                        userNick = userNick.substring("FIXED-TERM ".length()).trim();
-                    }
-                    // 处理EXTERNAL前缀，格式如: "EXTERNAL Chen, Zhanjun (XXXX)"
-                    else if (userNick.startsWith("EXTERNAL ")) {
-                        userNick = userNick.substring("EXTERNAL ".length()).trim();
-                    }
-                    // 处理[Blue color]前缀，格式如: "[Blue color] CHENG Xiaoyu (SES-MFO-STG3)"
-                    else if (userNick.startsWith("[Blue color] ")) {
-                        userNick = userNick.substring("[Blue color] ".length()).trim();
-                    }
-
-                    // 先分离出括号部分
-                    int bracketIndex = userNick.indexOf(" (");
-                    if (bracketIndex > 0) {
-                        userNick = userNick.substring(0, bracketIndex);
-                    }
-
-                    // 分离姓和名
-                    if (userInfo.getUserNick().startsWith("[Blue color] ")) {
-                        // [Blue color] 格式使用空格分隔，FirstName LastName形式
-                        String[] nameParts = userNick.split(" ", 2);
-                        if (nameParts.length == 2) {
-                            // 姓氏是第二部分
-                            sysControlModel.setLastName(nameParts[1]);
-                            // 名字是第一部分
-                            sysControlModel.setFirstName(nameParts[0]);
-                        } else {
-                            // 如果不符合预期格式，使用整个userNick作为lastName
-                            sysControlModel.setLastName(userNick);
-                        }
-                    } else {
-                        // 普通格式使用逗号分隔，LastName, FirstName形式
-                        String[] nameParts = userNick.split(", ");
-                        if (nameParts.length == 2) {
-                            // 姓氏是第一部分
-                            sysControlModel.setLastName(nameParts[0]);
-                            // 名字是第二部分
-                            sysControlModel.setFirstName(nameParts[1]);
-                        } else {
-                            // 如果不符合预期格式，使用整个userNick作为lastName
-                            sysControlModel.setLastName(userNick);
-                        }
-                    }
-                }
-                if(userInfo.getEmail()!=null){
-                    sysControlModel.setEmailAddress(userInfo.getEmail());
-                }
-                if(userInfo.getPhone()!=null){
-                    sysControlModel.setTelephone(userInfo.getPhone());
-                }
-                if(userInfo.getDepartment()!=null){
-                    sysControlModel.setDepartment(userInfo.getDepartment());
-                }
-                if(userInfo.getCostCenter()!=null){
-                    sysControlModel.setCostCenter(userInfo.getCostCenter());
-                }
-            }
-            // 如果申请前有电脑且为In Use，需要置为Waiting for Return，且新电脑归属情况与之前保持一致
+            
+            String deviceCategory = sysAllocateDeviceDTO.getDeviceCategory();
             Long approvalId = sysAllocateDeviceDTO.getApprovalId();
-            if(approvalId!=null){
-                SysApprovalRequestModel approvalRequestModel = sysApplyMapper.getByApprovalId(approvalId);
-                if(approvalRequestModel == null){
-                    log.warn("未找到approvalId为{}的申请记录", approvalId);
-                    return false;
+            
+            if ("共享电脑申请".equals(deviceCategory)) {
+                // 共享电脑分配：不修改pcStatus，保持ShareNotebook
+                // 用申请人信息更新电脑用户信息
+                Long applicantId = sysAllocateDeviceDTO.getApplicant();
+                String applicantUserName = sysUserMapper.getNameByUserId(applicantId);
+                SysUserModel applicantInfo = sysUserMapper.getUserInfoByUserName(applicantUserName);
+                if (applicantInfo != null) {
+                    sysControlModel.setNtAccount(applicantUserName);
+                    // 解析userNick设置firstName和lastName
+                    if (applicantInfo.getUserNick() != null && !applicantInfo.getUserNick().isEmpty()) {
+                        String userNick = applicantInfo.getUserNick();
+                        // 处理前缀
+                        if (userNick.startsWith("FIXED-TERM ")) {
+                            userNick = userNick.substring("FIXED-TERM ".length()).trim();
+                        } else if (userNick.startsWith("EXTERNAL ")) {
+                            userNick = userNick.substring("EXTERNAL ".length()).trim();
+                        } else if (userNick.startsWith("[Blue color] ")) {
+                            userNick = userNick.substring("[Blue color] ".length()).trim();
+                        }
+                        int bracketIndex = userNick.indexOf(" (");
+                        if (bracketIndex > 0) {
+                            userNick = userNick.substring(0, bracketIndex);
+                        }
+                        if (applicantInfo.getUserNick().startsWith("[Blue color] ")) {
+                            String[] nameParts = userNick.split(" ", 2);
+                            if (nameParts.length == 2) {
+                                sysControlModel.setLastName(nameParts[1]);
+                                sysControlModel.setFirstName(nameParts[0]);
+                            } else {
+                                sysControlModel.setLastName(userNick);
+                            }
+                        } else {
+                            String[] nameParts = userNick.split(", ");
+                            if (nameParts.length == 2) {
+                                sysControlModel.setLastName(nameParts[0]);
+                                sysControlModel.setFirstName(nameParts[1]);
+                            } else {
+                                sysControlModel.setLastName(userNick);
+                            }
+                        }
+                    }
+                    if(applicantInfo.getEmail()!=null){
+                        sysControlModel.setEmailAddress(applicantInfo.getEmail());
+                    }
+                    if(applicantInfo.getPhone()!=null){
+                        sysControlModel.setTelephone(applicantInfo.getPhone());
+                    }
+                    if(applicantInfo.getDepartment()!=null){
+                        sysControlModel.setDepartment(applicantInfo.getDepartment());
+                    }
+                    if(applicantInfo.getCostCenter()!=null){
+                        sysControlModel.setCostCenter(applicantInfo.getCostCenter());
+                    }
                 }
-                String ciName = approvalRequestModel.getCiName();
-                String deviceCategory = approvalRequestModel.getDeviceCategory();
+                // 归属改为Waiting for Return
+                sysControlModel.setPcClass("Waiting for Return");
+                // 临时分配标志
+                if(sysAllocateDeviceDTO.getIsTemp() != null){
+                    sysControlModel.setTemp(sysAllocateDeviceDTO.getIsTemp() == 1 ? 1 : 0);
+                }
+            } else {
+                // 普通申请逻辑
+                sysControlModel.setPcStatus("In Use");
+                // 通过applicant找到ntAccount并赋值进去
+                String userNtAccount = sysUserMapper.getUserInfoByUserName(sysUserMapper.getNameByUserId(sysAllocateDeviceDTO.getApplicant())).getResponsibility();
+                sysControlModel.setNtAccount(userNtAccount);
+                // 如果isTemp为1，将temp置为1，否则置为0。
+                if(sysAllocateDeviceDTO.getIsTemp() != null){
+                    if(sysAllocateDeviceDTO.getIsTemp() == 1){
+                        sysControlModel.setTemp(1);
+                    }
+                    else {
+                        sysControlModel.setTemp(0);
+                    }
+                }
+                // 通过ntAccount找到对应的数据，将用户字段赋值进去
+                SysUserModel userInfo = sysUserMapper.getUserInfoByUserName(userNtAccount);
+                if(userInfo!=null){
+                    // 解析userNick设置firstName和lastName
+                    if (userInfo.getUserNick() != null && !userInfo.getUserNick().isEmpty()) {
+                        String userNick = userInfo.getUserNick();
+                        // 处理前缀
+                        if (userNick.startsWith("FIXED-TERM ")) {
+                            userNick = userNick.substring("FIXED-TERM ".length()).trim();
+                        } else if (userNick.startsWith("EXTERNAL ")) {
+                            userNick = userNick.substring("EXTERNAL ".length()).trim();
+                        } else if (userNick.startsWith("[Blue color] ")) {
+                            userNick = userNick.substring("[Blue color] ".length()).trim();
+                        }
+                        int bracketIndex = userNick.indexOf(" (");
+                        if (bracketIndex > 0) {
+                            userNick = userNick.substring(0, bracketIndex);
+                        }
+                        if (userInfo.getUserNick().startsWith("[Blue color] ")) {
+                            String[] nameParts = userNick.split(" ", 2);
+                            if (nameParts.length == 2) {
+                                sysControlModel.setLastName(nameParts[1]);
+                                sysControlModel.setFirstName(nameParts[0]);
+                            } else {
+                                sysControlModel.setLastName(userNick);
+                            }
+                        } else {
+                            String[] nameParts = userNick.split(", ");
+                            if (nameParts.length == 2) {
+                                sysControlModel.setLastName(nameParts[0]);
+                                sysControlModel.setFirstName(nameParts[1]);
+                            } else {
+                                sysControlModel.setLastName(userNick);
+                            }
+                        }
+                    }
+                    if(userInfo.getEmail()!=null){
+                        sysControlModel.setEmailAddress(userInfo.getEmail());
+                    }
+                    if(userInfo.getPhone()!=null){
+                        sysControlModel.setTelephone(userInfo.getPhone());
+                    }
+                    if(userInfo.getDepartment()!=null){
+                        sysControlModel.setDepartment(userInfo.getDepartment());
+                    }
+                    if(userInfo.getCostCenter()!=null){
+                        sysControlModel.setCostCenter(userInfo.getCostCenter());
+                    }
+                }
+                // 普通申请后续逻辑保持不变
+                if(approvalId!=null){
+                    SysApprovalRequestModel approvalRequestModel = sysApplyMapper.getByApprovalId(approvalId);
+                    if(approvalRequestModel == null){
+                        log.warn("未找到approvalId为{}的申请记录", approvalId);
+                        return false;
+                    }
+                    String ciName = approvalRequestModel.getCiName();
+                    String approvalDeviceCategory = approvalRequestModel.getDeviceCategory();
                 SysControlModel computerInfo = null;
                 SysControlModel originalComputerInfo = new SysControlModel();
                 // 如果之前有电脑，且申请的电脑归属情况是Internal User的话，原来的电脑要设置为Waiting for Return
                 // 加一个，且不是其他申请
-                if(ciName!=null && !"申请新电脑".equals(ciName) && !"其他用途电脑申请".equals(deviceCategory)){
+                if(ciName!=null && !"申请新电脑".equals(ciName) && !"其他用途电脑申请".equals(approvalDeviceCategory)){
                     computerInfo = sysControlMapper.getComputerInfoByCiName(ciName);
                     // 之前有电脑且申请的电脑归属情况是Internal User时进行修改
                     if(computerInfo!=null){
@@ -254,7 +300,6 @@ public class SysControlServiceImpl implements SysControlService {
                 } else {
                     // 原来没有电脑时
                     // 实习生，蓝领，外服直接设置为对应的标识，如果不是的话（正职）就设置为Internal User
-
                 }
                 if(computerInfo!=null){
                     // 1.记录原数据
@@ -266,10 +311,12 @@ public class SysControlServiceImpl implements SysControlService {
                     sysControlMapper.updateSysControl(computerInfo);
                 }
             }
+            } // 添加缺失的大括号，结束普通申请的处理逻辑
             
             // 处理二次分配时的暂分配电脑：将用户当前使用的临时分配电脑设置为Waiting for Return
             if(sysAllocateDeviceDTO.getIsTemp() != null && sysAllocateDeviceDTO.getIsTemp() == 0) {
                 // 只在正式分配（非暂分配）时执行
+                String userNtAccount = sysUserMapper.getUserInfoByUserName(sysUserMapper.getNameByUserId(sysAllocateDeviceDTO.getApplicant())).getResponsibility();
                 if(userNtAccount != null) {
                     List<SysControlModel> userCurrentComputers = sysControlMapper.getComputerListByUserName(userNtAccount);
                     for(SysControlModel computer : userCurrentComputers) {
@@ -282,7 +329,6 @@ public class SysControlServiceImpl implements SysControlService {
                             BeanUtils.copyProperties(originalTempComputer, tempComputerRecord);
                             tempComputerRecord.setUpdateTime(formattedTime);
                             sysControlMapper.updateSysControlRecord(tempComputerRecord);
-                            
                             // 更新暂分配电脑状态
                             computer.setPcClass("Waiting for Return");
                             computer.setTemp(0); // 将temp重置为0

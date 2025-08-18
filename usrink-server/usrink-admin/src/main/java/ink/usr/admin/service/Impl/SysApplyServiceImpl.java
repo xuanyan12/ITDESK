@@ -89,7 +89,8 @@ public class SysApplyServiceImpl implements SysApplyService {
         sysApplyRequestDTO.setUpdatedAt(createTime);
         SysApprovalRequestModel sysApprovalRequestModel = new SysApprovalRequestModel();
         
-        // 检查申请类别，如果不是"办公电脑未超六年换新"或"其他用途电脑申请"，直接设置为审批通过
+        // 检查申请类别，只有"办公电脑未超六年换新"和"其他用途电脑申请"需要审批
+        // "共享电脑申请"等其他类别直接设置为审批通过
         String deviceCategory = sysApplyRequestDTO.getDeviceCategory();
         boolean needsApproval = "办公电脑未超六年换新".equals(deviceCategory) || "其他用途电脑申请".equals(deviceCategory);
         

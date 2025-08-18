@@ -4,11 +4,11 @@
       <template #header>
         <div class="card-header">
           <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-            <el-tab-pane :label="t('订单管理')" name="order">
-              <span>{{ t('订单管理') }}</span>
+            <el-tab-pane :label="t('申请订单管理')" name="order">
+              <span>{{ t('申请订单管理') }}</span>
             </el-tab-pane>
-            <el-tab-pane :label="t('维修管理')" name="maintenance">
-              <span>{{ t('维修管理') }}</span>
+            <el-tab-pane :label="t('维修订单管理')" name="maintenance">
+              <span>{{ t('维修订单管理') }}</span>
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -64,6 +64,7 @@
             <el-option label="秘书代申请新岗位员工电脑" value="秘书代申请新岗位员工电脑" />
             <el-option label="秘书代申请替代岗位员工电脑" value="秘书代申请替代岗位员工电脑" />
             <el-option label="秘书代申请新实习生/外服电脑" value="秘书代申请新实习生/外服电脑" />
+            <el-option label="共享电脑申请" value="共享电脑申请" />
             <el-option label="其他用途电脑申请" value="其他用途电脑申请" />
           </el-select>
         </el-form-item>
@@ -111,6 +112,8 @@
               {{ scope.row.assignStatus === '分配中' ? t('分配中') : 
                  scope.row.assignStatus === '暂分配' ? t('暂分配') : 
                  scope.row.assignStatus === '分配完成' ? t('分配完成') : 
+                 scope.row.assignStatus === '待归还' ? t('待归还') : 
+                 scope.row.assignStatus === '已归还' ? t('已归还') : 
                  scope.row.assignStatus === '已领取' ? t('已领取') : 
                  scope.row.assignStatus === '已关闭' ? t('已关闭') : scope.row.assignStatus }}
             </el-tag>
@@ -127,6 +130,15 @@
                 disabled
               >
                 {{ t('已领取') }}
+              </el-button>
+              <!-- 已归还状态：显示禁用的已归还按钮 -->
+              <el-button 
+                v-else-if="scope.row.assignStatus === '已归还'"
+                type="success" 
+                size="small"
+                disabled
+              >
+                {{ t('已归还') }}
               </el-button>
               <!-- 已关闭状态：显示禁用的已关闭按钮 -->
               <el-button 
@@ -145,6 +157,23 @@
                   @click="handleReceive(scope.row)"
                 >
                   {{ t('领取') }}
+                </el-button>
+                <el-button 
+                  type="danger" 
+                  size="small"
+                  @click="handleDelete(scope.row)"
+                >
+                  {{ t('关闭') }}
+                </el-button>
+              </template>
+              <!-- 待归还状态：显示归还和关闭按钮（仅共享电脑申请） -->
+              <template v-else-if="scope.row.assignStatus === '待归还' && scope.row.deviceCategory === '共享电脑申请'">
+                <el-button 
+                  type="success" 
+                  size="small"
+                  @click="handleReturn(scope.row)"
+                >
+                  {{ t('归还') }}
                 </el-button>
                 <el-button 
                   type="danger" 
@@ -254,6 +283,11 @@
           <el-table-column prop="problemDescription" :label="t('故障描述')" width="200" show-overflow-tooltip />
           <el-table-column prop="applicant" :label="t('申请人')" width="120" />
           <el-table-column prop="costCenter" :label="t('成本中心')" width="120" />
+          <el-table-column prop="maintenanceCost" :label="t('维修金额')" width="120">
+            <template #default="scope">
+              {{ scope.row.maintenanceCost || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column prop="orderStatus" :label="t('维修状态')" width="120">
             <template #default="scope">
               <el-tag :type="getMaintenanceStatusTagType(scope.row.orderStatus)">
@@ -974,6 +1008,8 @@ const translations = {
   "否": { en: "No", zh: "否" },
   "取消": { en: "Cancel", zh: "取消" },
   "暂分配": { en: "Temporary Assign", zh: "暂分配" },
+  "待归还": { en: "Pending Return", zh: "待归还" },
+  "已归还": { en: "Returned", zh: "已归还" },
   "确认分配": { en: "Confirm Assignment", zh: "确认分配" },
   "已领取": { en: "Received", zh: "已领取" },
   "已关闭": { en: "Closed", zh: "已关闭" },
@@ -998,6 +1034,14 @@ const translations = {
   "订单关闭失败": { en: "Failed to close order", zh: "订单关闭失败" },
   "订单关闭成功": { en: "Order closed successfully", zh: "订单关闭成功" },
   "订单关闭失败，请稍后重试": { en: "Failed to close order, please try again", zh: "订单关闭失败，请稍后重试" },
+  "归还": { en: "Return", zh: "归还" },
+  "确认归还提醒": { en: "Confirm Return Reminder", zh: "确认归还提醒" },
+  "确认归还该共享电脑吗": { en: "Confirm return this shared computer?", zh: "确认归还该共享电脑吗？" },
+  "归还后将更新订单状态为已归还": { en: "After return, the order status will be updated to returned", zh: "归还后将更新订单状态为已归还" },
+  "归还成功": { en: "Return successful", zh: "归还成功" },
+  "归还失败": { en: "Return failed", zh: "归还失败" },
+  "归还失败，请稍后重试": { en: "Return failed, please try again later", zh: "归还失败，请稍后重试" },
+  "确认归还": { en: "Confirm Return", zh: "确认归还" },
   "设备信息": { en: "Device Information", zh: "设备信息" },
   "电脑信息": { en: "Computer Information", zh: "电脑信息" },
   "电脑归属情况": { en: "Computer Ownership", zh: "电脑归属情况" },
@@ -1214,6 +1258,8 @@ const getStatusTagType = (status) => {
   if (status === '分配中') return 'primary'
   if (status === '暂分配') return 'warning'
   if (status === '分配完成') return 'success'
+  if (status === '待归还') return 'warning'
+  if (status === '已归还') return 'success'
   if (status === '已领取') return 'success'
   if (status === '已关闭') return 'info'
   return ''
@@ -1327,6 +1373,15 @@ const fetchComputerList = () => {
     ntAccount: computerQueryForm.value.ntAccount || null
   }
   
+  // 根据申请类型添加不同的查询条件
+  if (currentAssignRecord.value && currentAssignRecord.value.deviceCategory === '共享电脑申请') {
+    // 共享电脑申请：查询pcClass=ShareNotebook的电脑（可借用的共享电脑）
+    params.pcClass = 'ShareNotebook'
+  } else {
+    // 普通申请：根据电脑状态=To be assigned筛选（后端默认逻辑）
+    params.pcStatus = 'To be assigned'
+  }
+  
   // 将分页参数添加到URL中
   const urlParams = new URLSearchParams()
   urlParams.append('pageNum', computerPageNum.value)
@@ -1428,6 +1483,7 @@ const confirmAssign = () => {
     applicant: currentAssignRecord.value.applicant, // 使用当前分配记录的applicant作为applicant
     isTemp: 0, // 确认分配，非临时
     approvalId: currentAssignRecord.value.approvalId, // 添加订单号
+    deviceCategory: currentAssignRecord.value.deviceCategory, // 添加申请类型
   }
 
   ElMessageBox.confirm('确认分配该电脑?', '提示', {
@@ -1471,6 +1527,7 @@ const confirmTempAssign = () => {
     applicant: currentAssignRecord.value.applicant, // 使用当前分配记录的applicant作为applicant
     isTemp: 1, // 临时分配
     approvalId: currentAssignRecord.value.approvalId, // 添加订单号
+    deviceCategory: currentAssignRecord.value.deviceCategory, // 添加申请类型
   }
 
   ElMessageBox.confirm('确认暂时分配该电脑?', '提示', {
@@ -1845,6 +1902,46 @@ const formatDataForExport = (data) => {
     exportObj[t('分配状态')] = item.assignStatus || ''
     
     return exportObj
+  })
+}
+
+// 归还处理
+const handleReturn = (row) => {
+  ElMessageBox.confirm(
+    `${t('确认归还该共享电脑吗')}？<br/>${t('归还后将更新订单状态为已归还')}`,
+    t('确认归还提醒'),
+    {
+      confirmButtonText: t('确认归还'),
+      cancelButtonText: t('取消'),
+      type: 'warning',
+      dangerouslyUseHTMLString: true
+    }
+  ).then(() => {
+    // 创建请求参数
+    const params = {
+      approvalId: row.approvalId,
+      ciName: row.ciName
+    }
+
+    // 发送归还请求到后端
+    httpUtil.post('/sysControlAssign/returnSharedComputer', params, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (res.code === 200) {
+        ElMessage.success(t('归还成功'))
+        // 刷新列表
+        fetchAssignmentList()
+      } else {
+        ElMessage.error(res.message || t('归还失败'))
+      }
+    }).catch(err => {
+      console.error('归还失败:', err)
+      ElMessage.error(t('归还失败，请稍后重试'))
+    })
+  }).catch(() => {
+    // 用户取消操作
   })
 }
 

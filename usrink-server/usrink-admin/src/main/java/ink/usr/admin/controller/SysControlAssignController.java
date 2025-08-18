@@ -192,4 +192,28 @@ public class SysControlAssignController {
             return Res.error("订单关闭失败");
         }
     }
+
+    /**
+     * 归还共享电脑
+     * @param request
+     * @return
+     */
+    @RequestMapping("/returnSharedComputer")
+    @Transactional
+    public Res returnSharedComputer(@RequestBody Map<String, Object> request){
+        Long approvalId = Long.valueOf(request.get("approvalId").toString());
+        String ciName = (String) request.get("ciName");
+        
+        log.info("归还共享电脑请求, 订单号: {}, 电脑名: {}", approvalId, ciName);
+
+        boolean flag = sysControlAssignService.returnSharedComputer(approvalId, ciName);
+
+        if(flag){
+            log.info("共享电脑归还成功, 订单号: {}, 电脑名: {}", approvalId, ciName);
+            return Res.success("归还成功");
+        } else {
+            log.error("共享电脑归还失败, 订单号: {}, 电脑名: {}", approvalId, ciName);
+            return Res.error("归还失败");
+        }
+    }
 }

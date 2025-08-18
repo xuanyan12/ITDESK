@@ -37,7 +37,7 @@ const qaData = computed(() => {
             application: [
                 {
                     question: 'Q:申请新电脑需要什么条件？',
-                    answer: 'A:根据申请类别来进行判断，需要满足相应的条件。\n1.选择"办公电脑超六年换新"时，要求需要更换的电脑出厂日期距今超过六年，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n2.选择"办公电脑未超六年换新"时，要求需要更换的电脑出厂日期距今未超过六年，成本中心将自动置为使用人的成本中心，费用计入使用人的成本中心。\n3.选择"办公电脑未超六年换旧"时，要求需要更换的电脑出厂日期距今未超过六年，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n4.选择"秘书代申请新岗位员工电脑"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n5.选择"秘书代申请替代岗位员工电脑"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n6.选择"秘书代申请新实习生/外服电脑"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n7.选择"其他用途电脑申请"时，需要自行选择成本中心，成本中心将自动置为所选择的成本中心，费用计入所选择的成本中心。'
+                    answer: 'A:根据申请类别来进行判断，需要满足相应的条件。\n1.选择"办公电脑超六年换新"时，要求需要更换的电脑出厂日期距今超过六年，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n2.选择"办公电脑未超六年换新"时，要求需要更换的电脑出厂日期距今未超过六年，成本中心将自动置为使用人的成本中心，费用计入使用人的成本中心。\n3.选择"办公电脑未超六年换旧"时，要求需要更换的电脑出厂日期距今未超过六年，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n4.选择"秘书代申请新岗位员工电脑"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n5.选择"秘书代申请替代岗位员工电脑"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n6.选择"秘书代申请新实习生/外服电脑"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n7.选择"共享电脑申请"时，成本中心将自动置为IT的成本中心，费用计入IT的成本中心。\n8.选择"其他用途电脑申请"时，需要自行选择成本中心，成本中心将自动置为所选择的成本中心，费用计入所选择的成本中心。'
                 },
                 {
                     question: 'Q:申请被驳回了，如何重新申请？',
@@ -61,13 +61,13 @@ const qaData = computed(() => {
                 },
                 {
                     question: 'Q:为什么我填写不了申请理由？',
-                    answer: 'A:申请理由仅有在申请类别选择"其他用途电脑申请"的情况下才需要填写。'
+                    answer: 'A:申请理由在申请类别选择"其他用途电脑申请"或"共享电脑申请"的情况下需要填写。'
                 }
             ],
             approval: [
                 {
                     question: 'Q:提交审批后多久能够完成审批？',
-                    answer: 'A:一般情况下，审批流程会通过智能审批进行一键识别审批并进入等待分配状态，只有在申请类别选择"办公电脑未超六年换新"与"其他用途电脑申请"时才会进入人工审批，具体时效取决于审批人的处理速度。'
+                    answer: 'A:一般情况下，审批流程会通过智能审批进行一键识别审批并进入等待分配状态，只有在申请类别选择"办公电脑未超六年换新"与"其他用途电脑申请"时才会进入人工审批，具体时效取决于审批人的处理速度。其他申请类别（如"共享电脑申请"等）将自动审批通过。'
                 },
                 {
                     question: 'Q:如何查看申请的审批进度？',
@@ -96,7 +96,7 @@ const qaData = computed(() => {
             application: [
                 {
                     question: 'Q: What are the requirements for applying for a new computer?',
-                    answer: 'A: Requirements depend on the application category:\n1. "Office Computer Replacement (Over 6 Years)": The computer to be replaced must be over 6 years old from manufacture date. Cost center will be automatically set to IT department.\n2. "Office Computer Replacement (Under 6 Years - New)": The computer to be replaced must be under 6 years old from manufacture date. Cost center will be automatically set to the user\'s cost center.\n3. "Office Computer Replacement (Under 6 Years - Used)": The computer to be replaced must be under 6 years old from manufacture date. Cost center will be automatically set to IT department.\n4. "Secretary Application for New Employee Computer": Cost center will be automatically set to IT department.\n5. "Secretary Application for Replacement Employee Computer": Cost center will be automatically set to IT department.\n6. "Secretary Application for New Intern/External Computer": Cost center will be automatically set to IT department.\n7. "Other Purpose Computer Application": You need to select the cost center manually.'
+                    answer: 'A: Requirements depend on the application category:\n1. "Office Computer Replacement (Over 6 Years)": The computer to be replaced must be over 6 years old from manufacture date. Cost center will be automatically set to IT department.\n2. "Office Computer Replacement (Under 6 Years - New)": The computer to be replaced must be under 6 years old from manufacture date. Cost center will be automatically set to the user\'s cost center.\n3. "Office Computer Replacement (Under 6 Years - Used)": The computer to be replaced must be under 6 years old from manufacture date. Cost center will be automatically set to IT department.\n4. "Secretary Application for New Employee Computer": Cost center will be automatically set to IT department.\n5. "Secretary Application for Replacement Employee Computer": Cost center will be automatically set to IT department.\n6. "Secretary Application for New Intern/External Computer": Cost center will be automatically set to IT department.\n7. "Shared Computer Application": Cost center will be automatically set to IT department.\n8. "Other Purpose Computer Application": You need to select the cost center manually.'
                 },
                 {
                     question: 'Q: My application was rejected, how do I reapply?',
@@ -120,13 +120,13 @@ const qaData = computed(() => {
                 },
                 {
                     question: 'Q: Why can\'t I fill in the application reason?',
-                    answer: 'A: Application reason only needs to be filled when the application category is "Other Purpose Computer Application".'
+                    answer: 'A: Application reason needs to be filled when the application category is "Other Purpose Computer Application" or "Shared Computer Application".'
                 }
             ],
             approval: [
                 {
                     question: 'Q: How long does it take to complete approval after submission?',
-                    answer: 'A: Generally, the approval process will use intelligent approval for one-click recognition and enter the waiting allocation status. Manual approval is only required when the application category is "Office Computer Replacement (Under 6 Years - New)" or "Other Purpose Computer Application". The specific timeframe depends on the approver\'s processing speed.'
+                    answer: 'A: Generally, the approval process will use intelligent approval for one-click recognition and enter the waiting allocation status. Manual approval is only required when the application category is "Office Computer Replacement (Under 6 Years - New)" or "Other Purpose Computer Application". Other application categories (such as "Shared Computer Application") will be automatically approved.'
                 },
                 {
                     question: 'Q: How can I check the approval progress of my application?',

@@ -126,6 +126,7 @@
                 <el-option :label="t('秘书代申请新岗位员工电脑')" value="secretaryNewEmployee" :disabled="isPublicUseComputer"></el-option>
                 <el-option :label="t('秘书代申请替代岗位员工电脑')" value="secretaryReplacement" :disabled="isPublicUseComputer"></el-option>
                 <el-option :label="t('秘书代申请新实习生/外服电脑')" value="secretaryIntern" :disabled="isPublicUseComputer"></el-option>
+                <el-option :label="t('共享电脑申请')" value="sharedComputer"></el-option>
                 <el-option :label="t('其他用途电脑申请')" value="specialPurpose"></el-option>
               </el-select>
             </el-form-item>
@@ -527,6 +528,7 @@ export default {
       "秘书代申请新岗位员工电脑": { en: "New Employee PC", zh: "秘书代申请新岗位员工电脑" },
       "秘书代申请替代岗位员工电脑": { en: "Replacement PC", zh: "秘书代申请替代岗位员工电脑" },
       "秘书代申请新实习生/外服电脑": { en: "Intern/Contractor PC", zh: "秘书代申请新实习生/外服电脑" },
+      "共享电脑申请": { en: "Shared Computer", zh: "共享电脑申请" },
       "其他用途电脑申请": { en: "Special Purpose", zh: "其他用途电脑申请" },
       
       // Application Status section
@@ -1258,6 +1260,7 @@ export default {
         'secretaryNewEmployee': '秘书代申请新岗位员工电脑',
         'secretaryReplacement': '秘书代申请替代岗位员工电脑',
         'secretaryIntern': '秘书代申请新实习生/外服电脑',
+        'sharedComputer': '共享电脑申请',
         'publicComputer': '申请公共电脑',
         'specialPurpose': '其他用途电脑申请',
         // Keep old mapping for compatibility with existing data
@@ -1573,6 +1576,12 @@ export default {
             applicationForm.costCenter = getITCostCenter(applicationForm.company);
             applicationForm.computerCondition = '库存旧电脑';
             applicationForm.reason = '秘书代申请新实习生/外服电脑';
+            break;
+            
+          case 'sharedComputer':
+            applicationForm.costCenter = getITCostCenter(applicationForm.company);
+            applicationForm.computerCondition = '库存旧电脑';
+            applicationForm.reason = '共享电脑申请';
             break;
             
           case 'specialPurpose':
@@ -2012,6 +2021,8 @@ export default {
     // Add computed property in setup function
     const isReasonDisabled = computed(() => {
       const appType = applicationForm.applicationType;
+      // 只有特定申请类别需要填写申请理由，其他类别自动填充
+      // 注意：sharedComputer（共享电脑申请）和specialPurpose（其他用途电脑申请）需要手动填写申请理由
       return ['pcRenewalOverSixYears', 'pcRenewalUnderSixYearsOld', 
               'secretaryNewEmployee', 'secretaryReplacement', 'secretaryIntern', 'publicComputer'].includes(appType);
     });
@@ -2042,6 +2053,8 @@ export default {
       if (applicationForm.applicationType === 'specialPurpose' || 
           (myComputer.value?.pcClass?.includes('Public Use') && applicationForm.applicationType === 'specialPurpose')) {
         return '请输入其他用途电脑申请理由';
+      } else if (applicationForm.applicationType === 'sharedComputer') {
+        return '请输入共享电脑申请理由';
       }
       return '请输入申请理由';
     });

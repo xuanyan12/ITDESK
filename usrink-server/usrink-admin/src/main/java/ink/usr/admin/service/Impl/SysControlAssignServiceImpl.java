@@ -7,6 +7,7 @@ import ink.usr.admin.mapper.SysControlMapper;
 import ink.usr.admin.mapper.SysUserMapper;
 import ink.usr.admin.service.SysControlAssignService;
 import ink.usr.admin.service.SysUserService;
+import ink.usr.admin.service.SysControlService;
 import ink.usr.admin.config.EmailConfig;
 import ink.usr.common.model.mysql.SysControlAssignModel;
 import ink.usr.common.model.mysql.SysControlModel;
@@ -32,6 +33,8 @@ public class SysControlAssignServiceImpl implements SysControlAssignService {
     private SysUserMapper sysUserMapper;
     @Autowired
     private SysUserService sysUserService;
+    @Autowired
+    private SysControlService sysControlService;
     @Autowired
     private EmailConfig emailConfig;
 
@@ -63,11 +66,17 @@ public class SysControlAssignServiceImpl implements SysControlAssignService {
         if(controlAssign!=null){
             // 2.订单表sys_control_assign进行更改
             if(sysAllocateDeviceDTO.getIsTemp()!=null){
-                // 如果isTemp为1，将temp置为1，assignStatus置为暂分配；否则置为分配完成。
+                // 根据申请类型和临时分配标志设置分配状态
+                String deviceCategory = sysAllocateDeviceDTO.getDeviceCategory();
                 if(sysAllocateDeviceDTO.getIsTemp() == 1){
                     controlAssign.setAssignStatus("暂分配");
                 } else{
-                    controlAssign.setAssignStatus("分配完成");
+                    // 共享电脑申请设置为"待归还"，普通申请设置为"分配完成"
+                    if ("共享电脑申请".equals(deviceCategory)) {
+                        controlAssign.setAssignStatus("待归还");
+                    } else {
+                        controlAssign.setAssignStatus("分配完成");
+                    }
                 }
             }
             // 填入电脑名，上一个使用者的nt账号（如果有）
@@ -491,4 +500,42 @@ public class SysControlAssignServiceImpl implements SysControlAssignService {
         
         return html.toString();
     }
+
+    @Override
+    public boolean returnSharedComputer(Long approvalId, String ciName) {
+        try {
+            // 1. 更新订单状态为"已归还"
+            SysControlAssignModel controlAssign = sysControlAssignMapper.getControlAssign(approvalId);
+            if (controlAssign != null) {
+                controlAssign.setAssignStatus("已归还");
+                
+                // 更新时间
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime time = LocalDateTime.now();
+                String localTime = df.format(time);
+                controlAssign.setAssignTime(localTime);
+                
+                // 更新订单
+                boolean orderUpdateFlag = sysControlAssignMapper.updateControlAssign(controlAssign);
+                
+                // 2. 更新电脑归属情况为"ShareNotebook"
+                boolean computerUpdateFlag = sysControlService.updateComputerOwnership(ciName, "ShareNotebook");
+                
+                if (orderUpdateFlag && computerUpdateFlag) {
+                    log.info("共享电脑归还成功, 订单号: {}, 电脑名: {}", approvalId, ciName);
+                    return true;
+                } else {
+                    log.error("共享电脑归还失败, 订单更新: {}, 电脑更新: {}", orderUpdateFlag, computerUpdateFlag);
+                    return false;
+                }
+            } else {
+                log.warn("未找到订单号为 {} 的记录", approvalId);
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("归还共享电脑失败: approvalId={}, ciName={}", approvalId, ciName, e);
+            return false;
+        }
+    }
+    
 }

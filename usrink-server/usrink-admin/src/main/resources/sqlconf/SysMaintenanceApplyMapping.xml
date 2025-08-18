@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ink.usr.admin.mapper.SysMaintenanceApplyMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="ink.usr.common.model.mysql.SysMaintenanceApplyModel">
+        <id column="maintenanceId" property="maintenanceId" jdbcType="BIGINT"/>
+        <result column="applicant" property="applicant" jdbcType="BIGINT"/>
+        <result column="fixCategory" property="fixCategory" jdbcType="VARCHAR"/>
+        <result column="costCenter" property="costCenter" jdbcType="VARCHAR"/>
+        <result column="company" property="company" jdbcType="VARCHAR"/>
+        <result column="responsiblility" property="responsiblility" jdbcType="VARCHAR"/>
+        <result column="problemDescription" property="problemDescription" jdbcType="VARCHAR"/>
+        <result column="ciName" property="ciName" jdbcType="VARCHAR"/>
+        <result column="applyStatus" property="applyStatus" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+        <result column="updateTime" property="updateTime" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        maintenanceId, applicant, fixCategory, costCenter, company, responsiblility,
+        problemDescription, ciName, applyStatus, createTime, updateTime
+    </sql>
+
+    <!-- 插入维修申请 -->
+    <insert id="insertApply" parameterType="ink.usr.common.model.mysql.SysMaintenanceApplyModel" useGeneratedKeys="true" keyProperty="maintenanceId">
+        INSERT INTO sys_maintenance_apply (
+            applicant, fixCategory, costCenter, company, responsiblility,
+            problemDescription, ciName, applyStatus, createTime, updateTime
+        ) VALUES (
+            #{applicant}, #{fixCategory}, #{costCenter}, #{company}, #{responsiblility},
+            #{problemDescription}, #{ciName}, #{applyStatus}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 根据ID查询维修申请 -->
+    <select id="selectApplyById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_apply
+        WHERE maintenanceId = #{maintenanceId}
+    </select>
+
+    <!-- 根据申请人查询维修申请 -->
+    <select id="selectAppliesByApplicant" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_apply
+        WHERE applicant = #{applicant}
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 查询所有维修申请 -->
+    <select id="selectAllApplies" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_apply
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 根据状态查询维修申请 -->
+    <select id="selectAppliesByStatus" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_maintenance_apply
+        WHERE applyStatus = #{applyStatus}
+        ORDER BY createTime DESC
+    </select>
+
+    <!-- 更新维修申请 -->
+    <update id="updateApply" parameterType="ink.usr.common.model.mysql.SysMaintenanceApplyModel">
+        UPDATE sys_maintenance_apply
+        SET applicant = #{applicant},
+            fixCategory = #{fixCategory},
+            costCenter = #{costCenter},
+            company = #{company},
+            responsiblility = #{responsiblility},
+            problemDescription = #{problemDescription},
+            ciName = #{ciName},
+            applyStatus = #{applyStatus},
+            updateTime = #{updateTime}
+        WHERE maintenanceId = #{maintenanceId}
+    </update>
+
+    <!-- 更新申请状态 -->
+    <update id="updateApplyStatus">
+        UPDATE sys_maintenance_apply
+        SET applyStatus = #{applyStatus},
+            updateTime = NOW()
+        WHERE maintenanceId = #{maintenanceId}
+    </update>
+
+    <!-- 删除维修申请 -->
+    <delete id="deleteApply" parameterType="java.lang.Long">
+        DELETE FROM sys_maintenance_apply
+        WHERE maintenanceId = #{maintenanceId}
+    </delete>
+
+</mapper> 
